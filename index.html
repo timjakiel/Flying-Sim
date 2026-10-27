@@ -93,7 +93,7 @@ h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 #pauseBtn { position: fixed; z-index: 8; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); width: 40px; height: 40px;
   border-radius: 50%; border: 2px solid var(--ink); background: rgba(247,243,232,.85); color: var(--ink); font: 700 16px var(--ui); cursor: pointer; }
 #hud-right { margin-top: 48px; }
-body:has(#bossbar:not([hidden])) #hud-left { top: calc(84px + env(safe-area-inset-top, 0px)); }
+body:has(#bossbar:not([hidden])) #hud-left { top: calc(14px + env(safe-area-inset-top, 0px) + var(--bossH, 70px)); }
 #toast { position: fixed; z-index: 9; top: calc(76px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
   background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--blue); padding: 10px 16px; pointer-events: none; max-width: calc(100vw - 32px); }
 #toast.show { animation: toastIn 3.6s ease forwards; }
@@ -171,7 +171,9 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .diffs button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 #sd-hard { background: var(--red); color: var(--paper); }
 .diffs small { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing: .06em; opacity: .8; font-variant-numeric: tabular-nums; }
-#bossbar { top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(520px, calc(100vw - 120px)); display: grid; gap: 6px; }
+#bossbar { top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(520px, calc(100vw - 120px)); display: grid; gap: 4px; }
+#bossbar .vil .track { height: 9px; }
+#bossbar .vil span { font-size: 14px; }
 .bar2 { display: grid; gap: 2px; }
 .bar2 span { font-family: var(--display); font-size: 16px; letter-spacing: .08em; line-height: 1; }
 .bar2.vil span { color: #ff8a7a; text-align: right; }
@@ -180,8 +182,8 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .vil .track i { background: var(--red); transform-origin: right; }
 #hurt.frozen { opacity: .35 !important; background: radial-gradient(ellipse at center, rgba(160,220,255,0) 50%, rgba(170,225,255,.7)); }
 #hurt { position: fixed; inset: 0; pointer-events: none; z-index: 4; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,0,0,0) 45%, rgba(200,0,0,.75)); }
-#vmark { left: 0; top: 0; min-width: 28px; height: 28px; padding: 0 6px; display: grid; place-items: center; font: 700 12px var(--ui); color: var(--paper); background: rgba(158,15,26,.85); border: 2px solid var(--ink); border-radius: 14px; }
-#vmark.edge { width: 28px; padding: 0; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 4px rgba(255,90,60,.35); }
+.vmark { position: fixed; z-index: 5; pointer-events: none; left: 0; top: 0; min-width: 28px; height: 28px; padding: 0 6px; display: grid; place-items: center; font: 700 12px var(--ui); color: var(--paper); background: rgba(158,15,26,.85); border: 2px solid var(--ink); border-radius: 14px; }
+.vmark.edge { width: 28px; padding: 0; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 4px rgba(255,90,60,.35); }
 .chip.sel { box-shadow: inset 0 0 0 2px var(--yellow); background: rgba(9,18,34,.8); }
 .chip.sel::before { content: "▶"; position: absolute; left: -14px; color: var(--yellow); font-size: 12px; }
 .chip.off { opacity: .45; }
@@ -212,10 +214,9 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 <div class="hud" id="timer" hidden>2:00</div>
 <div class="hud" id="bossbar" hidden>
   <div class="bar2"><span>YOU</span><div class="track"><i id="pFill"></i></div></div>
-  <div class="bar2 vil"><span id="vName">THE WARLORD</span><div class="track"><i id="vFill"></i></div></div>
 </div>
 <div id="hurt"></div>
-<div class="hud" id="vmark" hidden></div>
+
 <button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
 <div id="toast" hidden><i id="toastSwatch"></i><div><div class="tlabel">Achievement unlocked</div><div id="toastTitle"></div><div id="toastSuit"></div></div></div>
 <div class="hud" id="powers"></div>
@@ -242,7 +243,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <div class="fight">
       <div class="vlist" id="vList"></div>
       <div class="vpanel">
-        <div class="vsel"><span class="label">Fight</span><div class="vname" id="vSelName">The Warlord</div><div class="sdesc" id="vSelTag"></div></div>
+        <div class="vsel"><span class="label">Fight · tap villains to add or remove them</span><div class="vname" id="vSelName">The Warlord</div><div class="sdesc" id="vSelTag"></div></div>
         <div class="diffs">
           <button type="button" id="sd-easy">EASY<small id="sdb-easy">—</small></button>
           <button type="button" id="sd-normal">NORMAL<small id="sdb-normal">—</small></button>
@@ -1509,7 +1510,7 @@ function launch() {
   addCracks(gx, gz, 30);
   const g0 = groundH(gx, gz);
   const cash = blast(new V3(gx, g0 + 1, gz), 6 * pmul('slam'), new V3(0, 40, 0));
-  if (villainInRange(new V3(gx, g0 + 2, gz), 10)) hurtVillain(60 * pmul('slam'), new V3(0, 1, 0), 140, 'UPPERCUT!');
+  foesInRange(new V3(gx, g0 + 2, gz), 10, () => hurtVillain(60 * pmul('slam'), new V3(0, 1, 0), 140, 'UPPERCUT!'));
   for (let q = 0; q < 34; q++) {
     const a = rand(0, Math.PI * 2), d = rand(0, 5);
     tmpV.set(gx + Math.cos(a) * d, g0 + .4, gz + Math.sin(a) * d);
@@ -1530,7 +1531,7 @@ function groundSlam(p, impact, meteor) {
   crater(p.x, p.z, R, R * .32);
   addCracks(p.x, p.z, R * 3.2);
   const cash = blast(tmpV2.set(p.x, groundH(p.x, p.z) + 1, p.z).clone(), R * 1.1, P.vel.clone().multiplyScalar(.2));
-  { const c = new V3(p.x, groundH(p.x, p.z) + 1, p.z); if (villainInRange(c, R * 1.3)) hurtVillain((meteor ? 200 * pmul('slam') : 50) * (1 - V.pos.distanceTo(c) / (R * 1.6)), tmpV2.subVectors(V.pos, c).setY(6), 180, meteor ? 'METEOR!' : null); }
+  { const c = new V3(p.x, groundH(p.x, p.z) + 1, p.z); foesInRange(c, R * 1.3, () => hurtVillain((meteor ? 200 * pmul('slam') : 50) * (1 - V.pos.distanceTo(c) / (R * 1.6)), tmpV2.subVectors(V.pos, c).setY(6), 180, meteor ? 'METEOR!' : null)); }
   // chunks of road
   for (let q = 0; q < 40; q++) {
     const a = rand(0, Math.PI * 2), d = rand(0, R * .8);
@@ -1691,7 +1692,7 @@ function explode(x) {
   sfxBoom(); sfxCrash(clamp(1.3 - d / 400, .2, 1.3));
   hitFeedback(cash, 100, true);
   if (T.r > 15 || Math.random() < .3) popup(['KABOOM!', 'BOOM!', 'FWOOSH!', 'KRAKOOM!'][Math.random() * 4 | 0], true);
-  if (villainInRange(p, T.r * 1.3)) hurtVillain(T.r * 3 * (1 - V.pos.distanceTo(p) / (T.r * 1.5)), tmpV2.subVectors(V.pos, p), T.r * 5, 'KABOOM!');
+  foesInRange(p, T.r * 1.3, () => hurtVillain(T.r * 3 * (1 - V.pos.distanceTo(p) / (T.r * 1.5)), tmpV2.subVectors(V.pos, p), T.r * 5, 'KABOOM!'));
   if (state.mode === 'showdown' && d < T.r * 1.3) hurtPlayer(T.r * 3.5 * (1 - d / (T.r * 1.4)) / S.diff.dmg, null, 0);
   statAdd('explosions');
 }
@@ -1763,19 +1764,21 @@ function aimInfo(range = 520) {
   const startT = camera.position.distanceTo(P.pos);
   const hit = raycastWorld(camera.position, aimDir, startT, range);
   let t = hit ? hit.t : range, onVillain = false;
-  if (state.mode === 'showdown' && villain.visible && !V.dead) {
-    const vt = tmpV.subVectors(V.pos, camera.position).dot(aimDir);
-    if (vt > startT && vt < t && V.pos.distanceTo(tmpV2.copy(camera.position).addScaledVector(aimDir, vt)) < 2.8) { t = vt; onVillain = true; }
+  let foe = null;
+  if (state.mode === 'showdown') for (const f of S.foes) {
+    if (!f.group.visible || f.V.dead) continue;
+    const vt = tmpV.subVectors(f.V.pos, camera.position).dot(aimDir);
+    if (vt > startT && vt < t && f.V.pos.distanceTo(tmpV2.copy(camera.position).addScaledVector(aimDir, vt)) < 2.8) { t = vt; onVillain = true; foe = f; }
   }
   aimPt.copy(camera.position).addScaledVector(aimDir, t);
-  return { hit, t, onVillain, point: aimPt, dir: aimDir };
+  return { hit, t, onVillain, foe, point: aimPt, dir: aimDir };
 }
 function handPos(out) { return heroModel.localToWorld(out.set(.4, .62, .75)); }
 
 // ---- shared attack shapes
 function coneAttack(id, o) {
   const m = pmul(id), f = forwardVec(new V3()), org = P.pos.clone(); org.y += 1;
-  let hitV = false;
+  const hitV = new Set();
   for (let i = 0; i < 7; i++) {
     const d = (7 + i * 9) * (.8 + m * .2), c = org.clone().addScaledVector(f, d), r = (2.5 + d * .22) * m;
     later(i * .06, () => {
@@ -1784,7 +1787,7 @@ function coneAttack(id, o) {
       const cash = blast(c, r, f.clone().multiplyScalar(o.push || 70));
       detonateNear(c, r);
       if (cash) hitFeedback(cash, 90, true);
-      if (!hitV && villainInRange(c, r)) { hitV = true; hurtVillain(o.dmg * m, f, o.knock, o.label); }
+      foesInRange(c, r, () => { if (hitV.has(curFoe)) return; hitV.add(curFoe); hurtVillain(o.dmg * m, f, o.knock, o.label); });
     });
   }
   state.shake = Math.max(state.shake, .7);
@@ -1797,7 +1800,7 @@ function radialAttack(id, o) {
     if (o.fx) o.fx(c, R);
     const cash = blast(c, R, null); detonateNear(c, R);
     if (P.pos.y - groundH(c.x, c.z) < 8) { crater(c.x, c.z, R * .45, o.dent ?? 2); addCracks(c.x, c.z, R * 1.3); }
-    if (villainInRange(c, R)) { hurtVillain(o.dmg * m, tmpV2.subVectors(V.pos, c).setY(2), o.knock, o.label); if (o.stun) V.stun = Math.max(V.stun, o.stun); }
+    foesInRange(c, R, () => { hurtVillain(o.dmg * m, tmpV2.subVectors(V.pos, c).setY(2), o.knock, o.label); if (o.stun) V.stun = Math.max(V.stun, o.stun); });
     state.shake = Math.max(state.shake, 1.3); sfxBoom(); sfxCrash(1.2);
     hitFeedback(cash + 1, 140, true);
   });
@@ -1840,7 +1843,7 @@ function projImpact(pr) {
     if (p.y - groundH(p.x, p.z) < 3) crater(p.x, p.z, R * .4, .8);
     const cash = blast(p, R, pr.vel.clone().multiplyScalar(.15)); detonateNear(p, R);
     if (pr.owner === 'villain') { const d = P.pos.distanceTo(p); if (d < R + 1) hurtPlayer(130 * m * (1 - d / (R * 1.8)), pr.vel, 120); }
-    else if (villainInRange(p, R)) hurtVillain(110 * m, pr.vel, 120, 'FWOOSH!');
+    else foesInRange(p, R, () => hurtVillain(110 * m, pr.vel, 120, 'FWOOSH!'));
     sfxBoom(); sfxCrash(.9); state.shake = Math.max(state.shake, clamp(1 - P.pos.distanceTo(p) / 300, .15, .9));
     if (pr.owner === 'player') hitFeedback(cash + 1, 100, true);
   } else {
@@ -1850,7 +1853,7 @@ function projImpact(pr) {
     if (p.y - groundH(p.x, p.z) < 3) crater(p.x, p.z, R * .5, 1.5);
     const cash = blast(p, R, pr.vel.clone().multiplyScalar(.3)); detonateNear(p, R);
     if (pr.owner === 'villain') { const d = P.pos.distanceTo(p); if (d < R) hurtPlayer(150 * m * (1 - d / (R * 1.6)), pr.vel, 200); }
-    else if (villainInRange(p, R * .8)) hurtVillain(150 * m, pr.vel, 200, 'CRUNCH!');
+    else foesInRange(p, R * .8, () => hurtVillain(150 * m, pr.vel, 200, 'CRUNCH!'));
     sfxCrash(1.1); state.shake = Math.max(state.shake, clamp(1 - P.pos.distanceTo(p) / 300, .15, 1));
     if (pr.owner === 'player') hitFeedback(cash + 1, 110, true);
   }
@@ -1881,7 +1884,7 @@ function strike(p, R, m, label) { // a lightning hit on a point
   spawnFire(p, .5, 3 * m, 3, .3, 6, 0x9fd8ff);
   const cash = blast(p, R, null); detonateNear(p, R);
   for (const c of carList) if (c.fly <= 0 && c.p.distanceTo(p) < R + 3) flingCar(c, rand(-8, 8), 26, rand(-8, 8));
-  if (villainInRange(p, R)) hurtVillain(label === 'storm' ? 35 * m : 120 * m, tmpV2.subVectors(V.pos, p), 60, 'ZZAP!');
+  foesInRange(p, R, () => hurtVillain(label === 'storm' ? 35 * m : 120 * m, tmpV2.subVectors(V.pos, p), 60, 'ZZAP!'));
   return cash;
 }
 
@@ -1925,14 +1928,14 @@ function useAbility() {
     spawnRing(c, UP, R / 4, 0xb070ff);
     for (const car of carList) if (car.fly <= 0 && car.p.distanceTo(c) < R) flingCar(car, rand(-4, 4), rand(30, 45), rand(-4, 4));
     for (const t of trees) if (t.st === 0 && Math.hypot(t.x - c.x, t.z - c.z) < R) toppleTree(t, t.x - c.x, t.z - c.z);
-    if (villainInRange(c, R * 1.4)) { V.vel.y += 70; V.stun = Math.max(V.stun, 1.6); V.act = null; }
+    foesInRange(c, R * 1.4, () => { V.vel.y += 70; V.stun = Math.max(V.stun, 1.6); V.act = null; });
     spawnDust(tmpV.set(c.x, groundH(c.x, c.z) + 2, c.z), R * .3, 6, PSY_COL);
     later(1.1, () => {
       const g = new V3(c.x, groundH(c.x, c.z) + 2, c.z), Rs = 16 * m;
       spawnRing(g, UP, Rs / 3.5, 0xb070ff);
       const cash = blast(g, Rs, new V3(0, -60, 0)); detonateNear(g, Rs);
       crater(g.x, g.z, Rs * .5, 2.5); addCracks(g.x, g.z, Rs * 1.6);
-      if (villainInRange(c, R * 1.5)) { hurtVillain(180 * m, new V3(0, -1, 0), 220, 'SLAM!'); }
+      foesInRange(c, R * 1.5, () => hurtVillain(180 * m, new V3(0, -1, 0), 220, 'SLAM!'));
       sfxBoom(); sfxCrash(1.2); state.shake = Math.max(state.shake, 1.2); hitFeedback(cash + 1, 140, true);
     });
   }
@@ -1976,7 +1979,7 @@ function useAbility() {
         for (let k = 0; k < 3; k++) spawnSpike(q.x + rand(-2.5, 2.5), q.z + rand(-2.5, 2.5), rand(6, 12) * m, rand(.9, 1.6) * m);
         spawnDust(c, 3, 1, ICE_COL);
         const cash = blast(c, 5.5 * m, new V3(0, 30, 0)); detonateNear(c, 5.5 * m);
-        if (villainInRange(c, 6 * m) && V.pos.y - gy < 14 * m) hurtVillain(45 * m, new V3(0, 1, 0), 90, 'SPIKED!');
+        foesInRange(c, 6 * m, () => { if (V.pos.y - gy < 14 * m) hurtVillain(45 * m, new V3(0, 1, 0), 90, 'SPIKED!'); });
         if (cash) hitFeedback(cash, 70, true);
       });
     }
@@ -2017,14 +2020,14 @@ function updateBeam(dt) {
   }
   // damage
   const dps = { laser: 110, icebeam: 95, flame: 125, storm: 0 }[id] * m;
-  if (a.onVillain && dps) { V.hp -= dps * dt; S.dealt += dps * dt; updateBars(); if (id === 'icebeam') V.vel.multiplyScalar(Math.exp(-dt * 3)); if (V.hp <= 0) { S.hits++; villainDown(); } }
+  if (a.onVillain && dps) { const prev = curFoe; bindFoe(a.foe); V.hp -= dps * dt; S.dealt += dps * dt; updateBars(); if (id === 'icebeam') V.vel.multiplyScalar(Math.exp(-dt * 3)); if (V.hp <= 0 && !V.dead) { S.hits++; villainDown(); } bindFoe(prev); }
   beamTick -= dt; beamPop -= dt;
   if (id === 'storm') {
     stormT -= dt;
     if (stormT <= 0) {
       stormT = Math.max(.08, .26 - .03 * powerLevel(id));
       const p = endV.clone().add(new V3(rand(-12, 12), 0, rand(-12, 12)));
-      if (a.onVillain && Math.random() < .5) p.copy(V.pos);
+      if (a.onVillain && Math.random() < .5) p.copy(a.foe.V.pos);
       p.y = Math.max(groundH(p.x, p.z), p.y - 4);
       if (a.hit && a.hit.e) { const top = a.hit.e.y0 + (a.hit.e.topK + 1) * a.hit.e.ch; if (Math.abs(p.x - a.hit.e.cx) < a.hit.e.w / 2 && Math.abs(p.z - a.hit.e.cz) < a.hit.e.d / 2) p.y = top; }
       drawBolt(p.clone().add(new V3(rand(-20, 20), 140, rand(-20, 20))), p, .5);
@@ -2446,6 +2449,7 @@ if (!save.unlocked.includes('classic')) save.unlocked.push('classic');
 if (!save.unlocked.includes('signature')) save.unlocked.unshift('signature');
 if (!save.hero) save.hero = 'sky';
 if (!save.villain) save.villain = 'warlord';
+if (!Array.isArray(save.villains) || !save.villains.length) save.villains = [save.villain];
 for (const d of ['easy', 'normal', 'hard']) if (save.stats['best_' + d] && !save.stats['best_warlord_' + d]) { save.stats['best_warlord_' + d] = save.stats['best_' + d]; delete save.stats['best_' + d]; }
 if ((save.ver || 1) < 2) { // progress from before achievements went Rampage-only starts over
   save.stats = { bestRampage: save.stats.bestRampage || 0 };
@@ -2499,22 +2503,30 @@ function applySuit(id) {
 // ---------------------------------------------------------------- modes + menus
 const RAMPAGE_TIME = 120;
 let suitsBack = 'main', heroesBack = 'main';
+const beaten = (id, d) => !!(save.stats['best_' + id + '_' + d] || save.stats['win_' + id + '_' + d]);
+const fightKey = () => selectedVillains().map((v) => v.id).join('+');
 const fmtTime = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
 function renderVillains() {
   const list = $('vList'); list.textContent = '';
   for (const v of VILLAINS) {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'vcard' + (save.villain === v.id ? ' on' : '');
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'vcard' + (save.villains.includes(v.id) ? ' on' : ''); b.setAttribute('aria-pressed', save.villains.includes(v.id));
     const sw = document.createElement('i'); sw.className = 'swatch'; sw.style.background = `linear-gradient(90deg, ${hex(v.look.cape)} 0 25%, ${hex(v.look.main)} 25% 75%, ${hex(v.look.cape)} 75%)`; sw.style.boxShadow = `inset 0 0 0 3px ${hex(v.look.accent)}`;
     const nm = document.createElement('span'); nm.className = 'vn'; nm.textContent = v.name;
     const wins = document.createElement('span'); wins.className = 'wins';
-    for (const d of ['easy', 'normal', 'hard']) { const w = document.createElement('em'); w.textContent = d[0].toUpperCase(); if (save.stats['best_' + v.id + '_' + d]) w.className = 'won'; w.title = DIFFS[d].name + (save.stats['best_' + v.id + '_' + d] ? ' beaten' : ' not beaten yet'); wins.append(w); }
+    for (const d of ['easy', 'normal', 'hard']) { const w = document.createElement('em'); w.textContent = d[0].toUpperCase(); const won = beaten(v.id, d); if (won) w.className = 'won'; w.title = DIFFS[d].name + (won ? ' beaten' : ' not beaten yet'); wins.append(w); }
     b.append(sw, nm, wins);
-    b.addEventListener('click', () => { save.villain = v.id; saveDirty = true; sfxTick(); renderVillains(); });
+    b.addEventListener('click', () => {
+      const on = save.villains.includes(v.id);
+      if (on && save.villains.length > 1) save.villains = save.villains.filter((x) => x !== v.id);
+      else if (!on) save.villains.push(v.id);
+      save.villain = save.villains[0]; saveDirty = true; sfxTick(); renderVillains();
+    });
     list.append(b);
   }
-  const v = curVillain();
-  $('vSelName').textContent = v.name; $('vSelTag').textContent = v.tag + '. Mirror of ' + HEROES.find((h) => h.id === v.mirror).name + '.';
-  for (const d of ['easy', 'normal', 'hard']) { const t = save.stats['best_' + v.id + '_' + d]; $('sdb-' + d).textContent = t ? 'best ' + fmtTime(t) : '—'; }
+  const sel = selectedVillains(), n = sel.length;
+  $('vSelName').textContent = n === 1 ? sel[0].name : n + ' v 1';
+  $('vSelTag').textContent = n === 1 ? sel[0].tag + '. Mirror of ' + HEROES.find((h) => h.id === sel[0].mirror).name + '.' : sel.map((v) => v.name).join(' + ') + ' at once. Bounty ×' + n + ' plus 25%.';
+  for (const d of ['easy', 'normal', 'hard']) { const t = save.stats['best_' + fightKey() + '_' + d]; $('sdb-' + d).textContent = t ? 'best ' + fmtTime(t) : '—'; }
 }
 function renderHeroes() {
   const list = $('heroList'); list.textContent = '';
@@ -2723,7 +2735,7 @@ $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
 $('pQuit').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('rAgain').addEventListener('click', () => startMode(state.lastMode || 'rampage', state.lastDiff));
-$('rNext').addEventListener('click', () => { const n = VILLAINS[VILLAINS.indexOf(curVillain()) + 1]; if (n) { save.villain = n.id; startMode('showdown', state.lastDiff); } });
+$('rNext').addEventListener('click', () => { const n = VILLAINS[VILLAINS.indexOf(selectedVillains()[0]) + 1]; if (n) { save.villains = [n.id]; save.villain = n.id; startMode('showdown', state.lastDiff); } });
 for (const d of ['easy', 'normal', 'hard']) $('sd-' + d).addEventListener('click', () => startMode('showdown', d));
 $('rMenu').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('pauseBtn').addEventListener('click', pauseGame);
@@ -2736,11 +2748,14 @@ const DIFFS = {
   hard: { name: 'Hard', hp: 2200, dmg: 1.2, cd: .7, speed: 1.18, aim: 4.2, lead: .9, lvl: 5, think: .4, reward: 12e6 },
 };
 const PLAYER_HP = 1000;
-const villain = new THREE.Group(); villain.visible = false; scene.add(villain);
-const vModel = new THREE.Group(); villain.add(vModel);
-const vMat = {};
-const vBody = {};
-{
+// up to five villains at once; the villain code below works on whichever one is bound
+let villain, vModel, vMat, vBody, vGlow, vBeams, V, curFoe = null;
+const foes = [];
+function buildFoe() {
+  const group = new THREE.Group(); group.visible = false; scene.add(group);
+  const model = new THREE.Group(); group.add(model);
+  const mat = {}, body = {};
+  const vModel = model, vMat = mat, vBody = body;
   const std = (c, r = .5, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, envMapIntensity: .5 });
   vMat.main = std(0x15161a, .35, .3); vMat.limb = std(0x0b0b0d, .4, .2); vMat.accent = std(0x9e0f1a, .4, .2);
   vMat.skin = std(0xc8936e, .6); vMat.eye = new THREE.MeshBasicMaterial({ color: 0xff2a1a, toneMapped: false });
@@ -2775,31 +2790,58 @@ const vBody = {};
   cape.position.set(0, .68, -.22); cape.rotation.x = .2; cape.castShadow = true; vModel.add(cape);
   vBody.cape = cape;
   vModel.scale.setScalar(1.35);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
+  glow.visible = false; scene.add(glow);
+  const beams = [0, 1].map(() => { const core = new THREE.Mesh(beamGeo, beamMat), g = new THREE.Mesh(beamGeo, glowMat); core.frustumCulled = g.frustumCulled = false; core.visible = g.visible = false; scene.add(core, g); return { core, glow: g }; });
+  const mark = document.createElement('div'); mark.className = 'hud vmark'; mark.hidden = true; document.body.append(mark);
+  return { group, model, mat, body, glow, beams, mark, vd: null, fill: null,
+    V: { pos: new V3(), vel: new V3(), hp: 1, maxHp: 1, dead: false, stun: 0, act: null, actT: 0, think: 0, cd: {}, aim: new V3(), orbit: 0, laserTick: 0, beamEnd: new V3() } };
 }
-const vGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
-vGlow.visible = false; scene.add(vGlow);
-const vBeams = [0, 1].map(() => { const core = new THREE.Mesh(beamGeo, beamMat), glow = new THREE.Mesh(beamGeo, glowMat); core.frustumCulled = glow.frustumCulled = false; core.visible = glow.visible = false; scene.add(core, glow); return { core, glow }; });
+function bindFoe(f) { curFoe = f; villain = f.group; vModel = f.model; vMat = f.mat; vBody = f.body; vGlow = f.glow; vBeams = f.beams; V = f.V; if (f.vd) S.vd = f.vd; }
+for (let i = 0; i < 5; i++) foes.push(buildFoe());
+const S = { hp: PLAYER_HP, lastHurt: 0, ko: false, diff: DIFFS.normal, diffId: 'normal', time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0, foes: [] };
+bindFoe(foes[0]);
+// run fn with each living villain near p bound, then put the previous binding back
+function foesInRange(p, r, fn) {
+  if (state.mode !== 'showdown') return 0;
+  const prev = curFoe; let n = 0;
+  for (const f of S.foes) if (f.group.visible && !f.V.dead && f.V.pos.distanceTo(p) < r + 1.8) { bindFoe(f); fn(); n++; }
+  bindFoe(prev); return n;
+}
 
-const V = { pos: new V3(), vel: new V3(), hp: 1, maxHp: 1, dead: false, stun: 0, act: null, actT: 0, think: 0, cd: {}, aim: new V3(), orbit: 0, laserTick: 0, lastHitBy: 0, beamEnd: new V3() };
-const S = { hp: PLAYER_HP, lastHurt: 0, ko: false, diff: DIFFS.normal, diffId: 'normal', time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0 };
-
+const selectedVillains = () => VILLAINS.filter((v) => save.villains.includes(v.id));
 function startShowdown(diffId) {
   S.diffId = diffId; S.diff = DIFFS[diffId];
-  Object.assign(S, { hp: PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0 });
-  const vd = curVillain(); S.vd = vd; S.stunT = 0; S.slowT = 0;
-  V.maxHp = V.hp = S.diff.hp; V.dead = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5; V.kit = vd.moves;
-  V.cd = {}; for (const id of vd.moves) V.cd[id] = rand(2, 6); V.cd.slam = 8;
-  applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0);
-  V.pos.set(0, 160, -120); V.vel.set(0, 0, 0); V.orbit = rand(0, 6.28);
-  villain.visible = true; villain.position.copy(V.pos); vGlow.visible = false;
-  $('bossbar').hidden = false; $('vName').textContent = vd.name.toUpperCase() + ' · ' + S.diff.name.toUpperCase();
+  Object.assign(S, { hp: PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0, stunT: 0, slowT: 0 });
+  const list = selectedVillains(); S.foes = foes.slice(0, list.length);
+  for (const f of foes) { f.group.visible = false; f.glow.visible = false; f.mark.hidden = true; for (const b of f.beams) b.core.visible = b.glow.visible = false; }
+  const bar = $('bossbar'); bar.querySelectorAll('.vil').forEach((e) => e.remove());
+  list.forEach((vd, i) => {
+    const f = foes[i]; f.vd = vd; bindFoe(f);
+    V.maxHp = V.hp = S.diff.hp; V.dead = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5 + i * 1.3; V.kit = vd.moves;
+    V.cd = {}; for (const id of vd.moves) V.cd[id] = rand(2, 6) + i; V.cd.slam = 8 + i * 2;
+    applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0);
+    const a = -Math.PI / 2 + (i - (list.length - 1) / 2) * .7;
+    V.pos.set(Math.cos(a) * 130, 150 + i * 12, Math.sin(a) * 130 + 60); V.vel.set(0, 0, 0); V.orbit = i / list.length * Math.PI * 2;
+    villain.visible = true; villain.position.copy(V.pos);
+    f.mark.style.borderColor = hex(vd.look.accent); f.mark.style.background = hex(vd.look.cape);
+    const row = document.createElement('div'); row.className = 'bar2 vil';
+    const nm = document.createElement('span'); nm.textContent = vd.name.toUpperCase() + (i === 0 ? ' · ' + S.diff.name.toUpperCase() : '');
+    const tr = document.createElement('div'); tr.className = 'track'; const fill = document.createElement('i'); fill.style.background = hex(vd.look.accent); tr.append(fill);
+    row.append(nm, tr); bar.append(row); f.fill = fill;
+  });
+  bindFoe(S.foes[0]);
+  bar.hidden = false;
   updateBars();
-  later(.3, () => popup(vd.name.toUpperCase() + ' ARRIVES', true));
+  later(.3, () => popup(list.length === 1 ? list[0].name.toUpperCase() + ' ARRIVES' : list.length + ' VILLAINS INCOMING', true));
 }
-function endShowdownWorld() { villain.visible = false; vGlow.visible = false; for (const b of vBeams) b.core.visible = b.glow.visible = false; $('bossbar').hidden = true; $('vmark').hidden = true; }
+function endShowdownWorld() {
+  for (const f of foes) { f.group.visible = false; f.glow.visible = false; f.mark.hidden = true; for (const b of f.beams) b.core.visible = b.glow.visible = false; }
+  $('bossbar').hidden = true;
+}
 function updateBars() {
   $('pFill').style.transform = `scaleX(${clamp(S.hp / PLAYER_HP, 0, 1)})`;
-  $('vFill').style.transform = `scaleX(${clamp(V.hp / V.maxHp, 0, 1)})`;
+  for (const f of S.foes) if (f.fill) f.fill.style.transform = `scaleX(${clamp(f.V.hp / f.V.maxHp, 0, 1)})`;
 }
 
 // ---- damage both ways
@@ -2827,7 +2869,7 @@ function hurtPlayer(amount, dir, knock) {
 function villainDown() {
   V.dead = true; V.act = null; vGlow.visible = false;
   for (const b of vBeams) b.core.visible = b.glow.visible = false;
-  V.vel.y = Math.max(V.vel.y, 20); popup(S.vd.name.toUpperCase().replace(/^THE /, '') + ' DOWN!', true); sfxBoom();
+  V.vel.y = Math.max(V.vel.y, 20); popup(curFoe.vd.name.toUpperCase().replace(/^THE /, '') + ' DOWN!', true); sfxBoom();
 }
 function endShowdown(win) {
   if (S.over) return;
@@ -2835,21 +2877,23 @@ function endShowdown(win) {
   if (document.pointerLockElement) document.exitPointerLock();
   const t = S.time, mm = Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
   $('rTitle').textContent = win ? 'Victory' : 'Defeated';
-  const vid = S.vd.id, next = VILLAINS[VILLAINS.indexOf(S.vd) + 1];
+  const names = S.foes.map((f) => f.vd.name), solo = S.foes.length === 1, vid = fightKey(), next = solo ? VILLAINS[VILLAINS.indexOf(S.foes[0].vd) + 1] : null;
+  const reward = S.diff.reward * S.foes.length * (solo ? 1 : 1.25);
   $('rNext').hidden = !(win && next); if (next) $('rNext').textContent = 'NEXT: ' + next.name.toUpperCase();
   $('rScore').textContent = win ? 'Won in ' + mm : 'Lasted ' + mm;
   const key = 'best_' + vid + '_' + S.diffId, prev = save.stats[key] || 0;
-  let note = S.vd.name + ' · ' + S.diff.name;
+  let note = names.join(' + ') + ' · ' + S.diff.name;
   if (win) {
     if (!prev || t < prev) { save.stats[key] = t; note = 'New fastest win on ' + S.diff.name + '!'; }
     else note = 'Fastest on ' + S.diff.name + ': ' + Math.floor(prev / 60) + ':' + String(Math.floor(prev % 60)).padStart(2, '0');
-    save.wallet = (save.wallet || 0) + S.diff.reward;
-    statForce('hardWins', VILLAINS.filter((v) => save.stats['best_' + v.id + '_hard']).length);
+    save.wallet = (save.wallet || 0) + reward;
+    for (const f of S.foes) save.stats['win_' + f.vd.id + '_' + S.diffId] = 1;
+    statForce('hardWins', VILLAINS.filter((v) => beaten(v.id, 'hard')).length);
     saveNow();
   }
   $('rBest').textContent = note; $('rBest').classList.toggle('newbest', win);
-  $('rCut').innerHTML = win ? 'Bounty <b>+' + fmtCash(S.diff.reward) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>' : 'No bounty. Go again.';
-  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], [S.vd.name.replace(/^The /, '') + ' health left', Math.max(0, Math.round(V.hp))], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
+  $('rCut').innerHTML = win ? 'Bounty <b>+' + fmtCash(reward) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>' : 'No bounty. Go again.';
+  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], ['Villains defeated', S.foes.filter((f) => f.V.dead).length + ' / ' + S.foes.length], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
   const st = $('rStats'); st.textContent = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
   const un = $('rUnlocks'); un.textContent = '';
@@ -3119,13 +3163,20 @@ function villainCollide() {
 const vq = new THREE.Quaternion(), vm = new THREE.Matrix4(), vy = new V3(), vz = new V3(), vx = new V3(), vfH = new V3(), vvd = new V3();
 let vAnim = 0;
 function updateVillain(dt) {
-  if (state.mode !== 'showdown' || !villain.visible) return;
+  if (state.mode !== 'showdown' || !S.foes.length) return;
   vAnim += dt;
   if (state.playing && !S.over) {
     S.time += dt; S.hitCd -= dt;
     if (!S.ko && S.time - S.lastHurt > 4) { S.hp = Math.min(PLAYER_HP, S.hp + 14 * dt); updateBars(); }
     S.stunT = Math.max(0, S.stunT - dt); S.slowT = Math.max(0, S.slowT - dt);
     $('hurt').classList.toggle('frozen', S.slowT > 0);
+  }
+  document.body.style.setProperty('--bossH', $('bossbar').offsetHeight + 'px');
+  for (const f of S.foes) { if (!f.group.visible) { f.mark.hidden = true; continue; } bindFoe(f); updateFoe(dt); }
+  bindFoe(S.foes[0]);
+}
+function updateFoe(dt) {
+  if (state.playing && !S.over) {
     if (V.dead) {
       V.vel.y -= 40 * dt; V.vel.x *= Math.exp(-dt); V.vel.z *= Math.exp(-dt);
       vModel.rotation.x += dt * 6; vModel.rotation.z += dt * 3;
@@ -3136,11 +3187,11 @@ function updateVillain(dt) {
         vCityHit(new V3(p.x, groundH(p.x, p.z) + 1, p.z), 24, null);
         spawnDust(tmpV.set(p.x, groundH(p.x, p.z) + 2, p.z), 10, 10, CONCRETE_COL);
         sfxCrash(1.3); sfxBoom(); state.shake = 1.5;
-        villain.visible = false; $('vmark').hidden = true;
-        later(1.8, () => endShowdown(true));
+        villain.visible = false; curFoe.mark.hidden = true;
+        if (S.foes.every((q) => !q.group.visible)) later(1.8, () => endShowdown(true));
       }
     } else {
-      if (S.vd.aura && Math.random() < .4) spawnFire(tmpV.copy(V.pos).add(new V3(rand(-.8, .8), rand(-1.2, 1.3), rand(-.8, .8))), .2, rand(.5, 1.1), 1, .45, 1.5, S.vd.id === 'scorch' ? null : S.vd.aura);
+      const vd = curFoe.vd; if (vd.aura && Math.random() < .4) spawnFire(tmpV.copy(V.pos).add(new V3(rand(-.8, .8), rand(-1.2, 1.3), rand(-.8, .8))), .2, rand(.5, 1.1), 1, .45, 1.5, vd.id === 'scorch' ? null : vd.aura);
       if (V.stun > 0) { V.stun -= dt; V.vel.multiplyScalar(Math.exp(-dt * 1.4)); }
       else villainAI(dt);
       const steps = Math.ceil(V.vel.length() * dt / 2.5) || 1;
@@ -3183,7 +3234,7 @@ function updateVillain(dt) {
     vBody.cape.rotation.x = lerp(vBody.cape.rotation.x, (V.act === 'slam' && V.slamPhase === 1) ? 2.8 : .15 + t * .2 + Math.sin(vAnim * 9) * .05 * t, 1 - Math.exp(-dt * 6));
   }
   // marker so you can always find him
-  const mk = $('vmark');
+  const mk = curFoe.mark;
   if (villain.visible && state.playing) {
     vTmp.copy(V.pos); vTmp.y += 3; vTmp.project(camera);
     const behind = vTmp.z > 1;
@@ -3196,7 +3247,7 @@ function updateVillain(dt) {
   } else mk.hidden = true;
 }
 // player attacks that reach the villain
-function villainInRange(p, r) { return state.mode === 'showdown' && villain.visible && !V.dead && V.pos.distanceTo(p) < r + 1.8; }
+function villainInRange(p, r) { return state.mode === 'showdown' && S.foes.some((f) => f.group.visible && !f.V.dead && f.V.pos.distanceTo(p) < r + 1.8); }
 
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
@@ -3237,6 +3288,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
