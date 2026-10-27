@@ -1823,7 +1823,7 @@ if (isTouch) {
 
 // ---------------------------------------------------------------- flight
 function forwardVec(out) { const cp = Math.cos(P.pitch); return out.set(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp); }
-const fwd = new V3(), right = new V3(), wish = new V3(), UP = new V3(0, 1, 0);
+const fwd = new V3(), right = new V3(), wish = new V3(), UP = new V3(0, 1, 0), steerDir = new V3(), steerTgt = new V3();
 let wasBoost = false;
 function updateFlight(dt) {
   // arrow keys look too
@@ -1851,8 +1851,18 @@ function updateFlight(dt) {
     P.landT -= dt; P.vel.set(0, 0, 0); P.pos.y = groundH(P.pos.x, P.pos.z) + 1.2;
     if (P.landT < .45 && wish.lengthSq() > .01) P.landT = 0;
   } else {
-    const k = 1 - Math.exp(-dt * (P.dashT > 0 ? .4 : rate));
-    P.vel.lerp(wish.multiplyScalar(maxSp), k);
+    wish.multiplyScalar(maxSp);
+    const cur = P.vel.length(), tgt = wish.length();
+    if (P.dashT <= 0 && cur > 5 && tgt > 1) {
+      // steer the heading hard and fast, but let speed build and bleed at its own pace
+      const turn = 1 - Math.exp(-dt * (P.boosting ? 11 : 8));
+      steerDir.copy(P.vel).divideScalar(cur).lerp(steerTgt.copy(wish).divideScalar(tgt), turn);
+      if (steerDir.lengthSq() < 1e-4) steerDir.copy(steerTgt); else steerDir.normalize();
+      const bleed = 1 - (1 - steerDir.dot(steerTgt)) * .04; // a little speed lost in hard turns
+      P.vel.copy(steerDir).multiplyScalar(lerp(cur, tgt, 1 - Math.exp(-dt * rate)) * bleed);
+    } else {
+      P.vel.lerp(wish, 1 - Math.exp(-dt * (P.dashT > 0 ? .4 : rate)));
+    }
   }
   if (P.boosting && !wasBoost) { spawnRing(P.pos.clone(), fwd, true); sfxBoom(); state.shake = Math.max(state.shake, .5); }
   wasBoost = P.boosting;
