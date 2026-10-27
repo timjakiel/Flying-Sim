@@ -2658,6 +2658,7 @@ function renderHeroes() {
   }
 }
 function showScreen(name) {
+  if (['main', 'heroes', 'shop', 'suits'].includes(name) && !state.mode && AC) musPlay('menu');
   for (const s of ['main', 'pause', 'suits', 'shop', 'results', 'heroes']) $('scr-' + s).hidden = s !== name;
   if (name === 'heroes') renderHeroes();
   $('overlay').hidden = !name;
@@ -2799,6 +2800,7 @@ function endRampage() {
   const un = $('rUnlocks'); un.textContent = '';
   for (const s of r.unlocks) { const d = document.createElement('div'); d.className = 'unlock'; const sw = document.createElement('i'); sw.style.background = swatchCss(s); d.append(sw, document.createTextNode(s.name + ' suit unlocked')); un.append(d); }
   showScreen('results');
+  if (AC) musPlay('menu');
 }
 function updateMode(dt) {
   if (!state.playing || state.mode !== 'rampage') return;
@@ -3471,7 +3473,7 @@ function endCutscene() {
 // and a riser; wins get a fanfare, losses a sting.
 const MUS = { on: save.music !== false, out: null, rev: null, white: null, timer: null, mode: 'off', step: 0, nextT: 0, bar: 0, introT: 0 };
 const BPM = 150, STEP = 60 / BPM / 4;
-function toggleMusic() { MUS.on = !MUS.on; save.music = MUS.on; saveDirty = true; musVol(state.playing ? 1 : .3, .2); $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off'); popup(MUS.on ? 'MUSIC ON' : 'MUSIC OFF', false); }
+function toggleMusic() { MUS.on = !MUS.on; save.music = MUS.on; saveDirty = true; musVol(MUS.mode === 'menu' ? 1.4 : state.playing ? 1 : .3, .2); $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off'); popup(MUS.on ? 'MUSIC ON' : 'MUSIC OFF', false); }
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 const CHORDS = [[50, [0, 3, 7]], [46, [0, 4, 7]], [48, [0, 4, 7]], [45, [0, 4, 7]]]; // Dm, Bb, C, A
 const THEME = [
@@ -3517,7 +3519,35 @@ function drum(kind, t, vol = 1) {
   else if (kind === 'tom') { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(vol, t); o.frequency.exponentialRampToValueAtTime(vol * .6, t + .3); env(g, t, .003, .55, .35); o.connect(g); g.connect(MUS.out); const r = AC.createGain(); r.gain.value = .3; g.connect(r); r.connect(MUS.rev); o.start(t); o.stop(t + .45); }
   else if (kind === 'crash') noiseHit(t, 1.6, .28 * vol, 'highpass', 4500, .5);
 }
+const MENU_STEP = 60 / 100 / 4;
+const MENU_CHORDS = [[50, [0, 3, 7]], [46, [0, 4, 7]], [53, [0, 4, 7]], [48, [0, 4, 7]]]; // Dm, Bb, F, C
+const MENU_THEME = [[[0, 69, 8], [8, 74, 8]], [[0, 77, 12], [12, 76, 4]], [[0, 72, 8], [8, 77, 8]], [[0, 76, 12], [12, 74, 4]]];
+function menuStep(t) {
+  const s = MUS.step % 16, bar = Math.floor(MUS.step / 16) % 8, [root, tri] = MENU_CHORDS[bar % 4], big = bar >= 4, D = MENU_STEP;
+  if (s === 0) {
+    for (const iv of tri) voice('sawtooth', mtof(root + iv), t, D * 15.8, .022, { det: [-9, 9], cut: big ? 1400 : 800, att: .9, rel: 1.2, rev: .8 });
+    voice('triangle', mtof(root + 24 + tri[2]), t, D * 15.8, .02, { att: 1.2, rel: 1.5, rev: .9 });
+    voice('sawtooth', mtof(root - 12), t, D * 7.8, .12, { cut: 300, att: .05, rel: .3 });
+    drum('timp', t, big ? 1 : .55);
+  }
+  if (s === 8) voice('sawtooth', mtof(root - 12 + (bar % 2 ? 7 : 0)), t, D * 7.8, .1, { cut: 300, att: .05, rel: .3 });
+  // sparkling eighth-note arpeggio, two octaves up
+  if (s % 2 === 0) { const arp = [0, tri[1], tri[2], 12, tri[2] + 12, 12, tri[2], tri[1]][s / 2]; voice('triangle', mtof(root + 24 + arp), t, D * 1.2, .05, { att: .005, rel: .35, rev: .7 }); }
+  if (big) {
+    if (s === 0 || s === 10) drum('kick', t, .8);
+    if (s === 8) drum('snare', t, .6);
+    if (s % 4 === 2) drum('hat', t, .6);
+    if (bar === 7 && s >= 12) drum('tom', t, [200, 170, 140, 110][s - 12]);
+    if (s === 0 && bar === 4) drum('crash', t, .7);
+    for (const [st, m, len] of MENU_THEME[bar - 4]) if (st === s) {
+      const os = voice('sawtooth', mtof(m), t, D * len - .03, .05, { det: [-7, 7], cut: 1100, cutTo: 2600, q: 1.1, att: .12, rel: .5, rev: .6 });
+      for (const o of os) { const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 5; lg.gain.value = 10; lfo.connect(lg); lg.connect(o.detune); lfo.start(t + .2); lfo.stop(t + D * len + .6); }
+      voice('sawtooth', mtof(m - 12), t, D * len - .03, .025, { cut: 900, att: .12, rel: .5, rev: .5 });
+    }
+  } else if (bar === 3 && s === 8) noiseHit(t, D * 8, .06, 'bandpass', 1800, .6); // swell into the big half
+}
 function musStep(t) {
+  if (MUS.mode === 'menu') return menuStep(t);
   const s = MUS.step % 16, bar = Math.floor(MUS.step / 16) % 8, [root, tri] = CHORDS[bar % 4];
   const hype = MUS.hype;
   if (MUS.mode === 'intro') {
@@ -3552,15 +3582,17 @@ function musStep(t) {
 function musTick() {
   if (!AC || MUS.mode === 'off') return;
   if (MUS.nextT < AC.currentTime) MUS.nextT = AC.currentTime + .05; // we fell behind: skip rather than pile up
-  while (MUS.nextT < AC.currentTime + .6) { musStep(MUS.nextT); MUS.nextT += STEP; MUS.step++; }
+  const dur = MUS.mode === 'menu' ? MENU_STEP : STEP;
+  while (MUS.nextT < AC.currentTime + .6) { musStep(MUS.nextT); MUS.nextT += dur; MUS.step++; }
 }
 function musVol(v, ramp = .4) { if (MUS.out) MUS.out.gain.setTargetAtTime(MUS.on ? v : 0, AC.currentTime, ramp); }
 function musPlay(mode) {
   if (!AC) return; musInit();
-  if (MUS.mode === 'off' || mode === 'fight') { MUS.step = 0; MUS.nextT = AC.currentTime + .08; }
+  if (MUS.mode === mode && mode === 'menu') return musVol(1.4, .6);
+  if (MUS.mode === 'off' || MUS.mode !== mode || mode === 'fight') { MUS.step = 0; MUS.nextT = AC.currentTime + .08; }
   MUS.mode = mode; MUS.introT = 0;
   if (!MUS.timer) MUS.timer = setInterval(musTick, 90);
-  musVol(mode === 'intro' ? .8 : 1, mode === 'intro' ? .8 : .05);
+  musVol(mode === 'menu' ? 1.4 : mode === 'intro' ? .8 : 1, mode === 'menu' ? 1.2 : mode === 'intro' ? .8 : .05);
 }
 function musStop(fade = .6) { if (!AC || MUS.mode === 'off') return; MUS.mode = 'off'; musVol(0, fade / 3); clearInterval(MUS.timer); MUS.timer = null; }
 function musSting(win) {
@@ -3578,7 +3610,7 @@ function musSting(win) {
     for (const m of [38, 45, 50, 53]) voice('sawtooth', mtof(m), t + 1.8, 2.2, .045, { det: [-8, 8], cut: 600, att: .1, rel: 1.4, rev: .7 });
     drum('timp', t + 1.8, 1.3);
   }
-  setTimeout(() => { if (MUS.mode === 'off') musVol(0, .5); }, 4800);
+  setTimeout(() => { if (MUS.mode === 'off' && !state.playing && !state.cut) musPlay('menu'); }, 4600);
 }
 function musUpdate(dt) {
   if (MUS.mode === 'intro') MUS.introT += dt;
@@ -3638,6 +3670,12 @@ function frame() {
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
 
 function start() { showScreen('main'); requestAnimationFrame(frame); }
+// the first click or key on the menu wakes the audio and starts the menu theme
+function firstGesture() {
+  removeEventListener('pointerdown', firstGesture, true); removeEventListener('keydown', firstGesture, true);
+  initAudio(); if (!state.mode && !state.playing) musPlay('menu');
+}
+addEventListener('pointerdown', firstGesture, true); addEventListener('keydown', firstGesture, true);
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
