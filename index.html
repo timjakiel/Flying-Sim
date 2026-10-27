@@ -196,6 +196,22 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .hero ul { margin: 0; padding-left: 18px; font-size: 15px; line-height: 1.35; }
 .hero .equip { justify-self: start; }
 .shophead { grid-column: 1 / -1; font-family: var(--display); font-size: 24px; letter-spacing: .05em; color: var(--yellow); text-align: left; margin-top: 6px; }
+#intro { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+#intro .lb { position: absolute; left: 0; right: 0; height: 12vh; background: #000; animation: lbIn .5s ease-out both; }
+#intro .top { top: 0; transform-origin: top; }
+#intro .bot { bottom: 0; transform-origin: bottom; }
+@keyframes lbIn { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+#introCard { --acc: var(--red); position: absolute; left: max(24px, env(safe-area-inset-left, 0px)); bottom: calc(12vh + 28px); max-width: min(620px, calc(100vw - 48px)); display: grid; gap: 4px;
+  padding: 14px 20px 16px; background: linear-gradient(90deg, rgba(5,6,10,.88), rgba(5,6,10,.55)); border-left: 6px solid var(--acc); }
+#introCard.in { animation: cardIn .55s cubic-bezier(.2,.9,.3,1) both; }
+@keyframes cardIn { from { transform: translateX(-40px); opacity: 0; } to { transform: none; opacity: 1; } }
+#introNum { font-size: 13px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--acc); }
+#introName { font-family: var(--display); font-size: clamp(44px, 9vw, 86px); line-height: .95; letter-spacing: .04em; color: var(--paper); -webkit-text-stroke: 2px #000; text-shadow: 5px 5px 0 var(--acc); }
+#introTag { font-size: 16px; font-weight: 600; letter-spacing: .04em; opacity: .9; }
+#introQuote { font-size: 20px; font-style: italic; margin-top: 4px; }
+#intro .skip { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12vh - 30px); font-size: 13px; font-weight: 600; letter-spacing: .08em; color: rgba(247,243,232,.75); }
+body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cut #hud-right, body.cut #pauseBtn, body.cut #touch, body.cut .vmark, body.cut #popups { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { #intro .lb, #introCard.in { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .pop, #toast.show { animation-duration: .01s; } #timer.hurry { animation: none; } }
 </style>
 
@@ -216,6 +232,16 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   <div class="bar2"><span>YOU</span><div class="track"><i id="pFill"></i></div></div>
 </div>
 <div id="hurt"></div>
+<div id="intro" hidden>
+  <div class="lb top"></div><div class="lb bot"></div>
+  <div id="introCard" hidden>
+    <div id="introNum">Villain</div>
+    <div id="introName">The Warlord</div>
+    <div id="introTag"></div>
+    <div id="introQuote"></div>
+  </div>
+  <div class="skip">Click, tap or press Space to skip</div>
+</div>
 
 <button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
 <div id="toast" hidden><i id="toastSwatch"></i><div><div class="tlabel">Achievement unlocked</div><div id="toastTitle"></div><div id="toastSuit"></div></div></div>
@@ -2147,6 +2173,7 @@ function collide() {
 function lookDelta(dx, dy, s) { P.yaw -= dx * s; P.pitch = clamp(P.pitch - dy * s, -1.48, 1.48); }
 let locked = false, dragging = false, noLock = isTouch, lockPending = false;
 addEventListener('keydown', (e) => {
+  if (state.cut && [' ', 'enter', 'escape', 'x', 'f'].includes(e.key.toLowerCase())) { e.preventDefault(); skipCutscene(); return; }
   const k = e.key.toLowerCase(); keys.add(k);
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
   if (!state.playing) return;
@@ -2167,6 +2194,7 @@ document.addEventListener('pointerlockchange', () => {
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('mousedown', (e) => {
+  if (state.cut) { skipCutscene(); return; }
   if (!state.playing || isTouch) return;
   if (e.button === 2) { mouseRight = true; useAbility(); return; }
   if (locked) { if (e.button === 0) dash(); return; }
@@ -2210,7 +2238,7 @@ if (isTouch) {
   $('tPower').addEventListener('pointerdown', () => useAbility());
   $('tNext').addEventListener('pointerdown', (e) => { e.preventDefault(); cycleAbility(1); });
   const looks = new Map();
-  canvas.addEventListener('pointerdown', (e) => { looks.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', (e) => { if (state.cut) { skipCutscene(); return; } looks.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', (e) => { const l = looks.get(e.pointerId); if (!l) return; lookDelta(e.clientX - l[0], e.clientY - l[1], .0055); l[0] = e.clientX; l[1] = e.clientY; });
   const endLook = (e) => looks.delete(e.pointerId);
   canvas.addEventListener('pointerup', endLook); canvas.addEventListener('pointercancel', endLook);
@@ -2370,6 +2398,7 @@ function updateCamera(dt) {
   }
   fovNow = lerp(fovNow, 68 + sf * 26 + (P.dashT > 0 ? 8 : 0), 1 - Math.exp(-dt * 4));
   camera.fov = fovNow; camera.updateProjectionMatrix();
+  if (state.cut) cutCamera(dt);
   sky.position.copy(camera.position);
 
   // shadow camera follows the hero, snapped to texels to avoid shimmer
@@ -2652,7 +2681,8 @@ function startMode(mode, diff) {
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
   $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
   if (mode === 'showdown') startShowdown(diff || 'normal'); else endShowdownWorld();
-  enterPlay();
+  if (mode === 'showdown') { showScreen(null); initAudio(); requestLock(); startCutscene(); }
+  else enterPlay();
   if (mode === 'rampage') popup('RAMPAGE!', true);
 }
 function pauseGame() {
@@ -2822,7 +2852,9 @@ function startShowdown(diffId) {
     V.cd = {}; for (const id of vd.moves) V.cd[id] = rand(2, 6) + i; V.cd.slam = 8 + i * 2;
     applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0);
     const a = -Math.PI / 2 + (i - (list.length - 1) / 2) * .7;
-    V.pos.set(Math.cos(a) * 130, 150 + i * 12, Math.sin(a) * 130 + 60); V.vel.set(0, 0, 0); V.orbit = i / list.length * Math.PI * 2;
+    const lx = [0, -80, 80, -160, 160][i];
+    f.land = new V3(lx, groundH(lx, 560) + 1.6, 560); f.from = new V3(lx + rand(-12, 12), 190, 525); f.landed = false;
+    V.pos.copy(f.from); V.vel.set(0, 0, 0); V.orbit = i / list.length * Math.PI * 2;
     villain.visible = true; villain.position.copy(V.pos);
     f.mark.style.borderColor = hex(vd.look.accent); f.mark.style.background = hex(vd.look.cape);
     const row = document.createElement('div'); row.className = 'bar2 vil';
@@ -2833,9 +2865,10 @@ function startShowdown(diffId) {
   bindFoe(S.foes[0]);
   bar.hidden = false;
   updateBars();
-  later(.3, () => popup(list.length === 1 ? list[0].name.toUpperCase() + ' ARRIVES' : list.length + ' VILLAINS INCOMING', true));
+  P.pos.set(0, 30, 690); P.yaw = 0; P.pitch = -.05;
 }
 function endShowdownWorld() {
+  if (state.cut) { state.cut = null; document.body.classList.remove('cut'); $('intro').hidden = true; }
   for (const f of foes) { f.group.visible = false; f.glow.visible = false; f.mark.hidden = true; for (const b of f.beams) b.core.visible = b.glow.visible = false; }
   $('bossbar').hidden = true;
 }
@@ -2910,15 +2943,15 @@ function vCityHit(p, r, push) { blast(p, r, push); detonateNear(p, r); }
 function startAct(name, wind) { V.act = name; V.actT = 0; V.wind = wind; vGlow.visible = true; }
 // Five villains, each the dark mirror of a hero. Everyone also rams and meteor-slams.
 const VILLAINS = [
-  { id: 'warlord', name: 'The Warlord', mirror: 'sky', tag: 'Strength · sonic shout · laser eyes', moves: ['ram', 'laser', 'shout', 'clap', 'slam'],
+  { id: 'warlord', quote: "This city is mine. You're just in the way.", name: 'The Warlord', mirror: 'sky', tag: 'Strength · sonic shout · laser eyes', moves: ['ram', 'laser', 'shout', 'clap', 'slam'],
     look: { main: 0x15161a, limb: 0x0b0b0d, accent: 0x9e0f1a, cape: 0x8e0c16, eye: 0xff2a1a } },
-  { id: 'scorch', name: 'Scorch', mirror: 'blaze', tag: 'Fireballs · supernova · flamethrower', moves: ['ram', 'fireball', 'nova', 'flame', 'slam'], aura: 0xff7a20,
+  { id: 'scorch', quote: "Let's see how long you last in the fire.", name: 'Scorch', mirror: 'blaze', tag: 'Fireballs · supernova · flamethrower', moves: ['ram', 'fireball', 'nova', 'flame', 'slam'], aura: 0xff7a20,
     look: { main: 0x2a0b05, limb: 0x120403, accent: 0xff5a12, cape: 0xc22a08, eye: 0xffb030, emissive: 0x6a1800 } },
-  { id: 'psyche', name: 'Psyche', mirror: 'mind', tag: 'Force waves · thrown boulders · gravity well', moves: ['ram', 'hurl', 'push', 'lift', 'slam'], aura: 0xc040ff,
+  { id: 'psyche', quote: "I don't need to touch you to break you.", name: 'Psyche', mirror: 'mind', tag: 'Force waves · thrown boulders · gravity well', moves: ['ram', 'hurl', 'push', 'lift', 'slam'], aura: 0xc040ff,
     look: { main: 0x1c0a2e, limb: 0x0c0614, accent: 0xd040ff, cape: 0x5a0f8a, eye: 0xf080ff } },
-  { id: 'overload', name: 'Overload', mirror: 'volt', tag: 'Lightning bolts · EMP · thunderstorm', moves: ['ram', 'bolt', 'emp', 'storm', 'slam'], aura: 0xfff36a,
+  { id: 'overload', quote: "Hope you're grounded, hero.", name: 'Overload', mirror: 'volt', tag: 'Lightning bolts · EMP · thunderstorm', moves: ['ram', 'bolt', 'emp', 'storm', 'slam'], aura: 0xfff36a,
     look: { main: 0x14161c, limb: 0x0a0b0e, accent: 0xffe23a, cape: 0x2a3a10, eye: 0xfff6a0 } },
-  { id: 'permafrost', name: 'Permafrost', mirror: 'frost', tag: 'Ice spikes · blizzard · ice beam', moves: ['ram', 'spikes', 'blizzard', 'icebeam', 'slam'], aura: 0xd8f4ff,
+  { id: 'permafrost', quote: "Everything stops eventually. You first.", name: 'Permafrost', mirror: 'frost', tag: 'Ice spikes · blizzard · ice beam', moves: ['ram', 'spikes', 'blizzard', 'icebeam', 'slam'], aura: 0xd8f4ff,
     look: { main: 0xe8f6ff, limb: 0x1c3550, accent: 0x7fd0ff, cape: 0x2a5a8a, eye: 0x9ff3ff, metal: .3 } },
 ];
 // low = the player is near the street
@@ -3249,11 +3282,93 @@ function updateFoe(dt) {
 // player attacks that reach the villain
 function villainInRange(p, r) { return state.mode === 'showdown' && S.foes.some((f) => f.group.visible && !f.V.dead && f.V.pos.distanceTo(p) < r + 1.8); }
 
+// ---------------------------------------------------------------- villain intro cut scene
+// Each villain drops out of the sky and craters the street, the camera pushes in on him while
+// his title card plays, then a shot over the hero's shoulder before control starts.
+const LAND_T = .9, SHOT_T = 3.1, GROUP_T = 1.4;
+const camFrom = new V3(), camAt = new V3(), camTmp = new V3();
+function startCutscene() {
+  state.playing = false; state.cut = { idx: 0, t: 0 };
+  document.body.classList.add('cut');
+  $('intro').hidden = false; $('introCard').hidden = true;
+  for (const f of S.foes) { bindFoe(f); V.act = 'slam'; V.slamPhase = 1; }
+  bindFoe(S.foes[0]);
+}
+function showTitle(vd, i, n) {
+  const c = $('introCard');
+  c.style.setProperty('--acc', hex(vd.look.accent));
+  $('introNum').textContent = n > 1 ? 'Villain ' + (i + 1) + ' of ' + n : 'Villain';
+  $('introName').textContent = vd.name;
+  $('introTag').textContent = 'Mirror of ' + HEROES.find((h) => h.id === vd.mirror).name + ' · ' + vd.tag;
+  $('introQuote').textContent = '“' + vd.quote + '”';
+  c.hidden = false; c.classList.remove('in'); void c.offsetWidth; c.classList.add('in');
+}
+function landFoe(f, fx) {
+  bindFoe(f); f.landed = true; V.pos.copy(f.land); V.vel.set(0, 0, 0); V.act = null;
+  if (!fx) return;
+  const p = f.land;
+  crater(p.x, p.z, 9, 2.5); addCracks(p.x, p.z, 30);
+  spawnDust(tmpV.set(p.x, p.y + 1, p.z), 5, 8, CONCRETE_COL); spawnRing(tmpV.set(p.x, p.y, p.z), UP, 2.2, f.vd.look.accent);
+  for (let q = 0; q < 26; q++) { const a = rand(0, 6.28); tmpV3.set(Math.cos(a) * rand(4, 14), rand(8, 22), Math.sin(a) * rand(4, 14)); pools[1].spawn(p, tmpV3, rand(.4, 1.3), Math.random() < .6 ? ASPHALT_COL : CONCRETE_COL); }
+  for (const c of carList) if (c.fly <= 0 && c.p.distanceTo(p) < 16) flingCar(c, c.p.x - p.x, 24, c.p.z - p.z);
+  state.shake = 1.1; sfxBoom(); sfxCrash(1.1);
+}
+function updateCutscene(dt) {
+  const c = state.cut; c.t += dt;
+  if (c.idx < S.foes.length) {
+    const f = S.foes[c.idx]; bindFoe(f);
+    if (!f.landed) {
+      const k = Math.min(1, c.t / LAND_T);
+      V.pos.lerpVectors(f.from, f.land, k * k); V.vel.set(0, -260, 0); V.act = 'slam'; V.slamPhase = 1;
+      if (k >= 1) { landFoe(f, true); showTitle(f.vd, c.idx, S.foes.length); }
+    } else V.vel.set(0, 0, 0);
+    if (c.t > SHOT_T) { $('introCard').hidden = true; c.idx++; c.t = 0; }
+  } else if (c.t > GROUP_T) { endCutscene(); return; }
+  bindFoe(S.foes[Math.min(c.idx, S.foes.length - 1)]);
+}
+function cutCamera() {
+  const c = state.cut;
+  if (c.idx < S.foes.length) {
+    const f = S.foes[c.idx], land = f.land, toHero = camTmp.set(P.pos.x - land.x, 0, P.pos.z - land.z).normalize();
+    if (!f.landed) { // wide and low, watching him come down
+      camera.position.set(land.x + toHero.x * 32 + 1.5, land.y + 1.5, land.z + toHero.z * 32);
+      camera.lookAt(f.V.pos.x, f.V.pos.y * .4 + land.y * .6, f.V.pos.z);
+    } else { // slow push-in from below
+      const k = clamp((c.t - LAND_T) / (SHOT_T - LAND_T), 0, 1), e = 1 - (1 - k) * (1 - k);
+      const side = new V3(-toHero.z, 0, toHero.x);
+      camFrom.copy(land).addScaledVector(toHero, 13).addScaledVector(side, 3).setY(land.y + .4);
+      camAt.copy(land).addScaledVector(toHero, 5.2).addScaledVector(side, 1.2).setY(land.y + .9);
+      camera.position.lerpVectors(camFrom, camAt, e);
+      camera.lookAt(land.x, land.y + 1.4, land.z);
+    }
+  } else { // over the hero's shoulder at the whole line-up
+    const mid = new V3(); for (const f of S.foes) mid.add(f.V.pos); mid.divideScalar(S.foes.length);
+    camera.position.copy(P.pos).add(new V3(4, 3, 12));
+    camera.lookAt(mid.x, mid.y + 6, mid.z);
+  }
+  camera.fov = c.idx < S.foes.length && !S.foes[c.idx].landed ? 62 : 50; camera.updateProjectionMatrix();
+}
+function skipCutscene() {
+  if (!state.cut) return;
+  for (const f of S.foes) if (!f.landed) landFoe(f, false);
+  endCutscene();
+}
+function endCutscene() {
+  state.cut = null; document.body.classList.remove('cut');
+  $('intro').hidden = true; $('introCard').hidden = true;
+  for (const f of S.foes) { bindFoe(f); V.act = null; V.vel.set(0, 25, 0); }
+  bindFoe(S.foes[0]);
+  state.playing = true; fovNow = 70;
+  popup(S.foes.length === 1 ? 'FIGHT!' : S.foes.length + ' V 1. FIGHT!', true);
+  sfxBoom();
+}
+
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
 function simulate(dt) {
   if (state.playing) updateFlight(dt);
   updateVillain(dt);
+  if (state.cut) updateCutscene(dt);
   updateMode(dt);
   updateHero(dt);
   updateFalling(dt);
@@ -3288,6 +3403,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
