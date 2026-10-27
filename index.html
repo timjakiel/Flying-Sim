@@ -140,6 +140,28 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .pips i { width: 14px; height: 6px; border-radius: 2px; background: rgba(247,243,232,.2); }
 .pips i.on { background: var(--yellow); }
 .pips span { margin-left: 6px; }
+.fight { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; text-align: left; }
+@media (max-width: 640px) { .fight { grid-template-columns: 1fr; } }
+.vlist { display: grid; gap: 5px; align-content: start; }
+.vcard { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 3px 10px; background: var(--glass); color: var(--paper); border: 2px solid transparent; border-radius: 6px; cursor: pointer; text-align: left; font-family: var(--ui); }
+.vcard:hover { border-color: rgba(255,90,60,.6); }
+.vcard.on { border-color: var(--red); background: #2a0d12; }
+.vcard:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.vcard .swatch { width: 28px; height: 28px; }
+.vn { font-family: var(--display); font-size: 20px; letter-spacing: .04em; line-height: 1; }
+.wins { display: flex; gap: 3px; }
+.wins em { font-style: normal; font-size: 11px; font-weight: 700; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 3px; background: rgba(247,243,232,.12); opacity: .7; }
+.wins em.won { background: var(--yellow); color: var(--ink); opacity: 1; }
+.vpanel { display: grid; gap: 10px; align-content: start; padding: 14px; background: #2a0d12; border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--red); }
+.vname { font-family: var(--display); font-size: clamp(30px, 5vw, 42px); color: var(--paper); line-height: 1; letter-spacing: .03em; }
+.vpanel .diffs { margin-top: 0; }
+#scr-main h1 { font-size: clamp(48px, 10vw, 92px); }
+#scr-main { gap: 12px; }
+#scr-main .tag { font-size: 18px; }
+.ctl summary { cursor: pointer; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-size: 14px; opacity: .85; list-style-position: inside; }
+.ctl[open] summary { margin-bottom: 8px; }
+.side { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.side .label { margin-right: 4px; }
 .modes { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .mode.boss { background: #2a0d12; color: var(--paper); box-shadow: 5px 5px 0 var(--red); cursor: default; }
 .mode.boss:hover { transform: skew(-4deg); box-shadow: 5px 5px 0 var(--red); }
@@ -156,6 +178,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .track { height: 12px; background: rgba(9,18,34,.7); border: 2px solid var(--ink); border-radius: 3px; overflow: hidden; }
 .track i { display: block; height: 100%; background: var(--yellow); transform-origin: left; transition: transform .15s; }
 .vil .track i { background: var(--red); transform-origin: right; }
+#hurt.frozen { opacity: .35 !important; background: radial-gradient(ellipse at center, rgba(160,220,255,0) 50%, rgba(170,225,255,.7)); }
 #hurt { position: fixed; inset: 0; pointer-events: none; z-index: 4; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,0,0,0) 45%, rgba(200,0,0,.75)); }
 #vmark { left: 0; top: 0; min-width: 28px; height: 28px; padding: 0 6px; display: grid; place-items: center; font: 700 12px var(--ui); color: var(--paper); background: rgba(158,15,26,.85); border: 2px solid var(--ink); border-radius: 14px; }
 #vmark.edge { width: 28px; padding: 0; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 4px rgba(255,90,60,.35); }
@@ -215,16 +238,17 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 <div id="overlay">
   <div class="card wide" id="scr-main">
     <h1>Skybreaker</h1>
-    <p class="tag" id="tagline">A whole city, and you're stronger than every building in it. Fly fast, punch through, watch it come down.</p>
-    <div class="modes">
-      <button class="mode" id="mSandbox" type="button"><span class="mname">Sandbox</span><span class="mdesc">Every power unlocked, no clock. Wreck whatever you like and rebuild the city any time.</span></button>
-      <button class="mode hot" id="mRampage" type="button"><span class="mname">Rampage</span><span class="mdesc">Two-minute rounds. You keep a cut of the damage and spend it on new powers.</span><span class="mbest" id="bestLine">No score yet</span></button>
-      <div class="mode boss"><span class="mname">Showdown</span><span class="mdesc">Fight the Warlord, a supervillain with all your powers. Every power you own, at your shop level.</span>
+    <p class="tag" id="tagline">Five supervillains are tearing the city apart. Pick a hero, pick a villain, take them down.</p>
+    <div class="fight">
+      <div class="vlist" id="vList"></div>
+      <div class="vpanel">
+        <div class="vsel"><span class="label">Fight</span><div class="vname" id="vSelName">The Warlord</div><div class="sdesc" id="vSelTag"></div></div>
         <div class="diffs">
           <button type="button" id="sd-easy">EASY<small id="sdb-easy">—</small></button>
           <button type="button" id="sd-normal">NORMAL<small id="sdb-normal">—</small></button>
           <button type="button" id="sd-hard">HARD<small id="sdb-hard">—</small></button>
         </div>
+        <div class="sdesc">Win to collect a bounty and spend it on power upgrades.</div>
       </div>
     </div>
     <div class="row">
@@ -232,6 +256,12 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
       <button class="ghost" id="openShop" type="button">Power shop<span id="walletMini">$0</span></button>
       <button class="ghost" id="openSuits" type="button">Suits &amp; achievements<span id="suitCount">1/12</span></button>
     </div>
+    <div class="side">
+      <span class="label">Side games</span>
+      <button class="ghost" id="mSandbox" type="button">Sandbox<span>free play</span></button>
+      <button class="ghost" id="mRampage" type="button">Rampage<span id="bestLine">No score yet</span></button>
+    </div>
+    <details class="ctl"><summary>Controls</summary>
     <div class="keys" id="keys">
       <div><span>MOUSE</span><span>Steer / look</span></div>
       <div><span>W A S D</span><span>Fly</span></div>
@@ -245,8 +275,9 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
       <div><span>DIVE</span><span>Crater the street</span></div>
       <div><span>R</span><span>Back to the sky</span></div>
       <div><span>P / ESC</span><span>Pause</span></div>
-      <div class="foot">* Bought and upgraded in the power shop for Rampage. Always on in Sandbox and Showdown.</div>
+      <div class="foot">* Your hero's powers. Bought and upgraded in the power shop; Sandbox has them all at max.</div>
     </div>
+    </details>
   </div>
   <div class="card" id="scr-pause" hidden>
     <h2 id="pauseTitle">Paused</h2>
@@ -257,7 +288,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   </div>
   <div class="card wide" id="scr-suits" hidden>
     <h2>Suits</h2>
-    <p class="tag">Every achievement unlocks a suit. Only Rampage rounds count (plus beating the Warlord on Hard). Sandbox never does.</p>
+    <p class="tag">Every achievement unlocks a suit. Rampage rounds count, and so does beating every villain on Hard. Sandbox never does.</p>
     <div class="suits" id="suitList"></div>
     <button class="ghost" id="sBack" type="button">Back</button>
   </div>
@@ -281,6 +312,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <div class="rstats" id="rStats"></div>
     <div class="cut" id="rCut"></div>
     <div id="rUnlocks"></div>
+    <button class="btn" id="rNext" type="button" hidden>NEXT VILLAIN</button>
     <button class="btn" id="rAgain" type="button">GO AGAIN</button>
     <div class="row">
       <button class="ghost" id="rShop" type="button">Power shop</button>
@@ -1659,7 +1691,7 @@ function explode(x) {
   sfxBoom(); sfxCrash(clamp(1.3 - d / 400, .2, 1.3));
   hitFeedback(cash, 100, true);
   if (T.r > 15 || Math.random() < .3) popup(['KABOOM!', 'BOOM!', 'FWOOSH!', 'KRAKOOM!'][Math.random() * 4 | 0], true);
-  if (villainInRange(p, T.r * 1.3)) hurtVillain(T.r * 6 * (1 - V.pos.distanceTo(p) / (T.r * 1.5)), tmpV2.subVectors(V.pos, p), T.r * 5, 'KABOOM!');
+  if (villainInRange(p, T.r * 1.3)) hurtVillain(T.r * 3 * (1 - V.pos.distanceTo(p) / (T.r * 1.5)), tmpV2.subVectors(V.pos, p), T.r * 5, 'KABOOM!');
   if (state.mode === 'showdown' && d < T.r * 1.3) hurtPlayer(T.r * 3.5 * (1 - d / (T.r * 1.4)) / S.diff.dmg, null, 0);
   statAdd('explosions');
 }
@@ -1775,9 +1807,9 @@ function radialAttack(id, o) {
 const projs = [];
 const rockGeo2 = new THREE.DodecahedronGeometry(1, 0);
 const rockMat2 = new THREE.MeshStandardMaterial({ color: 0x9a958d, roughness: .9 });
-function launchProj(type, from, to, m) {
+function launchProj(type, from, to, m, owner = 'player') {
   const dir = new V3().subVectors(to, from).normalize();
-  const pr = { type, pos: from.clone(), vel: dir.multiplyScalar(type === 'fireball' ? 170 : 210), life: 7, m, mesh: null };
+  const pr = { type, owner, pos: from.clone(), vel: dir.multiplyScalar((type === 'fireball' ? 170 : 210) * (owner === 'villain' ? .75 * S.diff.speed : 1)), life: 7, m, mesh: null };
   if (type === 'fireball') { pr.mesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); pr.mesh.scale.setScalar(4.5 * m); }
   else { pr.mesh = new THREE.Mesh(rockGeo2, rockMat2); pr.mesh.scale.setScalar(2.2 * m); pr.mesh.castShadow = true; }
   pr.mesh.position.copy(from); scene.add(pr.mesh); projs.push(pr);
@@ -1791,7 +1823,7 @@ function updateProjs(dt) {
     for (let s = 0; s < steps && !hitAt; s++) {
       pr.pos.addScaledVector(pr.vel, dt / steps);
       if (pr.pos.y < groundH(pr.pos.x, pr.pos.z) + .5) hitAt = pr.pos;
-      else if (villainInRange(pr.pos, 2)) hitAt = pr.pos;
+      else if (pr.owner === 'player' ? villainInRange(pr.pos, 2) : (state.mode === 'showdown' && P.pos.distanceTo(pr.pos) < 3)) hitAt = pr.pos;
       else { const arr = grid.get(cellKey(Math.floor(pr.pos.x / CELL), Math.floor(pr.pos.z / CELL))); if (arr) for (const e of arr) if (e.alive && pointInEntity(e, pr.pos)) { hitAt = pr.pos; break; } }
       if (!hitAt) for (const x of explosives) if (x.alive && !x.armed && Math.abs(x.x - pr.pos.x) < 2 && Math.abs(x.z - pr.pos.z) < 2 && pr.pos.y < groundH(x.x, x.z) + 3) { hitAt = pr.pos; break; }
     }
@@ -1807,18 +1839,20 @@ function projImpact(pr) {
     spawnDust(p, R * .3, 3, SMOKE_COL);
     if (p.y - groundH(p.x, p.z) < 3) crater(p.x, p.z, R * .4, .8);
     const cash = blast(p, R, pr.vel.clone().multiplyScalar(.15)); detonateNear(p, R);
-    if (villainInRange(p, R)) hurtVillain(110 * m, pr.vel, 120, 'FWOOSH!');
+    if (pr.owner === 'villain') { const d = P.pos.distanceTo(p); if (d < R + 1) hurtPlayer(130 * m * (1 - d / (R * 1.8)), pr.vel, 120); }
+    else if (villainInRange(p, R)) hurtVillain(110 * m, pr.vel, 120, 'FWOOSH!');
     sfxBoom(); sfxCrash(.9); state.shake = Math.max(state.shake, clamp(1 - P.pos.distanceTo(p) / 300, .15, .9));
-    hitFeedback(cash + 1, 100, true);
+    if (pr.owner === 'player') hitFeedback(cash + 1, 100, true);
   } else {
     const R = 7 * m;
     for (let q = 0; q < 24; q++) { tmpV3.set(rand(-1, 1), rand(.2, 1.2), rand(-1, 1)).normalize().multiplyScalar(rand(6, 20)).addScaledVector(pr.vel, .1); pools[1].spawn(p, tmpV3, rand(.5, 1.6) * m, CONCRETE_COL); }
     spawnDust(p, R * .4, 4, CONCRETE_COL);
     if (p.y - groundH(p.x, p.z) < 3) crater(p.x, p.z, R * .5, 1.5);
     const cash = blast(p, R, pr.vel.clone().multiplyScalar(.3)); detonateNear(p, R);
-    if (villainInRange(p, R * .8)) hurtVillain(150 * m, pr.vel, 200, 'CRUNCH!');
+    if (pr.owner === 'villain') { const d = P.pos.distanceTo(p); if (d < R) hurtPlayer(150 * m * (1 - d / (R * 1.6)), pr.vel, 200); }
+    else if (villainInRange(p, R * .8)) hurtVillain(150 * m, pr.vel, 200, 'CRUNCH!');
     sfxCrash(1.1); state.shake = Math.max(state.shake, clamp(1 - P.pos.distanceTo(p) / 300, .15, 1));
-    hitFeedback(cash + 1, 110, true);
+    if (pr.owner === 'player') hitFeedback(cash + 1, 110, true);
   }
 }
 
@@ -2153,7 +2187,7 @@ function dash() {
 if (isTouch) {
   $('touch').hidden = false;
   $('help').hidden = true;
-  $('keys').hidden = true;
+  document.querySelector('.ctl').hidden = true;
   $('pauseBtn').style.top = 'calc(14px + env(safe-area-inset-top, 0px))';
   $('tagline').textContent = 'A whole city, and you\'re stronger than every building in it. Left stick flies, drag to look, punch through everything.';
   const stick = $('stick'), knob = $('knob'); let sid = null;
@@ -2190,6 +2224,11 @@ function updateFlight(dt) {
     const gk = groundH(P.pos.x, P.pos.z) + 1.2; if (P.pos.y < gk) { P.pos.y = gk; P.vel.set(0, 0, 0); }
     return;
   }
+  if (state.mode === 'showdown' && S.stunT > 0) { // stunned or caught: no control
+    P.vel.multiplyScalar(Math.exp(-dt * .8)); P.pos.addScaledVector(P.vel, dt);
+    const gs = groundH(P.pos.x, P.pos.z) + 1.2; if (P.pos.y < gs) { P.pos.y = gs; if (P.vel.y < 0) P.vel.y = 0; }
+    collide(); return;
+  }
   // arrow keys look too
   const ak = 1.8 * dt;
   if (keys.has('arrowleft')) P.yaw += ak; if (keys.has('arrowright')) P.yaw -= ak;
@@ -2204,7 +2243,7 @@ function updateFlight(dt) {
   P.boosting = boostHeld && (fIn > .2 || (isTouch && wish.lengthSq() < .01));
   if (P.boosting && wish.lengthSq() < .01) wish.copy(fwd);
   if (wish.lengthSq() > 1) wish.normalize();
-  const maxSp = P.boosting ? 240 : 75;
+  const maxSp = (P.boosting ? 240 : 75) * (state.mode === 'showdown' && S.slowT > 0 ? .5 : 1);
   const rate = wish.lengthSq() > 0 ? (P.boosting ? 1.4 : 2.6) : 2.2;
   P.dashT = Math.max(0, P.dashT - dt); state.slamCd -= dt;
   for (const k in cds) cds[k] = Math.max(0, cds[k] - dt); castT -= dt;
@@ -2397,7 +2436,7 @@ const ACHS = {
   timber: { name: 'Timber!', desc: 'Knock down 1,000 trees', stat: 'trees', goal: 1000 },
   sonic: { name: 'Sound Barrier', desc: 'Stay supersonic for 60 seconds straight', stat: 'boostStreak', goal: 60 },
   chain: { name: 'Chain Reaction', desc: 'Blow up 1,500 explosives', stat: 'explosions', goal: 1500 },
-  nemesis: { name: 'Nemesis', desc: 'Beat the Warlord in Showdown on Hard', stat: 'hardWins', goal: 1 },
+  nemesis: { name: 'Nemesis', desc: 'Beat all five villains on Hard', stat: 'hardWins', goal: 5 },
   billion: { name: 'Billionaire Problems', desc: 'Cause $10B of damage in one Rampage round', stat: 'bestRampage', goal: 1e10 },
 };
 const SAVE_KEY = 'skybreaker-save-v1';
@@ -2406,6 +2445,8 @@ try { const raw = localStorage.getItem(SAVE_KEY); if (raw) Object.assign(save, J
 if (!save.unlocked.includes('classic')) save.unlocked.push('classic');
 if (!save.unlocked.includes('signature')) save.unlocked.unshift('signature');
 if (!save.hero) save.hero = 'sky';
+if (!save.villain) save.villain = 'warlord';
+for (const d of ['easy', 'normal', 'hard']) if (save.stats['best_' + d] && !save.stats['best_warlord_' + d]) { save.stats['best_warlord_' + d] = save.stats['best_' + d]; delete save.stats['best_' + d]; }
 if ((save.ver || 1) < 2) { // progress from before achievements went Rampage-only starts over
   save.stats = { bestRampage: save.stats.bestRampage || 0 };
   save.levels = save.levels || {}; for (const id of save.powers || []) save.levels[id] = Math.max(1, save.levels[id] || 0);
@@ -2458,6 +2499,23 @@ function applySuit(id) {
 // ---------------------------------------------------------------- modes + menus
 const RAMPAGE_TIME = 120;
 let suitsBack = 'main', heroesBack = 'main';
+const fmtTime = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+function renderVillains() {
+  const list = $('vList'); list.textContent = '';
+  for (const v of VILLAINS) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'vcard' + (save.villain === v.id ? ' on' : '');
+    const sw = document.createElement('i'); sw.className = 'swatch'; sw.style.background = `linear-gradient(90deg, ${hex(v.look.cape)} 0 25%, ${hex(v.look.main)} 25% 75%, ${hex(v.look.cape)} 75%)`; sw.style.boxShadow = `inset 0 0 0 3px ${hex(v.look.accent)}`;
+    const nm = document.createElement('span'); nm.className = 'vn'; nm.textContent = v.name;
+    const wins = document.createElement('span'); wins.className = 'wins';
+    for (const d of ['easy', 'normal', 'hard']) { const w = document.createElement('em'); w.textContent = d[0].toUpperCase(); if (save.stats['best_' + v.id + '_' + d]) w.className = 'won'; w.title = DIFFS[d].name + (save.stats['best_' + v.id + '_' + d] ? ' beaten' : ' not beaten yet'); wins.append(w); }
+    b.append(sw, nm, wins);
+    b.addEventListener('click', () => { save.villain = v.id; saveDirty = true; sfxTick(); renderVillains(); });
+    list.append(b);
+  }
+  const v = curVillain();
+  $('vSelName').textContent = v.name; $('vSelTag').textContent = v.tag + '. Mirror of ' + HEROES.find((h) => h.id === v.mirror).name + '.';
+  for (const d of ['easy', 'normal', 'hard']) { const t = save.stats['best_' + v.id + '_' + d]; $('sdb-' + d).textContent = t ? 'best ' + fmtTime(t) : '—'; }
+}
 function renderHeroes() {
   const list = $('heroList'); list.textContent = '';
   for (const h of HEROES) {
@@ -2479,8 +2537,9 @@ function showScreen(name) {
   $('overlay').hidden = !name;
   $('pauseBtn').hidden = !!name || !state.mode;
   $('timer').hidden = !!name || state.mode !== 'rampage';
+  $('help').hidden = !!name || isTouch; $('powers').hidden = !!name || isTouch;
   if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('walletMini').textContent = fmtCash(save.wallet); $('heroMini').textContent = curHero().name;
-    for (const d of ['easy', 'normal', 'hard']) { const t = save.stats['best_' + d]; $('sdb-' + d).textContent = t ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : '—'; } }
+    renderVillains(); }
   if (name === 'shop') renderShop();
   if (name === 'suits') renderSuits();
   if (name) saveNow();
@@ -2597,7 +2656,7 @@ function endRampage() {
   if (document.pointerLockElement) document.exitPointerLock();
   statMax('bestRampage', state.damage);
   statAdd('rampages', 1);
-  $('rTitle').textContent = "Time's up";
+  $('rTitle').textContent = "Time's up"; $('rNext').hidden = true;
   const r = state.run;
   $('rScore').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
   $('rBest').textContent = state.damage > r.prevBest ? 'New best!' : 'Best: $' + Math.round(stat('bestRampage')).toLocaleString('en-US');
@@ -2664,6 +2723,7 @@ $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
 $('pQuit').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('rAgain').addEventListener('click', () => startMode(state.lastMode || 'rampage', state.lastDiff));
+$('rNext').addEventListener('click', () => { const n = VILLAINS[VILLAINS.indexOf(curVillain()) + 1]; if (n) { save.villain = n.id; startMode('showdown', state.lastDiff); } });
 for (const d of ['easy', 'normal', 'hard']) $('sd-' + d).addEventListener('click', () => startMode('showdown', d));
 $('rMenu').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('pauseBtn').addEventListener('click', pauseGame);
@@ -2726,12 +2786,15 @@ const S = { hp: PLAYER_HP, lastHurt: 0, ko: false, diff: DIFFS.normal, diffId: '
 function startShowdown(diffId) {
   S.diffId = diffId; S.diff = DIFFS[diffId];
   Object.assign(S, { hp: PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0 });
-  V.maxHp = V.hp = S.diff.hp; V.dead = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5; V.cd = { ram: 3, laser: 5, shout: 6, clap: 4, slam: 8 };
+  const vd = curVillain(); S.vd = vd; S.stunT = 0; S.slowT = 0;
+  V.maxHp = V.hp = S.diff.hp; V.dead = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5; V.kit = vd.moves;
+  V.cd = {}; for (const id of vd.moves) V.cd[id] = rand(2, 6); V.cd.slam = 8;
+  applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0);
   V.pos.set(0, 160, -120); V.vel.set(0, 0, 0); V.orbit = rand(0, 6.28);
   villain.visible = true; villain.position.copy(V.pos); vGlow.visible = false;
-  $('bossbar').hidden = false; $('vName').textContent = 'THE WARLORD · ' + S.diff.name.toUpperCase();
+  $('bossbar').hidden = false; $('vName').textContent = vd.name.toUpperCase() + ' · ' + S.diff.name.toUpperCase();
   updateBars();
-  later(.3, () => popup('THE WARLORD ARRIVES', true));
+  later(.3, () => popup(vd.name.toUpperCase() + ' ARRIVES', true));
 }
 function endShowdownWorld() { villain.visible = false; vGlow.visible = false; for (const b of vBeams) b.core.visible = b.glow.visible = false; $('bossbar').hidden = true; $('vmark').hidden = true; }
 function updateBars() {
@@ -2764,7 +2827,7 @@ function hurtPlayer(amount, dir, knock) {
 function villainDown() {
   V.dead = true; V.act = null; vGlow.visible = false;
   for (const b of vBeams) b.core.visible = b.glow.visible = false;
-  V.vel.y = Math.max(V.vel.y, 20); popup('WARLORD DOWN!', true); sfxBoom();
+  V.vel.y = Math.max(V.vel.y, 20); popup(S.vd.name.toUpperCase().replace(/^THE /, '') + ' DOWN!', true); sfxBoom();
 }
 function endShowdown(win) {
   if (S.over) return;
@@ -2772,19 +2835,21 @@ function endShowdown(win) {
   if (document.pointerLockElement) document.exitPointerLock();
   const t = S.time, mm = Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
   $('rTitle').textContent = win ? 'Victory' : 'Defeated';
+  const vid = S.vd.id, next = VILLAINS[VILLAINS.indexOf(S.vd) + 1];
+  $('rNext').hidden = !(win && next); if (next) $('rNext').textContent = 'NEXT: ' + next.name.toUpperCase();
   $('rScore').textContent = win ? 'Won in ' + mm : 'Lasted ' + mm;
-  const key = 'best_' + S.diffId, prev = save.stats[key] || 0;
-  let note = 'The Warlord · ' + S.diff.name;
+  const key = 'best_' + vid + '_' + S.diffId, prev = save.stats[key] || 0;
+  let note = S.vd.name + ' · ' + S.diff.name;
   if (win) {
     if (!prev || t < prev) { save.stats[key] = t; note = 'New fastest win on ' + S.diff.name + '!'; }
     else note = 'Fastest on ' + S.diff.name + ': ' + Math.floor(prev / 60) + ':' + String(Math.floor(prev % 60)).padStart(2, '0');
     save.wallet = (save.wallet || 0) + S.diff.reward;
-    if (S.diffId === 'hard') statForce('hardWins', 1);
+    statForce('hardWins', VILLAINS.filter((v) => save.stats['best_' + v.id + '_hard']).length);
     saveNow();
   }
   $('rBest').textContent = note; $('rBest').classList.toggle('newbest', win);
   $('rCut').innerHTML = win ? 'Bounty <b>+' + fmtCash(S.diff.reward) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>' : 'No bounty. Go again.';
-  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], ['Warlord health left', Math.max(0, Math.round(V.hp))], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
+  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], [S.vd.name.replace(/^The /, '') + ' health left', Math.max(0, Math.round(V.hp))], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
   const st = $('rStats'); st.textContent = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
   const un = $('rUnlocks'); un.textContent = '';
@@ -2799,106 +2864,218 @@ const vLvl = () => 1 + .25 * (S.diff.lvl - 1);
 function predicted(out, t) { return out.copy(P.pos).addScaledVector(P.vel, t * S.diff.lead); }
 function vCityHit(p, r, push) { blast(p, r, push); detonateNear(p, r); }
 function startAct(name, wind) { V.act = name; V.actT = 0; V.wind = wind; vGlow.visible = true; }
+// Five villains, each the dark mirror of a hero. Everyone also rams and meteor-slams.
+const VILLAINS = [
+  { id: 'warlord', name: 'The Warlord', mirror: 'sky', tag: 'Strength · sonic shout · laser eyes', moves: ['ram', 'laser', 'shout', 'clap', 'slam'],
+    look: { main: 0x15161a, limb: 0x0b0b0d, accent: 0x9e0f1a, cape: 0x8e0c16, eye: 0xff2a1a } },
+  { id: 'scorch', name: 'Scorch', mirror: 'blaze', tag: 'Fireballs · supernova · flamethrower', moves: ['ram', 'fireball', 'nova', 'flame', 'slam'], aura: 0xff7a20,
+    look: { main: 0x2a0b05, limb: 0x120403, accent: 0xff5a12, cape: 0xc22a08, eye: 0xffb030, emissive: 0x6a1800 } },
+  { id: 'psyche', name: 'Psyche', mirror: 'mind', tag: 'Force waves · thrown boulders · gravity well', moves: ['ram', 'hurl', 'push', 'lift', 'slam'], aura: 0xc040ff,
+    look: { main: 0x1c0a2e, limb: 0x0c0614, accent: 0xd040ff, cape: 0x5a0f8a, eye: 0xf080ff } },
+  { id: 'overload', name: 'Overload', mirror: 'volt', tag: 'Lightning bolts · EMP · thunderstorm', moves: ['ram', 'bolt', 'emp', 'storm', 'slam'], aura: 0xfff36a,
+    look: { main: 0x14161c, limb: 0x0a0b0e, accent: 0xffe23a, cape: 0x2a3a10, eye: 0xfff6a0 } },
+  { id: 'permafrost', name: 'Permafrost', mirror: 'frost', tag: 'Ice spikes · blizzard · ice beam', moves: ['ram', 'spikes', 'blizzard', 'icebeam', 'slam'], aura: 0xd8f4ff,
+    look: { main: 0xe8f6ff, limb: 0x1c3550, accent: 0x7fd0ff, cape: 0x2a5a8a, eye: 0x9ff3ff, metal: .3 } },
+];
+// low = the player is near the street
+const MOVES = {
+  ram: { wind: .45, cd: 3.5, w: 3, ok: (d) => d > 20 && d < 260, color: 0xff8a30 },
+  slam: { wind: .3, cd: 9, w: 1.5, ok: (d, low) => low && d < 180, color: 0xffb060 },
+  laser: { wind: .55, cd: 8, w: 2, ok: (d) => d < 300, color: 0xff2a1a, beam: { dps: 160, range: 420, w: 2.4 } },
+  icebeam: { wind: .55, cd: 8, w: 2, ok: (d) => d < 300, color: 0x8fe0ff, beam: { dps: 130, range: 420, w: 2.6, ice: true } },
+  flame: { wind: .45, cd: 7, w: 2.5, ok: (d) => d < 90, color: 0xff7a20, beam: { dps: 190, range: 115, w: 4, flame: true } },
+  shout: { wind: .6, cd: 7, w: 2, ok: (d) => d < 85, color: 0xffffff, cone: { dmg: 170, knock: 160 } },
+  push: { wind: .5, cd: 6, w: 2, ok: (d) => d < 85, color: 0xc040ff, cone: { dmg: 140, knock: 320, ring: 0xc040ff } },
+  clap: { wind: .55, cd: 6, w: 3, ok: (d) => d < 22, color: 0xffd040, radial: { R: 18, dmg: 200, knock: 140 } },
+  nova: { wind: .5, cd: 6, w: 3, ok: (d) => d < 24, color: 0xff7a20, radial: { R: 19, dmg: 210, knock: 150, ring: 0xff7a20, fx: 'fire' } },
+  emp: { wind: .55, cd: 7, w: 3, ok: (d) => d < 24, color: 0xfff36a, radial: { R: 17, dmg: 140, knock: 40, stun: 1.1, ring: 0xfff36a, fx: 'emp' } },
+  blizzard: { wind: .55, cd: 7, w: 3, ok: (d) => d < 24, color: 0xd8f4ff, radial: { R: 18, dmg: 160, knock: 60, slow: 3, ring: 0xd8f4ff, fx: 'ice' } },
+  fireball: { wind: .4, cd: 2.2, w: 3, ok: (d) => d > 25 && d < 320, color: 0xff7a20, proj: 'fireball' },
+  hurl: { wind: .6, cd: 3, w: 3, ok: (d) => d > 25 && d < 300, color: 0xc040ff, proj: 'hurl' },
+  bolt: { wind: .6, cd: 3, w: 3, ok: (d) => d < 320, color: 0xfff36a },
+  storm: { wind: .6, cd: 9, w: 2, ok: (d) => d < 300, color: 0xfff36a },
+  spikes: { wind: .5, cd: 5, w: 3, ok: (d, low) => low && d < 130, color: 0xd8f4ff },
+  lift: { wind: .5, cd: 10, w: 2, ok: (d) => d < 70, color: 0xc040ff },
+};
+const curVillain = () => VILLAINS.find((v) => v.id === save.villain) || VILLAINS[0];
+function applyVillainLook(vd) {
+  const L = vd.look;
+  vMat.main.color.setHex(L.main); vMat.limb.color.setHex(L.limb); vMat.accent.color.setHex(L.accent); vMat.eye.color.setHex(L.eye);
+  vMat.main.emissive.setHex(L.emissive || 0); vMat.main.emissiveIntensity = L.emissive ? .6 : 0;
+  vMat.main.metalness = L.metal ?? .3; vBody.cape.material.color.setHex(L.cape);
+}
 function villainAI(dt) {
   const d = S.diff, toP = vTmp.subVectors(P.pos, V.pos), dist = toP.length();
   for (const k in V.cd) V.cd[k] -= dt;
   if (V.act) { runAct(dt, dist); return; }
   // move: orbit the player at mid range, close in fast when far away
   V.orbit += dt * .5;
-  const want = new V3(Math.cos(V.orbit) * 38, 12 + Math.sin(V.orbit * .7) * 8, Math.sin(V.orbit) * 38).add(P.pos);
+  const ring = V.kit.includes('flame') || V.kit.includes('spikes') ? 28 : 38;
+  const want = new V3(Math.cos(V.orbit) * ring, 12 + Math.sin(V.orbit * .7) * 8, Math.sin(V.orbit) * ring).add(P.pos);
   want.y = Math.max(want.y, groundH(want.x, want.z) + 6);
   const to = want.sub(V.pos), tl = to.length(), maxSp = (tl > 140 ? 230 : 95) * d.speed;
   steerVillain(dt, to.normalize().multiplyScalar(Math.min(maxSp, tl * 2.2)), 7);
   V.think -= dt;
   if (V.think > 0 || S.ko) return;
   V.think = d.think * rand(.7, 1.3);
-  const nearGround = P.pos.y - groundH(P.pos.x, P.pos.z) < 30;
-  const opts = [];
-  if (dist < 22 && V.cd.clap <= 0) opts.push(['clap', 3]);
-  if (dist < 85 && V.cd.shout <= 0) opts.push(['shout', 2]);
-  if (dist < 300 && V.cd.laser <= 0) opts.push(['laser', 2]);
-  if (dist > 20 && dist < 260 && V.cd.ram <= 0) opts.push(['ram', 3]);
-  if (nearGround && dist < 180 && V.cd.slam <= 0) opts.push(['slam', 1.5]);
+  const low = P.pos.y - groundH(P.pos.x, P.pos.z) < 30;
+  const opts = V.kit.filter((id) => (V.cd[id] || 0) <= 0 && MOVES[id].ok(dist, low)).map((id) => [id, MOVES[id].w]);
   if (!opts.length) return;
   let r = Math.random() * opts.reduce((a, o) => a + o[1], 0), pick = opts[0][0];
   for (const o of opts) { r -= o[1]; if (r <= 0) { pick = o[0]; break; } }
-  const wind = { clap: .55, shout: .6, laser: .55, ram: .45, slam: .3 }[pick] * (S.diffId === 'hard' ? .8 : 1) * (S.diffId === 'easy' ? 1.35 : 1);
-  startAct(pick, wind);
-  V.cd[pick] = { clap: 6, shout: 7, laser: 8, ram: 3.5, slam: 9 }[pick] * d.cd;
+  const mv = MOVES[pick];
+  V.act = pick; V.actT = 0; V.wind = mv.wind * (S.diffId === 'hard' ? .8 : S.diffId === 'easy' ? 1.35 : 1); vGlow.visible = true;
+  V.cd[pick] = mv.cd * d.cd;
   predicted(V.aim, .4);
-  if (pick === 'slam') V.slamPhase = 0;
+  V.slamPhase = 0; V.ramDir = null; V.target = null; V.stormT = 0;
+  if (pick === 'bolt') { V.target = predicted(new V3(), V.wind); V.target.y = Math.max(V.target.y, groundH(V.target.x, V.target.z) + 1); spawnRing(V.target.clone(), UP, 1.4, mv.color); }
 }
 function steerVillain(dt, target, rate) {
   V.vel.lerp(target, 1 - Math.exp(-dt * rate));
 }
+function vHand(out) { return vModel.localToWorld(out.set(.45, .6, .75)); }
+function vStrike(p, R, dmg) {
+  spawnFire(p, .5, 3, 3, .3, 6, 0xfff36a);
+  vCityHit(p, R, null);
+  for (const c of carList) if (c.fly <= 0 && c.p.distanceTo(p) < R + 3) flingCar(c, rand(-8, 8), 26, rand(-8, 8));
+  if (P.pos.distanceTo(p) < R + 1.5) hurtPlayer(dmg, tmpV2.subVectors(P.pos, p).setY(3), 80);
+}
+function vBeamsOff() { for (const b of vBeams) b.core.visible = b.glow.visible = false; }
 function runAct(dt, dist) {
   V.actT += dt;
-  const winding = V.actT < V.wind, k = clamp(V.actT / V.wind, 0, 1);
-  const colors = { clap: 0xffd040, shout: 0xffffff, laser: 0xff2a1a, ram: 0xff8a30, slam: 0xffb060 };
-  vGlow.material.color.setHex(colors[V.act]); vGlow.position.copy(V.pos);
+  const id = V.act, mv = MOVES[id], winding = V.actT < V.wind, k = clamp(V.actT / V.wind, 0, 1);
+  vGlow.material.color.setHex(mv.color); vGlow.position.copy(V.pos);
   const gs = winding ? 2 + k * 5 : 0; vGlow.scale.set(gs, gs, gs); vGlow.visible = winding;
-  if (V.act !== 'slam' && V.act !== 'ram') V.vel.multiplyScalar(Math.exp(-dt * 4)); // plant himself to attack
+  if (id !== 'slam' && id !== 'ram') V.vel.multiplyScalar(Math.exp(-dt * 4)); // plant himself to attack
   const toP = vDir.subVectors(P.pos, V.pos);
-  if (V.act === 'clap') {
+  const L = vLvl();
+  if (mv.radial) {
     if (!winding) {
-      const R = 18 * vLvl();
-      spawnRing(V.pos.clone(), UP, 3.5); spawnRing(V.pos.clone(), toP.clone().normalize(), 3);
-      vCityHit(V.pos.clone(), R, null);
+      const o = mv.radial, R = o.R * L, c = V.pos.clone();
+      spawnRing(c, UP, 3.5, o.ring); spawnRing(c, toP.clone().normalize(), 3, o.ring);
+      if (o.fx === 'fire') { spawnFire(c, R * .25, R * .5, 16, 1.1, R * 1.2); boomLight.color.setHex(0xff9a40); boomLight.position.copy(c); boomLight.intensity = 8; }
+      if (o.fx === 'emp') for (let q = 0; q < 8; q++) { const a = q / 8 * 6.28; drawBolt(c, new V3(c.x + Math.cos(a) * R, Math.max(groundH(c.x, c.z), c.y - R * .5), c.z + Math.sin(a) * R), .3); }
+      if (o.fx === 'ice') { spawnDust(c, R * .35, 8, ICE_COL); const g = groundH(c.x, c.z); if (c.y - g < 30) for (let q = 0; q < 14; q++) { const a = q / 14 * 6.28; spawnSpike(c.x + Math.cos(a) * R * .7, c.z + Math.sin(a) * R * .7, rand(4, 8) * L, rand(.8, 1.4) * L); } }
+      vCityHit(c, R, null);
       if (V.pos.y - groundH(V.pos.x, V.pos.z) < 8) { crater(V.pos.x, V.pos.z, R * .45, 2); addCracks(V.pos.x, V.pos.z, R * 1.3); }
-      if (dist < R + 2) hurtPlayer(200 * vLvl(), toP, 140);
+      if (dist < R + 2) {
+        hurtPlayer(o.dmg * L, toP, o.knock);
+        if (o.stun) { S.stunT = Math.max(S.stunT, o.stun); popup('STUNNED', true); }
+        if (o.slow) { S.slowT = Math.max(S.slowT, o.slow); popup('FROZEN', true); }
+      }
       sfxBoom(); sfxCrash(1); state.shake = Math.max(state.shake, clamp(1.2 - dist / 300, .2, 1.2));
       V.act = null;
     }
-  } else if (V.act === 'shout') {
+  } else if (mv.cone) {
     predicted(V.aim, .5);
     if (!winding) {
-      const f = vTmp.subVectors(V.aim, V.pos).normalize().clone(), o = V.pos.clone(), m = vLvl();
+      const o = mv.cone, f = vTmp.subVectors(V.aim, V.pos).normalize().clone(), org = V.pos.clone();
       for (let i = 0; i < 7; i++) {
-        const dd = (7 + i * 9) * (.8 + m * .2), c = o.clone().addScaledVector(f, dd), r = (2.5 + dd * .22) * m;
-        later(i * .06, () => { spawnRing(c, f, r / 6); vCityHit(c, r, f.clone().multiplyScalar(70)); });
+        const dd = (7 + i * 9) * (.8 + L * .2), c = org.clone().addScaledVector(f, dd), r = (2.5 + dd * .22) * L;
+        later(i * .06, () => { spawnRing(c, f, r / 6, o.ring); vCityHit(c, r, f.clone().multiplyScalar(o.knock * .4)); });
       }
-      const ang = f.angleTo(toP), reach = (7 + 6 * 9) * (.8 + m * .2) + 8;
-      if (dist < reach && ang < .45 + 6 / Math.max(dist, 1)) hurtPlayer(170 * m, f, 160);
+      const ang = f.angleTo(toP), reach = (7 + 6 * 9) * (.8 + L * .2) + 8;
+      if (dist < reach && ang < .45 + 6 / Math.max(dist, 1)) hurtPlayer(o.dmg * L, f, o.knock);
       sfxShout(); V.act = null;
     }
-  } else if (V.act === 'laser') {
+  } else if (mv.beam) {
+    const o = mv.beam, dur = o.flame ? 1.8 : 1.5;
     V.aim.lerp(predicted(vTmp, .25), 1 - Math.exp(-dt * S.diff.aim));
     villain.updateMatrixWorld(true);
-    vModel.localToWorld(vEye.set(0, .95, .2));
+    if (o.flame || o.ice) vHand(vEye); else vModel.localToWorld(vEye.set(0, .95, .2));
     const dir = vTmp.subVectors(V.aim, vEye).normalize().clone();
-    const hit = raycastWorld(vEye, dir, 2, 420);
-    V.beamEnd.copy(vEye).addScaledVector(dir, hit ? hit.t : 420);
-    // does the beam pass through the player before it hits the city?
-    const t = toP.copy(P.pos).sub(vEye).dot(dir), segLen = hit ? hit.t : 420;
-    const onBeam = t > 0 && t < segLen + 2 && P.pos.distanceTo(vTmp.copy(vEye).addScaledVector(dir, t)) < 2.4;
+    const hit = raycastWorld(vEye, dir, 2, o.range);
+    const segLen = hit ? hit.t : o.range;
+    V.beamEnd.copy(vEye).addScaledVector(dir, segLen);
+    const t = toP.copy(P.pos).sub(vEye).dot(dir);
+    const onBeam = t > 0 && t < segLen + 2 && P.pos.distanceTo(vTmp.copy(vEye).addScaledVector(dir, t)) < o.w;
     if (onBeam) V.beamEnd.copy(vEye).addScaledVector(dir, t);
-    const firing = !winding && V.actT < V.wind + 1.5;
+    const firing = !winding && V.actT < V.wind + dur;
+    const showBeam = firing && !o.flame;
     [-1, 1].forEach((s, i) => {
-      vModel.localToWorld(eyeV.set(s * .06, .95, .17));
-      const len = eyeV.distanceTo(V.beamEnd), b = vBeams[i];
-      b.core.visible = b.glow.visible = firing;
-      for (const [mm, r] of [[b.core, .05], [b.glow, .18 + Math.random() * .05]]) { mm.position.copy(eyeV).lerp(V.beamEnd, .5); mm.lookAt(V.beamEnd); mm.scale.set(r, r, len); }
+      const b = vBeams[i]; b.core.visible = b.glow.visible = showBeam;
+      if (!showBeam) return;
+      b.core.material = o.ice ? iceMat : beamMat; b.glow.material = o.ice ? iceGlow : glowMat;
+      if (o.ice) eyeV.copy(vEye).x += s * .15; else vModel.localToWorld(eyeV.set(s * .06, .95, .17));
+      const len = eyeV.distanceTo(V.beamEnd), wv = o.ice ? 1.8 : 1;
+      for (const [mm, r] of [[b.core, .05 * wv], [b.glow, (.18 + Math.random() * .05) * wv]]) { mm.position.copy(eyeV).lerp(V.beamEnd, .5); mm.lookAt(V.beamEnd); mm.scale.set(r, r, len); }
     });
-    if (winding) { vGlow.position.copy(vEye); }
+    if (winding) vGlow.position.copy(vEye);
     if (firing) {
-      if (onBeam) hurtPlayer(160 * vLvl() * dt, null, 0);
+      if (o.flame) for (let q = 0; q < 3; q++) { const f = fires[fireIdx = (fireIdx + 1) % fires.length]; f.s.visible = true; f.s.position.copy(vEye); f.v.copy(dir).multiplyScalar(Math.min(segLen * 2.2, 220) * rand(.8, 1.1)).add(new V3(rand(-4, 4), rand(-4, 4), rand(-4, 4))); f.max = f.life = rand(.35, .55); f.size = rand(1.8, 3) * L; f.tint = null; }
+      if (onBeam) { hurtPlayer(o.dps * L * dt, null, 0); if (o.ice) S.slowT = Math.max(S.slowT, .6); }
       V.laserTick -= dt;
       if (V.laserTick <= 0 && hit && !onBeam) {
-        V.laserTick = .08; spawnFire(V.beamEnd, .4, 1.6, 1, .35, 6);
-        if (hit.e) smashEntity(hit.e, new V3(V.beamEnd.x - hit.e.cx, V.beamEnd.y, V.beamEnd.z - hit.e.cz), 1.6 * vLvl(), dir.clone().multiplyScalar(-15));
+        V.laserTick = .08;
+        if (o.ice) spawnDust(V.beamEnd, 1.5, 1, ICE_COL); else spawnFire(V.beamEnd, .4, o.flame ? 3 : 1.6, 1, .35, 6);
+        if (hit.e) smashEntity(hit.e, new V3(V.beamEnd.x - hit.e.cx, V.beamEnd.y, V.beamEnd.z - hit.e.cz), (o.flame ? 2.6 : 1.6) * L, dir.clone().multiplyScalar(-15));
         detonateNear(V.beamEnd, 3);
       }
     }
-    if (V.actT > V.wind + 1.5) { V.act = null; for (const b of vBeams) b.core.visible = b.glow.visible = false; }
-  } else if (V.act === 'ram') {
+    if (V.actT > V.wind + dur) { V.act = null; vBeamsOff(); }
+  } else if (mv.proj) {
+    if (!winding) {
+      const from = vHand(new V3()), lead = predicted(new V3(), clamp(dist / 190, .2, 1.6));
+      launchProj(mv.proj, from, lead, .9 + .15 * S.diff.lvl, 'villain');
+      if (mv.proj === 'hurl') { spawnDust(from, 3, 2, PSY_COL); }
+      sfxWhoosh(); V.act = null;
+    }
+  } else if (id === 'bolt') {
+    if (!winding) {
+      drawBolt(vHand(new V3()), V.target, .4); drawBolt(V.target.clone().add(new V3(rand(-10, 10), 120, rand(-10, 10))), V.target, .5);
+      vStrike(V.target, 5 * L, 140 * L); V.act = null;
+    }
+  } else if (id === 'storm') {
+    if (!winding) {
+      V.stormT -= dt;
+      if (V.stormT <= 0) {
+        V.stormT = .32;
+        const p = P.pos.clone().add(new V3(rand(-8, 8), 0, rand(-8, 8)));
+        p.y = Math.max(groundH(p.x, p.z) + 1, P.pos.y + rand(-4, 2));
+        spawnRing(p.clone(), UP, .8, 0xfff36a);
+        later(.35, () => { drawBolt(p.clone().add(new V3(rand(-15, 15), 130, rand(-15, 15))), p, .5); vStrike(p, 4.5 * L, 70 * L); });
+      }
+      if (V.actT > V.wind + 2.6) V.act = null;
+    }
+  } else if (id === 'spikes') {
+    if (!winding) {
+      const g0 = new V3(V.pos.x, 0, V.pos.z), f = new V3(P.pos.x - V.pos.x, 0, P.pos.z - V.pos.z); if (f.lengthSq() < 1) f.set(0, 0, 1); f.normalize();
+      const n = Math.ceil(Math.min(Math.hypot(P.pos.x - V.pos.x, P.pos.z - V.pos.z) + 20, 140) / 6);
+      for (let i = 0; i < n; i++) {
+        const q = g0.clone().addScaledVector(f, 4 + i * 6);
+        later(i * .045, () => {
+          const gy = groundH(q.x, q.z);
+          for (let s = 0; s < 3; s++) spawnSpike(q.x + rand(-2.5, 2.5), q.z + rand(-2.5, 2.5), rand(6, 12) * L, rand(.9, 1.6) * L);
+          spawnDust(new V3(q.x, gy + 2, q.z), 3, 1, ICE_COL); vCityHit(new V3(q.x, gy + 3, q.z), 5 * L, new V3(0, 30, 0));
+          if (Math.hypot(P.pos.x - q.x, P.pos.z - q.z) < 6 * L && P.pos.y - gy < 14 * L) hurtPlayer(110 * L, new V3(0, 1, 0), 110);
+        });
+      }
+      sfxCrash(.7); V.act = null;
+    }
+  } else if (id === 'lift') {
+    if (!winding) {
+      spawnRing(P.pos.clone(), UP, 6, 0xc040ff); spawnDust(P.pos.clone(), 4, 4, PSY_COL);
+      if (dist < 75) {
+        S.stunT = Math.max(S.stunT, 1.1); popup('CAUGHT!', true);
+        P.vel.copy(toP.normalize().multiplyScalar(-55)); P.vel.y = 45;
+        later(1.05, () => {
+          const c = P.pos.clone(), g = groundH(c.x, c.z);
+          spawnRing(new V3(c.x, g + 1, c.z), UP, 4, 0xc040ff); crater(c.x, c.z, 10 * L, 2.5); addCracks(c.x, c.z, 26 * L);
+          vCityHit(new V3(c.x, g + 2, c.z), 14 * L, new V3(0, -60, 0));
+          hurtPlayer(190 * L, new V3(0, -1, 0), 160); sfxBoom(); sfxCrash(1.2);
+        });
+      }
+      V.act = null;
+    }
+  } else if (id === 'ram') {
     if (winding) { predicted(V.aim, .35); V.vel.multiplyScalar(Math.exp(-dt * 5)); }
     else {
-      if (!V.ramDir || V.actT - dt < V.wind) { V.ramDir = vTmp.subVectors(V.aim, V.pos).normalize().clone(); spawnRing(V.pos.clone(), V.ramDir, false); sfxBoom(); }
+      if (!V.ramDir) { V.ramDir = vTmp.subVectors(V.aim, V.pos).normalize().clone(); spawnRing(V.pos.clone(), V.ramDir, false); sfxBoom(); }
       V.vel.copy(V.ramDir).multiplyScalar(290 * S.diff.speed);
-      if (V.pos.distanceTo(P.pos) < 4.2) { hurtPlayer(150 * vLvl(), V.ramDir, 170); V.act = null; V.ramDir = null; V.vel.multiplyScalar(.2); }
-      else if (V.actT > V.wind + .7) { V.act = null; V.ramDir = null; }
+      if (V.pos.distanceTo(P.pos) < 4.2) { hurtPlayer(150 * L, V.ramDir, 170); V.act = null; V.vel.multiplyScalar(.2); }
+      else if (V.actT > V.wind + .7) V.act = null;
     }
-  } else if (V.act === 'slam') {
+  } else if (id === 'slam') {
     if (V.slamPhase === 0) { // climb above the target
       const above = vTmp.copy(P.pos); above.y = Math.max(P.pos.y, groundH(P.pos.x, P.pos.z)) + 90;
       steerVillain(dt, above.sub(V.pos).multiplyScalar(4).clampLength(0, 260), 8);
@@ -2907,13 +3084,13 @@ function runAct(dt, dist) {
       const to = vTmp.subVectors(V.aim, V.pos); to.y = 0;
       V.vel.set(to.x * 2, -330, to.z * 2);
       if (V.pos.y <= groundH(V.pos.x, V.pos.z) + 1.6) {
-        const R = 18 * vLvl(), p = V.pos.clone();
+        const R = 18 * L, p = V.pos.clone();
         crater(p.x, p.z, R, R * .32); addCracks(p.x, p.z, R * 3.2);
         vCityHit(new V3(p.x, groundH(p.x, p.z) + 1, p.z), R * 1.1, null);
         spawnDust(tmpV.set(p.x, groundH(p.x, p.z) + 2, p.z), R * .45, 8, CONCRETE_COL);
         spawnRing(tmpV.set(p.x, groundH(p.x, p.z) + 1, p.z), UP, true);
         const dd = P.pos.distanceTo(p);
-        if (dd < R * 1.3) hurtPlayer(240 * vLvl() * (1 - dd / (R * 1.6)), tmpV2.subVectors(P.pos, p).setY(4), 150);
+        if (dd < R * 1.3) hurtPlayer(240 * L * (1 - dd / (R * 1.6)), tmpV2.subVectors(P.pos, p).setY(4), 150);
         sfxCrash(1.2); sfxBoom(); state.shake = Math.max(state.shake, clamp(1.4 - dd / 300, .2, 1.4));
         V.vel.set(0, 30, 0); V.act = null;
       }
@@ -2947,6 +3124,8 @@ function updateVillain(dt) {
   if (state.playing && !S.over) {
     S.time += dt; S.hitCd -= dt;
     if (!S.ko && S.time - S.lastHurt > 4) { S.hp = Math.min(PLAYER_HP, S.hp + 14 * dt); updateBars(); }
+    S.stunT = Math.max(0, S.stunT - dt); S.slowT = Math.max(0, S.slowT - dt);
+    $('hurt').classList.toggle('frozen', S.slowT > 0);
     if (V.dead) {
       V.vel.y -= 40 * dt; V.vel.x *= Math.exp(-dt); V.vel.z *= Math.exp(-dt);
       vModel.rotation.x += dt * 6; vModel.rotation.z += dt * 3;
@@ -2961,6 +3140,7 @@ function updateVillain(dt) {
         later(1.8, () => endShowdown(true));
       }
     } else {
+      if (S.vd.aura && Math.random() < .4) spawnFire(tmpV.copy(V.pos).add(new V3(rand(-.8, .8), rand(-1.2, 1.3), rand(-.8, .8))), .2, rand(.5, 1.1), 1, .45, 1.5, S.vd.id === 'scorch' ? null : S.vd.aura);
       if (V.stun > 0) { V.stun -= dt; V.vel.multiplyScalar(Math.exp(-dt * 1.4)); }
       else villainAI(dt);
       const steps = Math.ceil(V.vel.length() * dt / 2.5) || 1;
@@ -3057,6 +3237,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>

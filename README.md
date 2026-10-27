@@ -4,23 +4,33 @@ Fly around a big city like a certain yellow-and-blue superhero and punch straigh
 
 Open `index.html` in a browser (needs internet for Three.js from the CDN).
 
-## Modes
-- **Sandbox**: fly around and wreck whatever you like. No clock. Pause and hit *Rebuild the city* to get a fresh skyline.
-- **Rampage**: two-minute rounds scored on the dollar value of everything you destroy. Each round pays you 0.4% of the damage plus a $50K appearance fee, and you spend it in the **Power shop**. Your best score and wallet are saved.
+## The fight (main game)
+Five supervillains are tearing the city apart. Pick your hero (**Hero** on the main menu), pick a villain and a difficulty, and take them down. Win to collect a bounty and spend it on power upgrades, which make you stronger in every fight. **Next villain** on the victory screen sends you straight into the next one.
 
-- **Showdown**: fight the Warlord, a caped supervillain with the same moves you have: ramming dashes, laser eyes, super shout, thunder clap and meteor slams. He wrecks the city fighting you. Pick **Easy**, **Normal** or **Hard**. You get every power at your shop level (minimum level 1). Win to collect a bounty (Easy $1M, Normal $4M, Hard $12M); your fastest win on each difficulty is saved.
+| Villain | Mirror of | Powers (all villains also ram and meteor-slam) |
+| --- | --- | --- |
+| The Warlord | Skybreaker | Laser eyes, super shout, thunder clap |
+| Scorch | Blaze | Fireballs, supernova, flamethrower |
+| Psyche | Mindstorm | Thrown boulders, psychic push, gravity well (grabs you, then slams you down) |
+| Overload | Volt | Lightning bolts (watch the ring that marks the strike), EMP (stuns you), thunderstorm |
+| Permafrost | Frostbite | Ice spikes along the street, blizzard (slows you), ice beam (slows you) |
 
-### Fighting the Warlord
-- His attacks glow before they land (yellow clap, white shout, red laser, orange ram, and he shouts *INCOMING!* before a meteor slam), so dodge on the tell.
-- Hurt him by flying into him fast (punch-dash hits hardest), lasering him, catching him in a shout, clap or meteor slam, or blowing up explosives next to him.
-- Explosions hurt you too. You heal slowly after four seconds without getting hit.
-- A red marker on screen always points to him.
+- Every attack glows in the villain's color before it lands, so dodge on the tell.
+- Hurt them by flying into them fast (punch-dash hits hardest), with your hero's powers, meteor slams, or by blowing up explosives next to them. Explosions hurt you too.
+- You heal slowly after four seconds without getting hit. A red marker always points to the villain.
+- You fight with every power your hero has, at your shop level (minimum level 1).
 
-| Difficulty | His health | His damage | Speed / aim | His power level | Bounty |
+| Difficulty | Villain health | Villain damage | Speed / aim | Villain power level | Bounty |
 | --- | --- | --- | --- | --- | --- |
 | Easy | 700 | 40% | slow, sloppy aim, long tells | 1 | $1M |
 | Normal | 1,300 | 70% | leads his shots | 3 | $4M |
 | Hard | 2,200 | 120% | fast, tight aim, short tells | 5 | $12M |
+
+The menu marks which difficulties you've beaten for each villain and shows your fastest win.
+
+## Side games
+- **Sandbox**: fly around and wreck whatever you like with every power at max level. No clock. Pause and hit *Rebuild the city* for a fresh skyline.
+- **Rampage**: two-minute rounds scored on the dollar value of everything you destroy. Each round pays you 0.4% of the damage plus a $50K appearance fee. Your best score is saved.
 
 ## Heroes
 Pick a hero from **Hero** on the main menu. Everyone flies, punch-dashes (left-click) and meteor-slams (X). Each hero has three powers of their own: **mouse wheel** (or 1/2/3) picks one, **right-click** (or V) uses it, and you hold it for beams.
@@ -65,7 +75,7 @@ Every achievement unlocks a suit. Only Rampage rounds count toward them; Sandbox
 | Ranger | Timber!: knock down 1,000 trees |
 | Chrome | Sound Barrier: stay supersonic for 60 seconds straight |
 | Hazmat | Chain Reaction: blow up 1,500 explosives |
-| Warlord (with cape) | Nemesis: beat the Warlord on Hard |
+| Warlord (with cape) | Nemesis: beat all five villains on Hard |
 | Solid Gold (with cape) | Billionaire Problems: $10B of damage in one Rampage round |
 
 ## Controls
