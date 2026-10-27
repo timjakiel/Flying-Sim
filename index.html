@@ -2286,7 +2286,7 @@ canvas.addEventListener('mousedown', (e) => {
   dragging = true;
 });
 addEventListener('mouseup', (e) => { dragging = false; if (e.button === 2) mouseRight = false; });
-addEventListener('wheel', (e) => { if (!state.playing) return; e.preventDefault(); if (Math.abs(e.deltaY) > 2) cycleAbility(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+addEventListener('wheel', (e) => { if (!state.playing) return; e.preventDefault(); if (Math.abs(e.deltaY) > 2) cycleAbility(e.deltaY > 0 ? -1 : 1); }, { passive: false });
 addEventListener('mousemove', (e) => {
   if (!state.playing || isTouch) return;
   if (locked) lookDelta(e.movementX, e.movementY, .0022);
@@ -2331,6 +2331,8 @@ if (isTouch) {
 
 // ---------------------------------------------------------------- flight
 function forwardVec(out) { const cp = Math.cos(P.pitch); return out.set(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp); }
+// keep the action in and just above the city: a bit over the tallest antenna, and not far past the outskirts
+const CEIL = 320, FENCE = 1000;
 const fwd = new V3(), right = new V3(), wish = new V3(), UP = new V3(0, 1, 0), steerDir = new V3(), steerTgt = new V3();
 let wasBoost = false;
 function updateFlight(dt) {
@@ -2400,8 +2402,8 @@ function updateFlight(dt) {
       }
       P.pos.y = Math.max(P.pos.y, groundH(P.pos.x, P.pos.z) + 1.2); if (P.vel.y < 0) P.vel.y = 0;
     }
-    if (P.pos.y > 1400) { P.pos.y = 1400; P.vel.y = Math.min(0, P.vel.y); }
-    const lim = 2600; P.pos.x = clamp(P.pos.x, -lim, lim); P.pos.z = clamp(P.pos.z, -lim, lim);
+    if (P.pos.y > CEIL) { P.pos.y = CEIL; P.vel.y = Math.min(0, P.vel.y); }
+    P.pos.x = clamp(P.pos.x, -FENCE, FENCE); P.pos.z = clamp(P.pos.z, -FENCE, FENCE);
     collide();
   }
   touchExplosives();
@@ -3257,7 +3259,7 @@ function runAct(dt, dist) {
     }
   } else if (id === 'slam') {
     if (V.slamPhase === 0) { // climb above the target
-      const above = vTmp.copy(P.pos); above.y = Math.max(P.pos.y, groundH(P.pos.x, P.pos.z)) + 90;
+      const above = vTmp.copy(P.pos); above.y = Math.min(CEIL - 5, Math.max(P.pos.y, groundH(P.pos.x, P.pos.z)) + 90);
       steerVillain(dt, above.sub(V.pos).multiplyScalar(4).clampLength(0, 260), 8);
       if (V.actT > 1.1) { V.slamPhase = 1; predicted(V.aim, .6); popup('INCOMING!', true); sfxBoom(); }
     } else {
@@ -3333,7 +3335,7 @@ function updateFoe(dt) {
       for (let s = 0; s < steps; s++) { V.pos.addScaledVector(V.vel, dt / steps); villainCollide(); }
       const gh = groundH(V.pos.x, V.pos.z) + 1.6;
       if (V.pos.y < gh) { V.pos.y = gh; if (V.vel.y < 0) V.vel.y = 0; }
-      const lim = 900; V.pos.x = clamp(V.pos.x, -lim, lim); V.pos.z = clamp(V.pos.z, -lim, lim); V.pos.y = Math.min(V.pos.y, 900);
+      V.pos.x = clamp(V.pos.x, -FENCE, FENCE); V.pos.z = clamp(V.pos.z, -FENCE, FENCE); V.pos.y = Math.min(V.pos.y, CEIL);
       // player punches: fly into him fast
       const rel = vTmp.subVectors(P.vel, V.vel), relSp = rel.length();
       if (S.hitCd <= 0 && P.pos.distanceTo(V.pos) < HERO_R + 2.2 && relSp > 30 && P.vel.length() > 25) {
