@@ -120,6 +120,17 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   font-family: var(--display); font-size: 18px; letter-spacing: .04em; display: grid; place-items: center; user-select: none; -webkit-user-select: none; }
 .tbtn.big { background: var(--yellow); }
 .tbtn.held { transform: scale(.92); filter: brightness(.85); }
+#powers { left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(64px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
+.chip { position: relative; overflow: hidden; display: flex; gap: 8px; align-items: center; padding: 4px 12px 4px 4px; background: var(--glass); border-radius: 6px; font-size: 16px; font-weight: 600; letter-spacing: .03em; }
+.chip b { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 4px; background: var(--yellow); color: var(--ink); border-radius: 4px; font-weight: 700; }
+.chip::after { content: ""; position: absolute; inset: 0; background: rgba(9,18,34,.7); transform-origin: left; transform: scaleX(var(--cd, 0)); }
+.row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.foot { grid-column: 1 / -1; font-size: 14px; opacity: .75; justify-content: flex-start !important; }
+.wallet { font-family: var(--display); font-size: 30px; letter-spacing: .04em; color: var(--yellow); -webkit-text-stroke: 1px var(--ink); font-variant-numeric: tabular-nums; }
+.cut { font-family: var(--display); font-size: 26px; letter-spacing: .04em; color: var(--paper); }
+.cut b { color: var(--yellow); font-weight: 400; }
+.pkey { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); background: var(--yellow); color: var(--ink); font-family: var(--display); font-size: 24px; }
+.suit.locked .pkey { background: rgba(247,243,232,.25); }
 @media (prefers-reduced-motion: reduce) { .pop, #toast.show { animation-duration: .01s; } #timer.hurry { animation: none; } }
 </style>
 
@@ -138,7 +149,8 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 <div class="hud" id="timer" hidden>2:00</div>
 <button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
 <div id="toast" hidden><i id="toastSwatch"></i><div><div class="tlabel">Achievement unlocked</div><div id="toastTitle"></div><div id="toastSuit"></div></div></div>
-<div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>X</b> launch / slam down · <b>P</b> pause</div>
+<div class="hud" id="powers"></div>
+<div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>X V G L</b> powers · <b>P</b> pause</div>
 <div id="popups"></div>
 
 <div id="touch" hidden>
@@ -149,6 +161,9 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <div class="tbtn" id="tDown">DOWN</div>
     <div class="tbtn big" id="tDash">PUNCH</div>
     <div class="tbtn" id="tSlam">SLAM</div>
+    <div class="tbtn big" id="tLaser">LASER</div>
+    <div class="tbtn" id="tShout">SHOUT</div>
+    <div class="tbtn" id="tClap">CLAP</div>
   </div>
 </div>
 
@@ -157,10 +172,13 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <h1>Skybreaker</h1>
     <p class="tag" id="tagline">A whole city, and you're stronger than every building in it. Fly fast, punch through, watch it come down.</p>
     <div class="modes">
-      <button class="mode" id="mSandbox" type="button"><span class="mname">Sandbox</span><span class="mdesc">Fly around and wreck whatever you like. No clock. Rebuild the city any time.</span></button>
-      <button class="mode hot" id="mRampage" type="button"><span class="mname">Rampage</span><span class="mdesc">Two minutes on the clock. Every dollar of damage is points.</span><span class="mbest" id="bestLine">No score yet</span></button>
+      <button class="mode" id="mSandbox" type="button"><span class="mname">Sandbox</span><span class="mdesc">Every power unlocked, no clock. Wreck whatever you like and rebuild the city any time.</span></button>
+      <button class="mode hot" id="mRampage" type="button"><span class="mname">Rampage</span><span class="mdesc">Two-minute rounds. You keep a cut of the damage and spend it on new powers.</span><span class="mbest" id="bestLine">No score yet</span></button>
     </div>
-    <button class="ghost" id="openSuits" type="button">Suits &amp; achievements<span id="suitCount">1/11</span></button>
+    <div class="row">
+      <button class="ghost" id="openShop" type="button">Power shop<span id="walletMini">$0</span></button>
+      <button class="ghost" id="openSuits" type="button">Suits &amp; achievements<span id="suitCount">1/12</span></button>
+    </div>
     <div class="keys" id="keys">
       <div><span>MOUSE</span><span>Steer / look</span></div>
       <div><span>W A S D</span><span>Fly</span></div>
@@ -168,10 +186,14 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
       <div><span>Q / C</span><span>Descend</span></div>
       <div><span>SHIFT</span><span>Supersonic boost</span></div>
       <div><span>CLICK / F</span><span>Punch-dash</span></div>
-      <div><span>X</span><span>Launch / slam down</span></div>
+      <div><span>X</span><span>Launch / slam down*</span></div>
+      <div><span>V</span><span>Super shout*</span></div>
+      <div><span>G</span><span>Thunder clap*</span></div>
+      <div><span>L / R-CLICK</span><span>Laser vision*</span></div>
       <div><span>DIVE</span><span>Crater the street</span></div>
       <div><span>R</span><span>Back to the sky</span></div>
       <div><span>P / ESC</span><span>Pause</span></div>
+      <div class="foot">* Bought in the power shop for Rampage. Always on in Sandbox.</div>
     </div>
   </div>
   <div class="card" id="scr-pause" hidden>
@@ -187,14 +209,25 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <div class="suits" id="suitList"></div>
     <button class="ghost" id="sBack" type="button">Back</button>
   </div>
+  <div class="card wide" id="scr-shop" hidden>
+    <h2>Power shop</h2>
+    <p class="tag">Every Rampage round pays you 1% of the damage plus a $100K appearance fee. Sandbox always has every power.</p>
+    <div class="wallet" id="walletLine">Wallet: $0</div>
+    <div class="suits" id="shopList"></div>
+    <button class="ghost" id="shBack" type="button">Back</button>
+  </div>
   <div class="card" id="scr-results" hidden>
     <h2>Time's up</h2>
     <div class="score" id="rScore">$0</div>
     <div id="rBest"></div>
     <div class="rstats" id="rStats"></div>
+    <div class="cut" id="rCut"></div>
     <div id="rUnlocks"></div>
     <button class="btn" id="rAgain" type="button">GO AGAIN</button>
-    <button class="ghost" id="rSuits" type="button">Suits &amp; achievements</button>
+    <div class="row">
+      <button class="ghost" id="rShop" type="button">Power shop</button>
+      <button class="ghost" id="rSuits" type="button">Suits &amp; achievements</button>
+    </div>
     <button class="ghost" id="rMenu" type="button">Main menu</button>
   </div>
 </div>
@@ -596,7 +629,8 @@ function crater(x, z, R, depth) {
   }
   pos.needsUpdate = true; col.needsUpdate = true;
   craterQueued = true;
-  reconformDecals(x, z, R); // normals recomputed once at end of frame
+  reconformDecals(x, z, R);
+  settleExplosives(x, z, R * 1.6); // normals recomputed once at end of frame
 }
 
 // ---------------------------------------------------------------- trees, parks
@@ -812,7 +846,7 @@ for (let i = 0; i < 6; i++) {
 let ringIdx = 0;
 function spawnRing(p, dir, big) {
   const r = rings[ringIdx = (ringIdx + 1) % rings.length];
-  r.m.position.copy(p); r.m.lookAt(p.clone().add(dir)); r.m.visible = true; r.life = 1; r.big = big ? 1.8 : 1;
+  r.m.position.copy(p); r.m.lookAt(p.clone().add(dir)); r.m.visible = true; r.life = 1; r.big = typeof big === 'number' ? big : big ? 1.8 : 1;
 }
 function updateRings(dt) {
   for (const r of rings) {
@@ -916,7 +950,7 @@ const START = { pos: new V3(0, 150, HALF + 160), yaw: 0, pitch: -0.18 };
 const P = { pos: START.pos.clone(), vel: new V3(), yaw: START.yaw, pitch: START.pitch, boosting: false, dashT: 0, slamming: false, landT: 0, launchT: 0 };
 const state = { damage: 0, wrecked: 0, combo: 0, comboT: 0, comboCash: 0, shake: 0, slamCd: 0, playing: false, mode: null, run: null, timeLeft: 0, boostStreak: 0, muted: false, lastCrash: 0 };
 const keys = new Set();
-const input = { lookX: 0, lookY: 0, stickX: 0, stickY: 0, tUp: false, tDown: false, tBoost: false };
+const input = { lookX: 0, lookY: 0, stickX: 0, stickY: 0, tUp: false, tDown: false, tBoost: false, tLaser: false };
 
 // ---------------------------------------------------------------- audio
 let AC = null, master, windGain, windFilter, noiseBuf;
@@ -956,6 +990,29 @@ function sfxBoom() {
   src.connect(f); f.connect(g2); g2.connect(master); src.start(t); src.stop(t + .4);
 }
 
+function sfxShout() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  const src = AC.createBufferSource(); src.buffer = noiseBuf;
+  const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(140, t + .9);
+  const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(1.4, t + .05); g.gain.exponentialRampToValueAtTime(.001, t + 1.1);
+  src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + 1.2);
+  const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(60, t + .9);
+  const og = AC.createGain(); og.gain.setValueAtTime(.35, t); og.gain.exponentialRampToValueAtTime(.001, t + 1);
+  o.connect(og); og.connect(master); o.start(t); o.stop(t + 1.05);
+}
+let laserOsc = null, laserGain = null;
+function sfxLaser(on) {
+  if (!AC) return;
+  if (!laserOsc) {
+    laserOsc = AC.createOscillator(); laserOsc.type = 'sawtooth'; laserOsc.frequency.value = 95;
+    const o2 = AC.createOscillator(); o2.type = 'square'; o2.frequency.value = 191;
+    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+    laserGain = AC.createGain(); laserGain.gain.value = 0;
+    laserOsc.connect(f); o2.connect(f); f.connect(laserGain); laserGain.connect(master); laserOsc.start(); o2.start();
+  }
+  laserGain.gain.setTargetAtTime(on ? .16 : 0, AC.currentTime, .03);
+}
 function sfxUnlock() {
   if (!AC) return;
   const t = AC.currentTime;
@@ -1256,8 +1313,9 @@ function blast(p, r, vel) {
       cash += smashEntity(e, tmpV.set(p.x - e.cx, p.y, p.z - e.cz).clone(), r, vel);
     }
   }
-  for (const t of trees) if (t.st === 0) { const dx = t.x - p.x, dz = t.z - p.z; if (dx * dx + dz * dz < r * r * 2.2) toppleTree(t, dx, dz); }
-  for (const c of carList) {
+  const nearGround = p.y - groundH(p.x, p.z) < r;
+  if (nearGround) for (const t of trees) if (t.st === 0) { const dx = t.x - p.x, dz = t.z - p.z; if (dx * dx + dz * dz < r * r * 2.2) toppleTree(t, dx, dz); }
+  if (nearGround) for (const c of carList) {
     if (c.fly > 0) continue;
     const dx = c.p.x - p.x, dz = c.p.z - p.z, d = Math.hypot(dx, dz);
     if (d < r * 1.6) { const f = (1 - d / (r * 1.6)) * 30 + 8; flingCar(c, dx / (d || 1) * f, f * .8 + 6, dz / (d || 1) * f); }
@@ -1327,7 +1385,7 @@ function updateDecals(dt) {
 
 // one key does both: punch off the ground like a rocket, or drop out of the sky feet-first
 function superMove() {
-  if (!state.playing) return;
+  if (!state.playing || !hasPower('slam')) return;
   const h = P.pos.y - groundH(P.pos.x, P.pos.z);
   if (h < 6) launch();
   else if (!P.slamming) { P.slamming = true; P.dashT = 0; spawnRing(P.pos.clone(), DOWN, false); sfxBoom(); state.shake = Math.max(state.shake, .4); }
@@ -1392,11 +1450,253 @@ function popup(text, combo) {
   $('popups').appendChild(el); setTimeout(() => el.remove(), 1400);
 }
 
+// ---------------------------------------------------------------- delayed actions
+const pending = [];
+function later(t, fn) { pending.push({ t, fn }); }
+function updatePending(dt) {
+  for (let i = pending.length - 1; i >= 0; i--) { const q = pending[i]; q.t -= dt; if (q.t <= 0) { pending.splice(i, 1); q.fn(); } }
+}
+
+// ---------------------------------------------------------------- fire + flash
+const fireTex = canvasTex(128, (g, S) => {
+  const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  gr.addColorStop(0, 'rgba(255,255,240,1)'); gr.addColorStop(.25, 'rgba(255,220,140,.9)'); gr.addColorStop(.6, 'rgba(255,120,40,.35)'); gr.addColorStop(1, 'rgba(255,60,0,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, S, S);
+});
+const fires = [];
+for (let i = 0; i < (isTouch ? 70 : 140); i++) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
+  s.visible = false; scene.add(s); fires.push({ s, v: new V3(), life: 0, max: 1, size: 1 });
+}
+let fireIdx = 0;
+function spawnFire(p, spread, size, n, life = .8, speed = 10) {
+  for (let k = 0; k < n; k++) {
+    const f = fires[fireIdx = (fireIdx + 1) % fires.length];
+    f.s.visible = true; f.s.position.set(p.x + rand(-1, 1) * spread, p.y + rand(-.4, 1) * spread, p.z + rand(-1, 1) * spread);
+    f.v.set(rand(-1, 1), rand(.3, 1.4), rand(-1, 1)).multiplyScalar(speed);
+    f.max = f.life = life * rand(.7, 1.2); f.size = size * rand(.6, 1.2); f.s.material.rotation = rand(0, 6);
+  }
+}
+function updateFire(dt) {
+  for (const f of fires) {
+    if (f.life <= 0) continue;
+    f.life -= dt; if (f.life <= 0) { f.s.visible = false; continue; }
+    const t = 1 - f.life / f.max;
+    f.s.position.addScaledVector(f.v, dt); f.v.multiplyScalar(1 - dt * 2.5); f.v.y += dt * 6;
+    const sc = f.size * (.5 + t * 1.6); f.s.scale.set(sc, sc, sc);
+    f.s.material.color.setRGB(1, lerp(.9, .3, t), lerp(.6, .05, t));
+    f.s.material.opacity = (1 - t) * (1 - t);
+  }
+}
+const boomLight = new THREE.PointLight(0xff9a40, 0, 220, 2); scene.add(boomLight);
+const SMOKE_COL = new THREE.Color(0x3b3632);
+
+// ---------------------------------------------------------------- explosives
+const EXP_TYPES = {
+  can: { r: 9, cr: .6, h: .6, value: 25e3, col: 0xc8231a },
+  drum: { r: 11, cr: .9, h: .7, value: 40e3 },
+  propane: { r: 17, cr: 2.6, h: 1.3, value: 120e3, col: 0xeeeeea },
+  tanker: { r: 28, cr: 5.5, h: 2.2, value: 450e3, col: 0xc9cdd2 },
+};
+const explosives = [];
+{
+  const add = (type, x, z, rot) => explosives.push({ type, x, z, rot, alive: true, armed: false, i: 0 });
+  for (let bx = 0; bx < N; bx++) for (let bz = 0; bz < N; bz++) {
+    const x0 = -HALF + bx * PERIOD + ROAD / 2, z0 = -HALF + bz * PERIOD + ROAD / 2;
+    for (let side = 0; side < 4; side++) {
+      const roll = rng(), along = rr(8, BLOCK - 8), inset = 1.9;
+      const ex = side < 2 ? 1 : 0, ez = side < 2 ? 0 : 1, rot = side < 2 ? 0 : Math.PI / 2;
+      const x = side < 2 ? x0 + along : side === 2 ? x0 + inset : x0 + BLOCK - inset;
+      const z = side >= 2 ? z0 + along : side === 0 ? z0 + inset : z0 + BLOCK - inset;
+      if (roll < .14) { const n = 1 + (rng() * 3 | 0); for (let k = 0; k < n; k++) add('can', x + ex * k * .85, z + ez * k * .85, rr(0, 6)); }
+      else if (roll < .22) { const n = 3 + (rng() * 2 | 0); for (let k = 0; k < n; k++) add('drum', x + ex * (k % 3) * 1.3 - ez * (k / 3 | 0) * 1.2 * (side === 2 ? -1 : 1), z + ez * (k % 3) * 1.3 - ex * (k / 3 | 0) * 1.2 * (side === 0 ? -1 : 1), rr(0, 6)); }
+      else if (roll < .28) add('propane', x - ez * (side === 2 ? -.4 : .4), z - ex * (side === 0 ? -.4 : .4), rot);
+    }
+  }
+  for (let k = 0; k < 16; k++) { // fuel tankers parked at the curb
+    const road = -HALF + (1 + (rng() * (N - 1) | 0)) * PERIOD, seg = -HALF + ((rng() * N | 0) + .5) * PERIOD + rr(-14, 14), side = rng() < .5 ? -6.6 : 6.6;
+    if (rng() < .5) add('tanker', seg, road + side, Math.PI / 2 + (side > 0 ? 0 : Math.PI)); else add('tanker', road + side, seg, side > 0 ? 0 : Math.PI);
+  }
+}
+const expMeshes = {};
+{
+  const count = (t) => explosives.filter((x) => x.type === t).length;
+  const mk = (t, geo, mat, colorFn) => {
+    const m = new THREE.InstancedMesh(geo, mat, Math.max(1, count(t)));
+    m.castShadow = m.receiveShadow = true; m.frustumCulled = false; scene.add(m);
+    (expMeshes[t] = expMeshes[t] || []).push(m);
+    if (colorFn) explosives.filter((x) => x.type === t).forEach((x, i) => m.setColorAt(i, colorFn(x)));
+    return m;
+  };
+  const drumCols = [0xe0a81b, 0x2b5fa8, 0xb52a1f, 0x3f7a3a].map((c) => new THREE.Color(c));
+  mk('can', new THREE.CylinderGeometry(.3, .32, 1.05, 16).translate(0, .525, 0), new THREE.MeshStandardMaterial({ color: 0xc8231a, roughness: .35, metalness: .3 }));
+  mk('drum', new THREE.CylinderGeometry(.58, .58, 1.35, 20).translate(0, .675, 0), new THREE.MeshStandardMaterial({ roughness: .5, metalness: .4 }), (x) => drumCols[(Math.abs(x.x * 7 + x.z * 13) | 0) % 4]);
+  mk('propane', new THREE.CapsuleGeometry(1.05, 2.7, 8, 20).rotateZ(Math.PI / 2).translate(0, 1.3, 0), new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: .3, metalness: .2 }));
+  mk('tanker', new THREE.CapsuleGeometry(1.35, 6.6, 8, 20).rotateX(Math.PI / 2).translate(0, 2.45, -1.3), new THREE.MeshStandardMaterial({ color: 0xc9cdd2, roughness: .25, metalness: .85 }));
+  mk('tanker', new THREE.BoxGeometry(2.5, 2.3, 2.6).translate(0, 1.75, 4.4), new THREE.MeshStandardMaterial({ color: 0xb8231c, roughness: .4, metalness: .3 }));
+  mk('tanker', new THREE.BoxGeometry(2.3, .7, 11.6).translate(0, .75, .2), new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: .8 }));
+  const idx = {}; for (const x of explosives) { x.i = idx[x.type] = (idx[x.type] ?? -1) + 1; }
+}
+function writeExplosive(x) {
+  if (x.alive) { dummy.position.set(x.x, groundH(x.x, x.z), x.z); dummy.rotation.set(0, x.rot, 0); dummy.scale.set(1, 1, 1); }
+  else dummy.scale.set(0, 0, 0);
+  dummy.updateMatrix();
+  for (const m of expMeshes[x.type]) { m.setMatrixAt(x.i, dummy.matrix); m.instanceMatrix.needsUpdate = true; }
+}
+function resetExplosives() { for (const x of explosives) { x.alive = true; x.armed = false; writeExplosive(x); } }
+resetExplosives();
+function settleExplosives(cx, cz, R) { for (const x of explosives) if (x.alive && Math.abs(x.x - cx) < R && Math.abs(x.z - cz) < R) writeExplosive(x); }
+function detonate(x, delay) { if (!x.alive || x.armed) return; x.armed = true; later(delay, () => explode(x)); }
+function detonateNear(p, r) {
+  for (const x of explosives) {
+    if (!x.alive || x.armed) continue;
+    const dx = x.x - p.x, dz = x.z - p.z, dy = groundH(x.x, x.z) + EXP_TYPES[x.type].h - p.y;
+    if (dx * dx + dz * dz + dy * dy < (r + EXP_TYPES[x.type].cr) ** 2) detonate(x, rand(.06, .22));
+  }
+}
+function explode(x) {
+  if (!x.alive) return;
+  x.alive = false; writeExplosive(x);
+  const T = EXP_TYPES[x.type], gy = groundH(x.x, x.z), p = new V3(x.x, gy + T.h, x.z);
+  spawnFire(p, T.r * .12, T.r * .55, Math.round(clamp(T.r * .7, 6, 22)), .7 + T.r * .025, T.r * .9);
+  spawnDust(tmpV.set(p.x, p.y + T.r * .2, p.z), T.r * .3, Math.round(clamp(T.r / 4, 2, 7)), SMOKE_COL);
+  boomLight.position.copy(p).y += 4; boomLight.intensity = 4 + T.r * .25;
+  const col = T.col ? new THREE.Color(T.col) : new THREE.Color(0xd0a020);
+  for (let q = 0; q < clamp(T.r, 8, 30); q++) {
+    tmpV3.set(rand(-1, 1), rand(.4, 1.4), rand(-1, 1)).normalize().multiplyScalar(rand(10, 30));
+    pools[0].spawn(p, tmpV3, rand(.25, .7), Math.random() < .5 ? col : SMOKE_COL);
+  }
+  crater(x.x, x.z, T.r * .32, T.r * .07);
+  if (T.r > 15) addCracks(x.x, x.z, T.r * 1.5);
+  state.damage += T.value;
+  const cash = blast(p, T.r * .75, null) + T.value;
+  detonateNear(p, T.r);
+  const d = P.pos.distanceTo(p);
+  if (d < T.r * 1.6) P.vel.addScaledVector(tmpV.subVectors(P.pos, p).normalize(), 70 * (1 - d / (T.r * 1.6)));
+  state.shake = Math.max(state.shake, clamp(1.4 * (1 - d / (T.r * 9)), 0, 1.4));
+  sfxBoom(); sfxCrash(clamp(1.3 - d / 400, .2, 1.3));
+  hitFeedback(cash, 100, true);
+  if (T.r > 15 || Math.random() < .3) popup(['KABOOM!', 'BOOM!', 'FWOOSH!', 'KRAKOOM!'][Math.random() * 4 | 0], true);
+  statAdd('explosions');
+}
+function touchExplosives() {
+  const sp = P.vel.length(); if (sp < 6) return;
+  for (const x of explosives) {
+    if (!x.alive || x.armed) continue;
+    const T = EXP_TYPES[x.type], dx = x.x - P.pos.x, dz = x.z - P.pos.z;
+    if (Math.abs(dx) > 8 || Math.abs(dz) > 8) continue;
+    const dy = groundH(x.x, x.z) + T.h - P.pos.y;
+    if (dx * dx + dz * dz + dy * dy < (T.cr + HERO_R + .5) ** 2) detonate(x, 0);
+  }
+}
+
+// ---------------------------------------------------------------- powers
+const POWERS = [
+  { id: 'slam', name: 'Meteor Slam', key: 'X', price: 400e3, desc: 'Rocket off the street, or drop out of the sky feet-first into a crater.' },
+  { id: 'shout', name: 'Super Shout', key: 'V', price: 1.2e6, cd: 5, desc: 'A sonic roar that blows a cone of city apart in front of you.' },
+  { id: 'overtime', name: 'Overtime', price: 1.5e6, desc: '45 extra seconds on every Rampage round.' },
+  { id: 'clap', name: 'Thunder Clap', key: 'G', price: 1.8e6, cd: 6, desc: 'Clap so hard that everything around you comes down.' },
+  { id: 'laser', name: 'Laser Vision', key: 'L', alt: 'or hold right-click', price: 2.5e6, desc: 'Hold to carve through whatever you look at. Lights up explosives.' },
+  { id: 'fists', name: 'Titan Fists', price: 3e6, desc: 'Every punch tears a hole half again as wide.' },
+];
+const hasPower = (id) => state.mode === 'sandbox' || save.powers.includes(id);
+const cds = { shout: 0, clap: 0 };
+let shoutT = 0, clapT = 0;
+
+function superShout() {
+  if (!state.playing || !hasPower('shout') || cds.shout > 0) return;
+  cds.shout = 5; shoutT = .6;
+  const f = forwardVec(new V3()), o = P.pos.clone(); o.y += 1;
+  for (let i = 0; i < 7; i++) {
+    const d = 7 + i * 10, c = o.clone().addScaledVector(f, d), r = 3 + d * .34;
+    later(i * .06, () => {
+      spawnRing(c, f, r / 6);
+      const cash = blast(c, r, f.clone().multiplyScalar(70));
+      detonateNear(c, r);
+      if (cash) hitFeedback(cash, 90, true);
+    });
+  }
+  state.shake = Math.max(state.shake, .7); sfxShout();
+}
+function thunderClap() {
+  if (!state.playing || !hasPower('clap') || cds.clap > 0) return;
+  cds.clap = 6; clapT = .45;
+  later(.12, () => {
+    const c = P.pos.clone();
+    spawnRing(c, UP, 4); spawnRing(c, forwardVec(new V3()), 3.2);
+    const cash = blast(c, 26, null); detonateNear(c, 26);
+    if (P.pos.y - groundH(c.x, c.z) < 8) { crater(c.x, c.z, 12, 2); addCracks(c.x, c.z, 34); }
+    state.shake = Math.max(state.shake, 1.3); sfxBoom(); sfxCrash(1.2);
+    hitFeedback(cash + 1, 140, true);
+  });
+}
+
+// laser vision: march a ray from the camera through the crosshair
+function pointInEntity(e, p) {
+  const lx = p.x - e.cx, lz = p.z - e.cz, k = Math.floor((p.y - e.y0) / e.ch);
+  if (k < 0 || k > e.topK) return false;
+  if (e.kind === 'box') {
+    const i = Math.floor((lx + e.w / 2) / e.cw), j = Math.floor((lz + e.d / 2) / e.cd);
+    if (i < 0 || j < 0 || i >= e.nx || j >= e.nz) return false;
+    return !e.mask || !!e.mask[k * e.layer + j * e.nx + i];
+  }
+  if (Math.hypot(lx, lz) > e.w / 2) return false;
+  const sec = Math.floor(((Math.atan2(lz, lx) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * e.nx) % e.nx;
+  return !e.mask || !!e.mask[k * e.layer + sec];
+}
+const rayP = new V3();
+function raycastWorld(o, dir, t0, maxT) {
+  for (let t = t0; t < maxT; t += 1.2) {
+    rayP.copy(o).addScaledVector(dir, t);
+    if (rayP.y < groundH(rayP.x, rayP.z)) return { t, e: null };
+    const arr = grid.get(cellKey(Math.floor(rayP.x / CELL), Math.floor(rayP.z / CELL)));
+    if (arr) for (const e of arr) if (e.alive && pointInEntity(e, rayP)) return { t, e };
+  }
+  return null;
+}
+const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true).rotateX(Math.PI / 2);
+const beamMat = new THREE.MeshBasicMaterial({ color: 0xff3018, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false, fog: false });
+const glowMat = beamMat.clone(); glowMat.opacity = .3;
+const beams = [0, 1].map(() => { const core = new THREE.Mesh(beamGeo, beamMat), glow = new THREE.Mesh(beamGeo, glowMat); core.frustumCulled = glow.frustumCulled = false; core.visible = glow.visible = false; scene.add(core, glow); return { core, glow }; });
+const laserDot = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, color: 0xff6040, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); laserDot.visible = false; scene.add(laserDot);
+let laserTick = 0, laserCash = 0, laserPop = 0, mouseRight = false;
+const camDir = new V3(), eyeV = new V3(), endV = new V3();
+function updateLaser(dt) {
+  const on = state.playing && hasPower('laser') && (keys.has('l') || mouseRight || input.tLaser);
+  for (const b of beams) b.core.visible = b.glow.visible = on;
+  laserDot.visible = on; sfxLaser(on);
+  if (!on) return;
+  camera.getWorldDirection(camDir);
+  const startT = camera.position.distanceTo(P.pos);
+  const hit = raycastWorld(camera.position, camDir, startT, 520);
+  endV.copy(camera.position).addScaledVector(camDir, hit ? hit.t : 520);
+  [-1, 1].forEach((s, i) => {
+    heroModel.localToWorld(eyeV.set(s * .06, .935, .17));
+    const len = eyeV.distanceTo(endV), b = beams[i];
+    for (const [m, r] of [[b.core, .045], [b.glow, .16 + Math.random() * .04]]) {
+      m.position.copy(eyeV).lerp(endV, .5); m.lookAt(endV); m.scale.set(r, r, len);
+    }
+  });
+  laserDot.position.copy(endV); const ds = hit ? rand(3, 4.5) : 0; laserDot.scale.set(ds, ds, ds);
+  laserTick -= dt; laserPop -= dt;
+  if (hit && laserTick <= 0) {
+    laserTick = .05;
+    spawnFire(endV, .4, 1.6, 1, .35, 6);
+    if (hit.e) laserCash += smashEntity(hit.e, new V3(endV.x - hit.e.cx, endV.y, endV.z - hit.e.cz), 2.6, camDir.clone().multiplyScalar(-15));
+    else if (Math.random() < .35) crater(endV.x, endV.z, 1.8, .25);
+    detonateNear(endV, 3);
+    for (const c of carList) if (c.fly <= 0 && c.p.distanceTo(endV) < 3.5) { flingCar(c, rand(-6, 6), 22, rand(-6, 6)); laserCash += 38000; }
+    for (const t of trees) if (t.st === 0 && Math.abs(t.x - endV.x) < 2.5 && Math.abs(t.z - endV.z) < 2.5) toppleTree(t, camDir.x, camDir.z);
+    state.shake = Math.max(state.shake, .12);
+  }
+  if (laserPop <= 0 && laserCash > 0) { laserPop = .45; popup('+' + fmtMoney(laserCash), false); laserCash = 0; }
+}
+
 // ---------------------------------------------------------------- collisions
 const HERO_R = 1.5, SMASH_SPEED = 16;
 const lp = new V3();
 function collide() {
-  const sp = P.vel.length(), rSmash = sp > 150 ? 9 : sp > 70 ? 6 : 4.5;
+  const sp = P.vel.length(), rSmash = (sp > 150 ? 9 : sp > 70 ? 6 : 4.5) * (hasPower('fists') ? 1.5 : 1);
   const ix = Math.floor(P.pos.x / CELL), iz = Math.floor(P.pos.z / CELL);
   const seen = new Set();
   let cash = 0;
@@ -1460,6 +1760,8 @@ addEventListener('keydown', (e) => {
   if (k === 'p' || (k === 'escape' && noLock)) { pauseGame(); return; }
   if (k === 'f') dash();
   if (k === 'x') superMove();
+  if (k === 'v') superShout();
+  if (k === 'g') thunderClap();
   if (k === 'r') resetHero();
   if (k === 'm') { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : .55; }
 });
@@ -1469,12 +1771,14 @@ document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
   if (!locked && state.playing && !noLock) pauseGame();
 });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('mousedown', (e) => {
   if (!state.playing || isTouch) return;
+  if (e.button === 2) { mouseRight = true; return; }
   if (locked) { if (e.button === 0) dash(); return; }
   dragging = true;
 });
-addEventListener('mouseup', () => { dragging = false; });
+addEventListener('mouseup', (e) => { dragging = false; if (e.button === 2) mouseRight = false; });
 addEventListener('mousemove', (e) => {
   if (!state.playing || isTouch) return;
   if (locked) lookDelta(e.movementX, e.movementY, .0022);
@@ -1507,6 +1811,9 @@ if (isTouch) {
   hold('tUp', 'tUp'); hold('tDown', 'tDown'); hold('tBoost', 'tBoost');
   $('tDash').addEventListener('pointerdown', (e) => { e.preventDefault(); dash(); });
   $('tSlam').addEventListener('pointerdown', (e) => { e.preventDefault(); superMove(); });
+  hold('tLaser', 'tLaser');
+  $('tShout').addEventListener('pointerdown', (e) => { e.preventDefault(); superShout(); });
+  $('tClap').addEventListener('pointerdown', (e) => { e.preventDefault(); thunderClap(); });
   const looks = new Map();
   canvas.addEventListener('pointerdown', (e) => { looks.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', (e) => { const l = looks.get(e.pointerId); if (!l) return; lookDelta(e.clientX - l[0], e.clientY - l[1], .0055); l[0] = e.clientX; l[1] = e.clientY; });
@@ -1536,6 +1843,7 @@ function updateFlight(dt) {
   const maxSp = P.boosting ? 240 : 75;
   const rate = wish.lengthSq() > 0 ? (P.boosting ? 1.4 : 2.6) : 2.2;
   P.dashT = Math.max(0, P.dashT - dt); state.slamCd -= dt;
+  cds.shout = Math.max(0, cds.shout - dt); cds.clap = Math.max(0, cds.clap - dt); shoutT -= dt; clapT -= dt;
   P.launchT = Math.max(0, P.launchT - dt);
   if (P.slamming) { // meteor drop: straight down, a little steering
     P.vel.x = lerp(P.vel.x, wish.x * 40, 1 - Math.exp(-dt * 3)); P.vel.z = lerp(P.vel.z, wish.z * 40, 1 - Math.exp(-dt * 3)); P.vel.y = -330;
@@ -1567,6 +1875,7 @@ function updateFlight(dt) {
     const lim = 2600; P.pos.x = clamp(P.pos.x, -lim, lim); P.pos.z = clamp(P.pos.z, -lim, lim);
     collide();
   }
+  touchExplosives();
 }
 
 // ---------------------------------------------------------------- hero pose + camera
@@ -1597,6 +1906,8 @@ function updateHero(dt) {
   u.legR.rotation.x = lerp(-.12 + bob * .08, .04, t); u.legL.rotation.x = lerp(.1 - bob * .08, -.04, t);
   u.legR.rotation.z = lerp(.04, .03, t); u.legL.rotation.z = lerp(-.04, -.03, t);
   if (P.launchT > 0) { u.armL.rotation.x = -Math.PI; u.armL.rotation.z = -.05; }
+  if (clapT > 0) { const k = clapT > .33 ? 0 : 1; u.armR.rotation.set(-1.5, 0, k ? -.32 : .9); u.armL.rotation.set(-1.5, 0, k ? .32 : -.9); }
+  if (shoutT > 0) { u.armR.rotation.set(.5, 0, .7); u.armL.rotation.set(.5, 0, -.7); }
   if (P.slamming) { // feet first, arms flung up and out
     u.armR.rotation.set(0, 0, 2.3); u.armL.rotation.set(0, 0, -2.3);
     u.legR.rotation.set(-.1, 0, .12); u.legL.rotation.set(.15, 0, -.12);
@@ -1675,6 +1986,7 @@ function updateHud(dt) {
   $('speed').innerHTML = Math.round(P.vel.length() * 3.6).toLocaleString('en-US') + '<small>KM/H</small>';
   $('alt').textContent = 'ALT ' + Math.round(P.pos.y) + ' m';
   $('boostTag').classList.toggle('on', P.boosting);
+  for (const c of $('powers').children) { const pw = POWERS.find((x) => x.id === c.dataset.id); c.style.setProperty('--cd', pw.cd ? cds[pw.id] / pw.cd : 0); }
   if (saveDirty && (hudT2 -= .1) <= 0) { hudT2 = 3; saveNow(); }
   if (isTouch) $('tSlam').textContent = P.pos.y - groundH(P.pos.x, P.pos.z) < 6 ? 'LAUNCH' : 'SLAM';
 }
@@ -1691,6 +2003,7 @@ const SUITS = [
   { id: 'inferno', name: 'Inferno', main: 0xff6a1a, limb: 0x1a1412, accent: 0xffc23a, mask: 0x1a1412, lens: 0xfff2b0, emissive: 0xff4a00, ach: 'meteor' },
   { id: 'ranger', name: 'Ranger', main: 0x4f8a3a, limb: 0x5a3b22, accent: 0x2b2014, mask: 0x2b2014, lens: 0xe8ffd0, ach: 'timber' },
   { id: 'chrome', name: 'Chrome', main: 0xdfe3e8, limb: 0xb8bec6, accent: 0x8d949c, mask: 0x1b1e22, lens: 0x7fe0ff, metal: .95, rough: .18, ach: 'sonic' },
+  { id: 'hazmat', name: 'Hazmat', main: 0xf2d22e, limb: 0x1b1d21, accent: 0x1b1d21, mask: 0x1b1d21, lens: 0x9cff6a, ach: 'chain' },
   { id: 'gold', name: 'Solid Gold', main: 0xffcc33, limb: 0xe0a92a, accent: 0xb07d12, mask: 0x2a1d05, lens: 0xffffff, metal: 1, rough: .25, cape: 0x7a0f18, ach: 'billion' },
 ];
 const ACHS = {
@@ -1703,10 +2016,11 @@ const ACHS = {
   meteor: { name: 'Superhero Landing', desc: 'Land 10 meteor slams (X while airborne)', stat: 'slams', goal: 10 },
   timber: { name: 'Timber!', desc: 'Knock down 75 trees', stat: 'trees', goal: 75 },
   sonic: { name: 'Sound Barrier', desc: 'Stay supersonic for 10 seconds straight', stat: 'boostStreak', goal: 10 },
+  chain: { name: 'Chain Reaction', desc: 'Blow up 50 explosives', stat: 'explosions', goal: 50 },
   billion: { name: 'Billionaire Problems', desc: 'Cause $1B of damage in one Rampage', stat: 'bestRampage', goal: 1e9 },
 };
 const SAVE_KEY = 'skybreaker-save-v1';
-const save = { stats: {}, unlocked: ['classic'], suit: 'classic' };
+const save = { stats: {}, unlocked: ['classic'], suit: 'classic', wallet: 0, powers: [] };
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) Object.assign(save, JSON.parse(raw)); } catch (e) { /* private mode: progress lasts this visit */ }
 if (!save.unlocked.includes('classic')) save.unlocked.push('classic');
 let saveDirty = false;
@@ -1751,11 +2065,12 @@ function applySuit(id) {
 const RAMPAGE_TIME = 120;
 let suitsBack = 'main';
 function showScreen(name) {
-  for (const s of ['main', 'pause', 'suits', 'results']) $('scr-' + s).hidden = s !== name;
+  for (const s of ['main', 'pause', 'suits', 'shop', 'results']) $('scr-' + s).hidden = s !== name;
   $('overlay').hidden = !name;
   $('pauseBtn').hidden = !!name || !state.mode;
   $('timer').hidden = !!name || state.mode !== 'rampage';
-  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; }
+  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('walletMini').textContent = fmtCash(save.wallet); }
+  if (name === 'shop') renderShop();
   if (name === 'suits') renderSuits();
   if (name) saveNow();
   const first = name && document.querySelector('#scr-' + name + ' button'); if (first) first.focus({ preventScroll: true });
@@ -1786,6 +2101,36 @@ function renderSuits() {
     card.append(sw, body, btn); list.append(card);
   }
 }
+const fmtCash = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : '$' + Math.round(n / 1e3) + 'K';
+let shopBack = 'main';
+function renderShop() {
+  $('walletLine').textContent = 'Wallet: ' + fmtCash(save.wallet);
+  const list = $('shopList'); list.textContent = '';
+  for (const pw of POWERS) {
+    const own = save.powers.includes(pw.id), afford = save.wallet >= pw.price;
+    const card = document.createElement('div'); card.className = 'suit' + (own ? ' on' : afford ? '' : ' locked');
+    const k = document.createElement('div'); k.className = 'pkey'; k.textContent = pw.key || '+';
+    const body = document.createElement('div'); body.className = 'sbody';
+    const nm = document.createElement('div'); nm.className = 'sname'; nm.textContent = pw.name;
+    const ds = document.createElement('div'); ds.className = 'sdesc'; ds.textContent = pw.desc + (pw.key ? ' Key: ' + pw.key + (pw.alt ? ' ' + pw.alt : '') + '.' : ' Always on.');
+    body.append(nm, ds);
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'equip';
+    btn.textContent = own ? 'OWNED' : fmtCash(pw.price); btn.disabled = own || !afford;
+    if (!own && !afford) btn.title = 'Need ' + fmtCash(pw.price - save.wallet) + ' more';
+    btn.addEventListener('click', () => { if (save.wallet < pw.price || own) return; save.wallet -= pw.price; save.powers.push(pw.id); saveNow(); sfxUnlock(); renderShop(); });
+    card.append(k, body, btn); list.append(card);
+  }
+}
+function buildPowerHud() {
+  const el = $('powers'); el.textContent = '';
+  for (const pw of POWERS) {
+    if (!pw.key || !hasPower(pw.id)) continue;
+    const c = document.createElement('div'); c.className = 'chip'; c.dataset.id = pw.id;
+    const b = document.createElement('b'); b.textContent = pw.key; c.append(b, document.createTextNode(pw.name)); el.append(c);
+  }
+  el.hidden = isTouch;
+  for (const [id, pw] of [['tSlam', 'slam'], ['tLaser', 'laser'], ['tShout', 'shout'], ['tClap', 'clap']]) $(id).hidden = !hasPower(pw);
+}
 function requestLock() {
   if (isTouch || noLock) return;
   try {
@@ -1801,7 +2146,8 @@ function resetHero() {
 }
 function startMode(mode) {
   resetWorld();
-  state.mode = mode; state.timeLeft = RAMPAGE_TIME;
+  state.mode = mode; state.timeLeft = RAMPAGE_TIME + (hasPower('overtime') ? 45 : 0);
+  buildPowerHud();
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
   $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
   $('help').style.opacity = '1'; clearTimeout(startMode.t); startMode.t = setTimeout(() => { $('help').style.opacity = '0'; }, 12000);
@@ -1825,7 +2171,10 @@ function endRampage() {
   $('rScore').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
   $('rBest').textContent = state.damage > r.prevBest ? 'New best!' : 'Best: $' + Math.round(stat('bestRampage')).toLocaleString('en-US');
   $('rBest').classList.toggle('newbest', state.damage > r.prevBest);
-  const rows = [['Buildings wrecked', state.wrecked], ['Buildings flattened', r.leveled || 0], ['Cars thrown', r.cars || 0], ['Trees down', r.trees || 0], ['Meteor slams', r.slams || 0], ['Best combo', '×' + r.maxCombo]];
+  const cut = Math.round(state.damage * .01 + 100000);
+  save.wallet = (save.wallet || 0) + cut; saveNow();
+  $('rCut').innerHTML = 'Your cut <b>+' + fmtCash(cut) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>';
+  const rows = [['Buildings wrecked', state.wrecked], ['Buildings flattened', r.leveled || 0], ['Explosions', r.explosions || 0], ['Cars thrown', r.cars || 0], ['Trees down', r.trees || 0], ['Best combo', '×' + r.maxCombo]];
   const st = $('rStats'); st.textContent = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
   const un = $('rUnlocks'); un.textContent = '';
@@ -1857,6 +2206,8 @@ function resetWorld() {
   trees.forEach((t, i) => { t.st = 0; t.ang = 0; t.w = 0; writeTree(i); });
   trunkMesh.instanceMatrix.needsUpdate = crownMesh.instanceMatrix.needsUpdate = true;
   carList.forEach(placeCar);
+  resetExplosives(); pending.length = 0; cds.shout = cds.clap = 0; boomLight.intensity = 0;
+  for (const f of fires) { f.life = 0; f.s.visible = false; }
   for (const p of pools) p.clear(); glassPool.clear();
   for (const d of dust) { d.life = 0; d.s.visible = false; }
   for (const r of rings) { r.life = 0; r.m.visible = false; }
@@ -1870,6 +2221,9 @@ $('mRampage').addEventListener('click', () => startMode('rampage'));
 $('openSuits').addEventListener('click', () => { suitsBack = 'main'; showScreen('suits'); });
 $('pSuits').addEventListener('click', () => { suitsBack = 'pause'; showScreen('suits'); });
 $('rSuits').addEventListener('click', () => { suitsBack = 'results'; showScreen('suits'); });
+$('openShop').addEventListener('click', () => { shopBack = 'main'; showScreen('shop'); });
+$('rShop').addEventListener('click', () => { shopBack = 'results'; showScreen('shop'); });
+$('shBack').addEventListener('click', () => showScreen(shopBack));
 $('sBack').addEventListener('click', () => showScreen(suitsBack));
 $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
@@ -1888,6 +2242,10 @@ function simulate(dt) {
   updateFalling(dt);
   updateTrees(dt);
   updateDecals(dt);
+  if (state.playing) updatePending(dt);
+  updateFire(dt);
+  boomLight.intensity *= Math.exp(-dt * 7);
+  updateLaser(dt);
   for (const p of pools) p.update(dt);
   glassPool.update(dt);
   updateDust(dt);
@@ -1908,6 +2266,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { explosives, explode, superShout, thunderClap, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>

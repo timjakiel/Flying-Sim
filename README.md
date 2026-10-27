@@ -6,7 +6,22 @@ Open `index.html` in a browser (needs internet for Three.js from the CDN).
 
 ## Modes
 - **Sandbox**: fly around and wreck whatever you like. No clock. Pause and hit *Rebuild the city* to get a fresh skyline.
-- **Rampage**: two minutes on the clock. Your score is the dollar value of everything you destroy. Your best score is saved.
+- **Rampage**: two-minute rounds scored on the dollar value of everything you destroy. Every round pays you 1% of the damage plus a $100K appearance fee, and you spend that in the **Power shop**. Your best score and wallet are saved.
+
+## Powers
+Sandbox has all of them. In Rampage you buy them in the shop.
+
+| Power | Key | Price |
+| --- | --- | --- |
+| Meteor Slam: rocket off the street, or drop feet-first into a crater | X | $400K |
+| Super Shout: a sonic roar that blows apart a cone in front of you | V | $1.2M |
+| Overtime: +45 s every Rampage round | passive | $1.5M |
+| Thunder Clap: flattens everything around you | G | $1.8M |
+| Laser Vision: hold to carve through what you look at | L / right-click | $2.5M |
+| Titan Fists: punch holes 50% wider | passive | $3M |
+
+## Explosives
+Gas cans, oil drums, propane tanks and parked fuel tankers are scattered around the streets. Fly into one, laser it, or catch it in a blast and it goes up, setting off anything else nearby in a chain reaction.
 
 ## Suits
 Every achievement unlocks a suit. Equip them from *Suits & achievements* in the menu. Progress counts in both modes and is saved in your browser.
@@ -23,6 +38,7 @@ Every achievement unlocks a suit. Equip them from *Suits & achievements* in the 
 | Inferno | Superhero Landing: land 10 meteor slams |
 | Ranger | Timber!: knock down 75 trees |
 | Chrome | Sound Barrier: stay supersonic for 10 seconds |
+| Hazmat | Chain Reaction: blow up 50 explosives |
 | Solid Gold (with cape) | Billionaire Problems: $1B of damage in one Rampage |
 
 ## Controls
@@ -34,7 +50,7 @@ Every achievement unlocks a suit. Equip them from *Suits & achievements* in the 
 | Q / C | Descend |
 | Shift | Supersonic boost |
 | Click / F | Punch-dash |
-| X | On the ground: rocket launch. In the air: meteor slam down feet-first |
+| X / V / G / L | Powers (see above) |
 | R | Back to the sky |
 | P / Esc | Pause |
 | M | Mute |
