@@ -5,7 +5,7 @@ Fly around a big city like a certain yellow-and-blue superhero and punch straigh
 Open `index.html` in a browser (needs internet for Three.js from the CDN).
 
 ## The fight (main game)
-Five supervillains are tearing the city apart. Pick your hero (**Hero** on the main menu), pick one or more villains and a difficulty, and take them down. Tap villains in the roster to add or remove them: pick two for a 2v1, or all five if you hate yourself. Every fight opens with a short intro for each villain: he drops out of the sky, craters the street and gets a title card with his powers and a one-liner (click, tap or press Space to skip). Every villain in the fight gets his own health bar and screen marker, and multi-villain wins pay each villain's bounty plus 25%. Win to collect a bounty and spend it on power upgrades, which make you stronger in every fight. **Next villain** on the victory screen sends you straight into the next one.
+Five supervillains are tearing the city apart. Pick your hero (**Hero** on the main menu), pick one or more villains and a difficulty, and take them down. Tap villains in the roster to add or remove them: pick two for a 2v1, or all five if you hate yourself. Fights have their own synthesized battle score: a tense drone and timpani build under the intro, a 150 bpm orchestral-style track (drums, driving bass, string ostinato, brass stabs and a hero theme) during the fight that gets more frantic when someone is close to going down, and a fanfare or sting at the end. **N** toggles the music (also in the pause menu), **M** mutes everything. Every fight opens with a short intro for each villain: he drops out of the sky, craters the street and gets a title card with his powers and a one-liner (click, tap or press Space to skip). Every villain in the fight gets his own health bar and screen marker, and multi-villain wins pay each villain's bounty plus 25%. Win to collect a bounty and spend it on power upgrades, which make you stronger in every fight. **Next villain** on the victory screen sends you straight into the next one.
 
 | Villain | Mirror of | Powers (all villains also ram and meteor-slam) |
 | --- | --- | --- |
@@ -92,6 +92,7 @@ Every achievement unlocks a suit. Only Rampage rounds count toward them; Sandbox
 | Right-click / V | Use the power (hold for beams) |
 | R | Back to the sky |
 | P / Esc | Pause |
+| N | Music on/off |
 | M | Mute |
 
 On phones: left stick flies, drag to look, buttons for boost / punch / up / down.

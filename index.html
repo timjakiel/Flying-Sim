@@ -302,6 +302,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
       <div><span>DIVE</span><span>Crater the street</span></div>
       <div><span>R</span><span>Back to the sky</span></div>
       <div><span>P / ESC</span><span>Pause</span></div>
+      <div><span>N / M</span><span>Music / all sound on-off</span></div>
       <div class="foot">* Your hero's powers. Bought and upgraded in the power shop; Sandbox has them all at max.</div>
     </div>
     </details>
@@ -310,6 +311,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
     <h2 id="pauseTitle">Paused</h2>
     <button class="btn" id="pResume" type="button">RESUME</button>
     <button class="ghost" id="pRebuild" type="button">Rebuild the city</button>
+    <button class="ghost" id="pMusic" type="button">Music: on</button>
     <button class="ghost" id="pSuits" type="button">Suits &amp; achievements</button>
     <button class="ghost" id="pQuit" type="button">Quit to menu</button>
   </div>
@@ -2183,6 +2185,7 @@ addEventListener('keydown', (e) => {
   if (k === 'v' && !e.repeat) useAbility();
   if (k === '1' || k === '2' || k === '3') pickAbility(+k - 1);
   if (k === 'r') resetHero();
+  if (k === 'n') toggleMusic();
   if (k === 'm') { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : .55; }
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
@@ -2668,7 +2671,7 @@ function requestLock() {
   } catch (e) { noLock = true; }
   canvas.focus();
 }
-function enterPlay() { showScreen(null); state.playing = true; initAudio(); requestLock(); }
+function enterPlay() { showScreen(null); state.playing = true; initAudio(); requestLock(); if (MUS.mode === 'fight') musVol(1, .3); }
 function resetHero() {
   P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch;
   P.slamming = false; P.landT = 0; P.launchT = 0; P.dashT = 0; state.boostStreak = 0;
@@ -2680,13 +2683,15 @@ function startMode(mode, diff) {
   buildPowerHud();
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
   $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
-  if (mode === 'showdown') startShowdown(diff || 'normal'); else endShowdownWorld();
+  if (mode === 'showdown') startShowdown(diff || 'normal'); else { endShowdownWorld(); musStop(); }
   if (mode === 'showdown') { showScreen(null); initAudio(); requestLock(); startCutscene(); }
   else enterPlay();
   if (mode === 'rampage') popup('RAMPAGE!', true);
 }
 function pauseGame() {
   if (!state.playing) return;
+  if (MUS.mode !== 'off') musVol(.3, .3);
+  $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off');
   state.playing = false; keys.clear();
   $('pRebuild').hidden = state.mode !== 'sandbox';
   $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : state.mode === 'showdown' ? 'Showdown paused' : 'Paused';
@@ -2763,12 +2768,13 @@ $('shBack').addEventListener('click', () => showScreen(shopBack));
 $('sBack').addEventListener('click', () => showScreen(suitsBack));
 $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
-$('pQuit').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('pQuit').addEventListener('click', () => { musStop(); endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('rAgain').addEventListener('click', () => startMode(state.lastMode || 'rampage', state.lastDiff));
 $('rNext').addEventListener('click', () => { const n = VILLAINS[VILLAINS.indexOf(selectedVillains()[0]) + 1]; if (n) { save.villains = [n.id]; save.villain = n.id; startMode('showdown', state.lastDiff); } });
 for (const d of ['easy', 'normal', 'hard']) $('sd-' + d).addEventListener('click', () => startMode('showdown', d));
-$('rMenu').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('rMenu').addEventListener('click', () => { musStop(); endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('pauseBtn').addEventListener('click', pauseGame);
+$('pMusic').addEventListener('click', toggleMusic);
 applySuit(save.suit);
 
 // ---------------------------------------------------------------- showdown: the Warlord
@@ -2906,6 +2912,7 @@ function villainDown() {
 }
 function endShowdown(win) {
   if (S.over) return;
+  musSting(win);
   S.over = true; state.playing = false; keys.clear();
   if (document.pointerLockElement) document.exitPointerLock();
   const t = S.time, mm = Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
@@ -3288,6 +3295,7 @@ function villainInRange(p, r) { return state.mode === 'showdown' && S.foes.some(
 const LAND_T = .9, SHOT_T = 3.1, GROUP_T = 1.4;
 const camFrom = new V3(), camAt = new V3(), camTmp = new V3();
 function startCutscene() {
+  musPlay('intro');
   state.playing = false; state.cut = { idx: 0, t: 0 };
   document.body.classList.add('cut');
   $('intro').hidden = false; $('introCard').hidden = true;
@@ -3354,6 +3362,7 @@ function skipCutscene() {
   endCutscene();
 }
 function endCutscene() {
+  musPlay('fight');
   state.cut = null; document.body.classList.remove('cut');
   $('intro').hidden = true; $('introCard').hidden = true;
   for (const f of S.foes) { bindFoe(f); V.act = null; V.vel.set(0, 25, 0); }
@@ -3363,12 +3372,132 @@ function endCutscene() {
   sfxBoom();
 }
 
+// ---------------------------------------------------------------- battle music (synthesized live)
+// 150 bpm in D minor, i–VI–VII–V. An 8-bar loop: bars 1–4 drums, bass, string ostinato and pad;
+// bars 5–8 add brass stabs and the hero theme. The intro under the cut scene is a drone, timpani
+// and a riser; wins get a fanfare, losses a sting.
+const MUS = { on: save.music !== false, out: null, rev: null, white: null, timer: null, mode: 'off', step: 0, nextT: 0, bar: 0, introT: 0 };
+const BPM = 150, STEP = 60 / BPM / 4;
+function toggleMusic() { MUS.on = !MUS.on; save.music = MUS.on; saveDirty = true; musVol(state.playing ? 1 : .3, .2); $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off'); popup(MUS.on ? 'MUSIC ON' : 'MUSIC OFF', false); }
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+const CHORDS = [[50, [0, 3, 7]], [46, [0, 4, 7]], [48, [0, 4, 7]], [45, [0, 4, 7]]]; // Dm, Bb, C, A
+const THEME = [
+  [[0, 74, 6], [6, 72, 2], [8, 74, 4], [12, 77, 4]],
+  [[0, 74, 6], [6, 72, 2], [8, 70, 8]],
+  [[0, 72, 6], [6, 74, 2], [8, 76, 4], [12, 79, 4]],
+  [[0, 81, 8], [8, 79, 4], [12, 76, 4]],
+];
+function musInit() {
+  if (!AC || MUS.out) return;
+  MUS.out = AC.createGain(); MUS.out.gain.value = 0;
+  const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
+  MUS.out.connect(comp); comp.connect(master);
+  const len = AC.sampleRate * 2.4, ir = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+  const conv = AC.createConvolver(); conv.buffer = ir;
+  MUS.rev = AC.createGain(); MUS.rev.gain.value = .5; MUS.rev.connect(conv); conv.connect(MUS.out);
+  MUS.white = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+  const w = MUS.white.getChannelData(0); for (let i = 0; i < w.length; i++) w[i] = Math.random() * 2 - 1;
+}
+function env(g, t, a, peak, d, tail = .001) { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(tail, t + a + d); }
+function voice(type, freq, t, dur, vol, o = {}) {
+  const g = AC.createGain(); let node = g;
+  if (o.cut) { const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = o.q || .7; f.frequency.setValueAtTime(o.cut, t); if (o.cutTo) f.frequency.exponentialRampToValueAtTime(o.cutTo, t + dur); f.connect(g); node = f; }
+  const oscs = (o.det || [0]).map((det) => { const os = AC.createOscillator(); os.type = type; os.frequency.setValueAtTime(freq, t); os.detune.value = det; os.connect(node); os.start(t); os.stop(t + dur + (o.rel || .15) + .05); return os; });
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (o.att || .01));
+  g.gain.setValueAtTime(vol, t + Math.max(o.att || .01, dur - .02)); g.gain.exponentialRampToValueAtTime(.0001, t + dur + (o.rel || .15));
+  g.connect(MUS.out); if (o.rev) { const s = AC.createGain(); s.gain.value = o.rev; g.connect(s); s.connect(MUS.rev); }
+  return oscs;
+}
+function noiseHit(t, dur, vol, type, freq, rev = 0) {
+  const s = AC.createBufferSource(); s.buffer = MUS.white;
+  const f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = AC.createGain(); env(g, t, .002, vol, dur);
+  s.connect(f); f.connect(g); g.connect(MUS.out); if (rev) { const r = AC.createGain(); r.gain.value = rev; g.connect(r); r.connect(MUS.rev); }
+  s.start(t); s.stop(t + dur + .05);
+}
+function drum(kind, t, vol = 1) {
+  if (kind === 'kick') { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + .22); env(g, t, .003, .9 * vol, .32); o.connect(g); g.connect(MUS.out); o.start(t); o.stop(t + .4); }
+  else if (kind === 'timp') { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(70, t + .5); env(g, t, .004, .7 * vol, .9); o.connect(g); g.connect(MUS.out); const r = AC.createGain(); r.gain.value = .4; g.connect(r); r.connect(MUS.rev); o.start(t); o.stop(t + 1); noiseHit(t, .12, .2 * vol, 'lowpass', 900); }
+  else if (kind === 'snare') { noiseHit(t, .16, .45 * vol, 'highpass', 1500, .25); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = 190; env(g, t, .002, .25 * vol, .1); o.connect(g); g.connect(MUS.out); o.start(t); o.stop(t + .15); }
+  else if (kind === 'hat') noiseHit(t, .04, .09 * vol, 'highpass', 8000);
+  else if (kind === 'tom') { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(vol, t); o.frequency.exponentialRampToValueAtTime(vol * .6, t + .3); env(g, t, .003, .55, .35); o.connect(g); g.connect(MUS.out); const r = AC.createGain(); r.gain.value = .3; g.connect(r); r.connect(MUS.rev); o.start(t); o.stop(t + .45); }
+  else if (kind === 'crash') noiseHit(t, 1.6, .28 * vol, 'highpass', 4500, .5);
+}
+function musStep(t) {
+  const s = MUS.step % 16, bar = Math.floor(MUS.step / 16) % 8, [root, tri] = CHORDS[bar % 4];
+  const hype = MUS.hype;
+  if (MUS.mode === 'intro') {
+    if (s === 0) { for (const iv of [0, 7, 12]) voice('sawtooth', mtof(root - 12 + iv + (bar % 2 ? 0 : 0)), t, STEP * 16, .035, { det: [-8, 8], cut: 500, cutTo: 900 + MUS.introT * 400, att: .6, rel: .8, rev: .6 }); }
+    if (s === 0 || s === 8) drum('timp', t, .7 + Math.min(.5, MUS.introT * .1));
+    if (MUS.introT > 2 && s % 4 === 0) drum('timp', t, .4);
+    return;
+  }
+  // drums
+  if ([0, 7, 8, 10].includes(s) || (hype && s === 14)) drum('kick', t);
+  if (s === 4 || s === 12) drum('snare', t);
+  if (hype ? true : s % 2 === 0) drum('hat', t, s % 4 === 2 ? 1.3 : .8);
+  if ((bar === 3 || bar === 7) && s >= 12) drum('tom', t, [220, 180, 150, 120][s - 12]);
+  if (s === 0 && bar === 0) drum('crash', t);
+  if (s === 0 && bar === 4) drum('crash', t, .8);
+  // bass: driving eighths with an octave kick
+  if (s % 2 === 0) voice('sawtooth', mtof(root - 12 + (s === 6 || s === 14 ? 12 : 0)), t, STEP * 1.6, .16, { cut: 420, q: 2, rel: .05 });
+  // string ostinato: sixteenth arpeggio
+  const arp = [0, tri[1], tri[2], 12][s % 4];
+  voice('sawtooth', mtof(root + 12 + arp), t, STEP * .9, .028, { det: [-6, 6], cut: 2400, rel: .06, rev: .25 });
+  // pad
+  if (s === 0) for (const iv of tri) voice('triangle', mtof(root + 12 + iv), t, STEP * 15.5, .04, { det: [-5, 5], att: .3, rel: .5, rev: .7 });
+  // brass stabs, bigger in the second half
+  const stabs = bar >= 4 ? [0, 6, 10] : [0];
+  if (stabs.includes(s)) for (const iv of tri) voice('sawtooth', mtof(root + iv), t, STEP * (s === 0 ? 3 : 1.5), .05, { det: [-10, 0, 10], cut: 600, cutTo: 2200, q: 1.5, att: .02, rel: .25, rev: .45 });
+  // hero theme
+  if (bar >= 4) for (const [st, m, len] of THEME[bar - 4]) if (st === s) {
+    const os = voice('sawtooth', mtof(m), t, STEP * len - .02, .055, { det: [-7, 7], cut: 1400, cutTo: 3200, q: 1.2, att: .04, rel: .2, rev: .5 });
+    for (const o of os) { const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 5.5; lg.gain.value = 9; lfo.connect(lg); lg.connect(o.detune); lfo.start(t + .15); lfo.stop(t + STEP * len + .3); }
+  }
+}
+function musTick() {
+  if (!AC || MUS.mode === 'off') return;
+  while (MUS.nextT < AC.currentTime + .15) { musStep(MUS.nextT); MUS.nextT += STEP; MUS.step++; }
+}
+function musVol(v, ramp = .4) { if (MUS.out) MUS.out.gain.setTargetAtTime(MUS.on ? v : 0, AC.currentTime, ramp); }
+function musPlay(mode) {
+  if (!AC) return; musInit();
+  if (MUS.mode === 'off' || mode === 'fight') { MUS.step = 0; MUS.nextT = AC.currentTime + .08; }
+  MUS.mode = mode; MUS.introT = 0;
+  if (!MUS.timer) MUS.timer = setInterval(musTick, 25);
+  musVol(mode === 'intro' ? .8 : 1, mode === 'intro' ? .8 : .05);
+}
+function musStop(fade = .6) { if (!AC || MUS.mode === 'off') return; MUS.mode = 'off'; musVol(0, fade / 3); clearInterval(MUS.timer); MUS.timer = null; }
+function musSting(win) {
+  if (!AC) return; musInit(); musStop(.2);
+  const t = AC.currentTime + .25;
+  setTimeout(() => musVol(1, .02), 260);
+  if (win) {
+    drum('crash', t); drum('timp', t);
+    [[62, 0], [66, .18], [69, .36], [74, .54]].forEach(([m, d]) => voice('sawtooth', mtof(m), t + d, .5, .07, { det: [-10, 0, 10], cut: 900, cutTo: 3000, att: .02, rel: .4, rev: .5 }));
+    for (const m of [62, 66, 69, 74, 78]) voice('sawtooth', mtof(m), t + .8, 1.8, .045, { det: [-10, 10], cut: 1200, cutTo: 3500, att: .05, rel: 1.2, rev: .7 });
+    drum('crash', t + .8); drum('timp', t + .8, 1.2);
+  } else {
+    drum('timp', t, 1.2);
+    [[62, 0], [61, .45], [60, .9], [57, 1.35]].forEach(([m, d]) => voice('sawtooth', mtof(m - 12), t + d, .55, .07, { det: [-12, 12], cut: 700, att: .03, rel: .5, rev: .6 }));
+    for (const m of [38, 45, 50, 53]) voice('sawtooth', mtof(m), t + 1.8, 2.2, .045, { det: [-8, 8], cut: 600, att: .1, rel: 1.4, rev: .7 });
+    drum('timp', t + 1.8, 1.3);
+  }
+  setTimeout(() => { if (MUS.mode === 'off') musVol(0, .5); }, 4800);
+}
+function musUpdate(dt) {
+  if (MUS.mode === 'intro') MUS.introT += dt;
+  if (MUS.mode === 'fight') MUS.hype = S.hp < PLAYER_HP * .35 || S.foes.some((f) => !f.V.dead && f.V.hp < f.V.maxHp * .3);
+}
+
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
 function simulate(dt) {
   if (state.playing) updateFlight(dt);
   updateVillain(dt);
   if (state.cut) updateCutscene(dt);
+  musUpdate(dt);
   updateMode(dt);
   updateHero(dt);
   updateFalling(dt);
@@ -3403,6 +3532,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
