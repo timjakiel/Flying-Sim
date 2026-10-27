@@ -82,7 +82,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   <div id="alt">ALT 0 m</div>
   <div id="boostTag">SUPERSONIC</div>
 </div>
-<div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>Dive</b> into the street to crater it</div>
+<div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>X</b> launch / slam down</div>
 <div id="popups"></div>
 
 <div id="touch" hidden>
@@ -92,6 +92,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <div class="tbtn big" id="tBoost">BOOST</div>
     <div class="tbtn" id="tDown">DOWN</div>
     <div class="tbtn big" id="tDash">PUNCH</div>
+    <div class="tbtn" id="tSlam">SLAM</div>
   </div>
 </div>
 
@@ -107,6 +108,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
       <div><span>Q / C</span><span>Descend</span></div>
       <div><span>SHIFT</span><span>Supersonic boost</span></div>
       <div><span>CLICK / F</span><span>Punch-dash</span></div>
+      <div><span>X</span><span>Launch / slam down</span></div>
       <div><span>DIVE</span><span>Crater the street</span></div>
       <div><span>R</span><span>Back to the sky</span></div>
       <div><span>M</span><span>Mute</span></div>
@@ -499,7 +501,8 @@ function crater(x, z, R, depth) {
     col.setXYZ(k, Math.min(col.getX(k), s), Math.min(col.getY(k), s * .97), Math.min(col.getZ(k), s * .94));
   }
   pos.needsUpdate = true; col.needsUpdate = true;
-  craterQueued = true; // normals recomputed once at end of frame
+  craterQueued = true;
+  reconformDecals(x, z, R); // normals recomputed once at end of frame
 }
 
 // ---------------------------------------------------------------- trees, parks
@@ -806,7 +809,7 @@ const heroModel = new THREE.Group(); hero.add(heroModel);
 
 // ---------------------------------------------------------------- state
 const START = { pos: new V3(0, 150, HALF + 160), yaw: 0, pitch: -0.18 };
-const P = { pos: START.pos.clone(), vel: new V3(), yaw: START.yaw, pitch: START.pitch, boosting: false, dashT: 0 };
+const P = { pos: START.pos.clone(), vel: new V3(), yaw: START.yaw, pitch: START.pitch, boosting: false, dashT: 0, slamming: false, landT: 0, launchT: 0 };
 const state = { damage: 0, wrecked: 0, combo: 0, comboT: 0, comboCash: 0, shake: 0, slamCd: 0, started: false, muted: false, lastCrash: 0 };
 const keys = new Set();
 const input = { lookX: 0, lookY: 0, stickX: 0, stickY: 0, tUp: false, tDown: false, tBoost: false };
@@ -1145,9 +1148,99 @@ function blast(p, r, vel) {
   }
   return cash;
 }
-function groundSlam(p, impact) {
-  const R = clamp(impact / 8, 7, 24);
+// spiderweb cracks: a ground-hugging decal that follows craters
+function crackLine(g, x, y, a, len, w, depth) {
+  const steps = 10; let px = x, py = y;
+  for (let i = 0; i < steps; i++) {
+    a += rand(-.4, .4);
+    const nx = px + Math.cos(a) * len / steps, ny = py + Math.sin(a) * len / steps, lw = w * (1 - i / steps) + .7;
+    g.strokeStyle = 'rgba(14,12,10,.88)'; g.lineWidth = lw; g.beginPath(); g.moveTo(px, py); g.lineTo(nx, ny); g.stroke();
+    g.strokeStyle = 'rgba(255,248,235,.16)'; g.lineWidth = lw * .45; g.beginPath(); g.moveTo(px + lw * .7, py + lw * .7); g.lineTo(nx + lw * .7, ny + lw * .7); g.stroke();
+    if (depth < 2 && Math.random() < .2) crackLine(g, nx, ny, a + rand(-1.1, 1.1), len * rand(.25, .5), lw * .7, depth + 1);
+    px = nx; py = ny;
+  }
+}
+const crackTex = [0, 1, 2].map(() => canvasTex(512, (g, S) => {
+  const c = S / 2;
+  g.clearRect(0, 0, S, S); g.lineCap = 'round'; g.lineJoin = 'round';
+  const gr = g.createRadialGradient(c, c, 0, c, c, S * .2);
+  gr.addColorStop(0, 'rgba(22,19,16,.9)'); gr.addColorStop(.55, 'rgba(30,26,22,.55)'); gr.addColorStop(1, 'rgba(30,26,22,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 70; i++) { // crushed fragments near the impact point
+    const a = rand(0, 6.28), r = rand(0, S * .14), x = c + Math.cos(a) * r, y = c + Math.sin(a) * r, k = rand(4, 12);
+    g.fillStyle = Math.random() < .5 ? 'rgba(10,9,8,.7)' : 'rgba(190,182,170,.35)';
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + k, y + rand(-k, k)); g.lineTo(x + rand(-k, k), y + k); g.closePath(); g.fill();
+  }
+  const n = 16 + (Math.random() * 8 | 0);
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + rand(-.15, .15), r0 = rand(6, 30); crackLine(g, c + Math.cos(a) * r0, c + Math.sin(a) * r0, a, S * rand(.24, .46), rand(3, 7), 0); }
+  for (const rf of [.12, .21, .31]) { // broken concentric fracture rings
+    let a = rand(0, 6.28); const end = a + Math.PI * 2;
+    while (a < end) {
+      const span = rand(.3, .9); g.beginPath();
+      for (let b = a; b < Math.min(a + span, end); b += .06) { const r = S * rf * rand(.94, 1.06); const x = c + Math.cos(b) * r, y = c + Math.sin(b) * r; b === a ? g.moveTo(x, y) : g.lineTo(x, y); }
+      g.strokeStyle = 'rgba(14,12,10,.75)'; g.lineWidth = rand(1.5, 3.5); g.stroke();
+      a += span + rand(.1, .6);
+    }
+  }
+}));
+const decals = [];
+for (let i = 0; i < 12; i++) {
+  const geo = new THREE.PlaneGeometry(1, 1, 24, 24);
+  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: crackTex[i % 3], transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  m.visible = false; m.receiveShadow = true; m.frustumCulled = false; m.renderOrder = 1; scene.add(m);
+  decals.push({ m, base: geo.attributes.position.array.slice(), x: 0, z: 0, size: 0, rot: 0, life: 0 });
+}
+let decalIdx = 0;
+function conformDecal(d) {
+  const pos = d.m.geometry.attributes.position, b = d.base, c = Math.cos(d.rot), s = Math.sin(d.rot);
+  for (let i = 0; i < pos.count; i++) {
+    const px = b[i * 3] * d.size, py = b[i * 3 + 1] * d.size, wx = d.x + px * c - py * s, wz = d.z - (px * s + py * c);
+    pos.setXYZ(i, wx, groundH(wx, wz) + .07, wz);
+  }
+  pos.needsUpdate = true; d.m.geometry.computeVertexNormals();
+}
+function addCracks(x, z, size) {
+  const d = decals[decalIdx = (decalIdx + 1) % decals.length];
+  Object.assign(d, { x, z, size, rot: rand(0, 6.28), life: 50 });
+  d.m.material.opacity = 1; d.m.visible = true; conformDecal(d);
+}
+function reconformDecals(x, z, R) { for (const d of decals) if (d.life > 0 && Math.hypot(d.x - x, d.z - z) < d.size / 2 + R * 1.5) conformDecal(d); }
+function updateDecals(dt) {
+  for (const d of decals) { if (d.life <= 0) continue; d.life -= dt; d.m.material.opacity = clamp(d.life / 6, 0, 1); if (d.life <= 0) d.m.visible = false; }
+}
+
+// one key does both: punch off the ground like a rocket, or drop out of the sky feet-first
+function superMove() {
+  if (!state.started) return;
+  const h = P.pos.y - groundH(P.pos.x, P.pos.z);
+  if (h < 6) launch();
+  else if (!P.slamming) { P.slamming = true; P.dashT = 0; spawnRing(P.pos.clone(), DOWN, false); sfxBoom(); state.shake = Math.max(state.shake, .4); }
+}
+function launch() {
+  const gx = P.pos.x, gz = P.pos.z;
+  P.landT = 0; P.slamming = false;
+  crater(gx, gz, 6, 1.3);
+  addCracks(gx, gz, 30);
+  const g0 = groundH(gx, gz);
+  const cash = blast(new V3(gx, g0 + 1, gz), 7, new V3(0, 40, 0));
+  for (let q = 0; q < 34; q++) {
+    const a = rand(0, Math.PI * 2), d = rand(0, 5);
+    tmpV.set(gx + Math.cos(a) * d, g0 + .4, gz + Math.sin(a) * d);
+    tmpV3.set(Math.cos(a) * rand(2, 9), rand(14, 40), Math.sin(a) * rand(2, 9));
+    pools[1].spawn(tmpV, tmpV3, rand(.3, 1.2), Math.random() < .6 ? ASPHALT_COL : CONCRETE_COL);
+  }
+  spawnDust(tmpV.set(gx, g0 + 1.5, gz), 5, 7, CONCRETE_COL);
+  spawnRing(tmpV.set(gx, g0 + .8, gz), UP, true);
+  P.vel.set(P.vel.x * .3, 270, P.vel.z * .3); P.dashT = .8; P.launchT = .9;
+  state.damage += 150000 + cash; state.shake = Math.max(state.shake, 1.1);
+  sfxBoom(); sfxCrash(.8);
+  popup('LIFTOFF', true);
+}
+
+function groundSlam(p, impact, meteor) {
+  const R = meteor ? 30 : clamp(impact / 8, 7, 24);
   crater(p.x, p.z, R, R * .32);
+  addCracks(p.x, p.z, R * 3.2);
   const cash = blast(tmpV2.set(p.x, groundH(p.x, p.z) + 1, p.z).clone(), R * 1.1, P.vel.clone().multiplyScalar(.2));
   // chunks of road
   for (let q = 0; q < 40; q++) {
@@ -1247,7 +1340,8 @@ addEventListener('keydown', (e) => {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
   if (!state.started) return;
   if (k === 'f') dash();
-  if (k === 'r') { P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch; }
+  if (k === 'x') superMove();
+  if (k === 'r') { P.slamming = false; P.landT = 0; P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch; }
   if (k === 'm') { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : .55; }
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
@@ -1292,6 +1386,7 @@ if (isTouch) {
     const up = () => { input[prop] = false; b.classList.remove('held'); }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); };
   hold('tUp', 'tUp'); hold('tDown', 'tDown'); hold('tBoost', 'tBoost');
   $('tDash').addEventListener('pointerdown', (e) => { e.preventDefault(); dash(); });
+  $('tSlam').addEventListener('pointerdown', (e) => { e.preventDefault(); superMove(); });
   const looks = new Map();
   canvas.addEventListener('pointerdown', (e) => { looks.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', (e) => { const l = looks.get(e.pointerId); if (!l) return; lookDelta(e.clientX - l[0], e.clientY - l[1], .0055); l[0] = e.clientX; l[1] = e.clientY; });
@@ -1340,8 +1435,16 @@ function updateFlight(dt) {
   const maxSp = P.boosting ? 240 : 75;
   const rate = wish.lengthSq() > 0 ? (P.boosting ? 1.4 : 2.6) : 2.2;
   P.dashT = Math.max(0, P.dashT - dt); state.slamCd -= dt;
-  const k = 1 - Math.exp(-dt * (P.dashT > 0 ? .4 : rate));
-  P.vel.lerp(wish.multiplyScalar(maxSp), k);
+  P.launchT = Math.max(0, P.launchT - dt);
+  if (P.slamming) { // meteor drop: straight down, a little steering
+    P.vel.x = lerp(P.vel.x, wish.x * 40, 1 - Math.exp(-dt * 3)); P.vel.z = lerp(P.vel.z, wish.z * 40, 1 - Math.exp(-dt * 3)); P.vel.y = -330;
+  } else if (P.landT > 0) { // superhero landing: hold the pose for a beat
+    P.landT -= dt; P.vel.set(0, 0, 0); P.pos.y = groundH(P.pos.x, P.pos.z) + 1.2;
+    if (P.landT < .45 && wish.lengthSq() > .01) P.landT = 0;
+  } else {
+    const k = 1 - Math.exp(-dt * (P.dashT > 0 ? .4 : rate));
+    P.vel.lerp(wish.multiplyScalar(maxSp), k);
+  }
   if (P.boosting && !wasBoost) { spawnRing(P.pos.clone(), fwd, true); sfxBoom(); state.shake = Math.max(state.shake, .5); }
   wasBoost = P.boosting;
 
@@ -1351,7 +1454,10 @@ function updateFlight(dt) {
     P.pos.addScaledVector(P.vel, dt / steps);
     const gh = groundH(P.pos.x, P.pos.z) + 1.2;
     if (P.pos.y < gh) {
-      if (P.vel.y < -40 && state.slamCd <= 0) { groundSlam(P.pos, -P.vel.y); state.slamCd = .35; P.vel.y = 18; }
+      if (P.vel.y < -40 && state.slamCd <= 0) {
+        groundSlam(P.pos, -P.vel.y, P.slamming); state.slamCd = .35;
+        P.slamming = false; P.landT = .9; P.vel.set(0, 0, 0);
+      }
       P.pos.y = Math.max(P.pos.y, groundH(P.pos.x, P.pos.z) + 1.2); if (P.vel.y < 0) P.vel.y = 0;
     }
     if (P.pos.y > 1400) { P.pos.y = 1400; P.vel.y = Math.min(0, P.vel.y); }
@@ -1367,7 +1473,7 @@ let animT = 0;
 function updateHero(dt) {
   animT += dt;
   const sp = P.vel.length();
-  const t = clamp((sp - 10) / 45, 0, 1);
+  const t = (P.slamming || P.landT > 0) ? 0 : clamp((sp - 10) / 45, 0, 1);
   fH.set(-Math.sin(P.yaw), 0, -Math.cos(P.yaw));
   if (sp > 1) vdir.copy(P.vel).divideScalar(sp); else vdir.copy(fH);
   yA.copy(UP).lerp(vdir, t); if (yA.lengthSq() < .01) yA.copy(vdir); yA.normalize();
@@ -1377,9 +1483,9 @@ function updateHero(dt) {
   zA.addScaledVector(yA, -zA.dot(yA)); if (zA.lengthSq() < 1e-4) zA.set(0, 0, 1); zA.normalize();
   xA.crossVectors(yA, zA).normalize();
   mBasis.makeBasis(xA, yA, zA); qTarget.setFromRotationMatrix(mBasis);
-  hero.quaternion.slerp(qTarget, 1 - Math.exp(-dt * 9));
+  hero.quaternion.slerp(qTarget, 1 - Math.exp(-dt * (P.slamming ? 16 : 9)));
   hero.position.copy(P.pos);
-  if (t < .5) hero.position.y += Math.sin(animT * 2.2) * .12 * (1 - t * 2);
+  if (t < .5 && !P.slamming && P.landT <= 0) hero.position.y += Math.sin(animT * 2.2) * .12 * (1 - t * 2);
 
   const u = hero.userData, bob = Math.sin(animT * 2.2);
   const pr = P.dashT > 0 || P.boosting ? 1 : t;
@@ -1387,6 +1493,19 @@ function updateHero(dt) {
   u.armL.rotation.x = lerp(.15 - bob * .05, P.boosting ? -Math.PI : .25, pr); u.armL.rotation.z = lerp(-.18, P.boosting ? -.05 : -.15, pr);
   u.legR.rotation.x = lerp(-.12 + bob * .08, .04, t); u.legL.rotation.x = lerp(.1 - bob * .08, -.04, t);
   u.legR.rotation.z = lerp(.04, .03, t); u.legL.rotation.z = lerp(-.04, -.03, t);
+  if (P.launchT > 0) { u.armL.rotation.x = -Math.PI; u.armL.rotation.z = -.05; }
+  if (P.slamming) { // feet first, arms flung up and out
+    u.armR.rotation.set(0, 0, 2.3); u.armL.rotation.set(0, 0, -2.3);
+    u.legR.rotation.set(-.1, 0, .12); u.legL.rotation.set(.15, 0, -.12);
+  }
+  // superhero landing: one knee down, fist on the ground
+  const c = P.landT > 0 ? clamp(P.landT / .3, 0, 1) : 0;
+  heroModel.position.y = -.55 * c; heroModel.rotation.x = .35 * c;
+  if (c > 0) {
+    u.legR.rotation.x = lerp(u.legR.rotation.x, -1.5, c); u.legL.rotation.x = lerp(u.legL.rotation.x, .9, c);
+    u.armR.rotation.x = lerp(u.armR.rotation.x, -.3, c); u.armR.rotation.z = lerp(u.armR.rotation.z, .1, c);
+    u.armL.rotation.x = lerp(u.armL.rotation.x, .7, c); u.armL.rotation.z = lerp(u.armL.rotation.z, -.55, c);
+  }
 }
 const camPos = new V3(), lookAt = new V3();
 let fovNow = 70;
@@ -1443,6 +1562,7 @@ function updateHud(dt) {
   $('speed').innerHTML = Math.round(P.vel.length() * 3.6).toLocaleString('en-US') + '<small>KM/H</small>';
   $('alt').textContent = 'ALT ' + Math.round(P.pos.y) + ' m';
   $('boostTag').classList.toggle('on', P.boosting);
+  if (isTouch) $('tSlam').textContent = P.pos.y - groundH(P.pos.x, P.pos.z) < 6 ? 'LAUNCH' : 'SLAM';
 }
 
 // ---------------------------------------------------------------- loop
@@ -1452,6 +1572,7 @@ function simulate(dt) {
   updateHero(dt);
   updateFalling(dt);
   updateTrees(dt);
+  updateDecals(dt);
   for (const p of pools) p.update(dt);
   glassPool.update(dt);
   updateDust(dt);
@@ -1475,6 +1596,6 @@ function start(data) {
 const hot = window.claude && window.claude.hot;
 if (hot && hot.snapshot) hot.snapshot(() => ({ damage: state.damage, wrecked: state.wrecked }));
 if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
-window.__game = { P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
