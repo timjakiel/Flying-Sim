@@ -30,6 +30,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ink); 
 #speed small { font-family: var(--ui); font-size: 15px; font-weight: 700; -webkit-text-stroke: 0; margin-left: 4px; }
 #boostTag { display: inline-block; margin-top: 6px; padding: 2px 10px; background: var(--red); color: var(--paper); font-family: var(--display); font-size: 20px; letter-spacing: .06em; transform: skew(-10deg); opacity: 0; transition: opacity .15s; }
 #boostTag.on { opacity: 1; }
+#fps { font-size: 12px; font-weight: 600; letter-spacing: .06em; opacity: .6; margin-top: 4px; font-variant-numeric: tabular-nums; }
 
 #help { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--glass); padding: 8px 16px; border-radius: 6px;
   font-size: 15px; font-weight: 500; letter-spacing: .03em; text-align: center; width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box; }
@@ -226,6 +227,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
   <div id="speed">0<small>KM/H</small></div>
   <div id="alt">ALT 0 m</div>
   <div id="boostTag">SUPERSONIC</div>
+  <div id="fps"></div>
 </div>
 <div class="hud" id="timer" hidden>2:00</div>
 <div class="hud" id="bossbar" hidden>
@@ -282,6 +284,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
       <button class="ghost" id="openHeroes" type="button">Hero<span id="heroMini">Skybreaker</span></button>
       <button class="ghost" id="openShop" type="button">Power shop<span id="walletMini">$0</span></button>
       <button class="ghost" id="openSuits" type="button">Suits &amp; achievements<span id="suitCount">1/12</span></button>
+      <button class="ghost" id="gfxBtn" type="button">Graphics<span id="gfxMini">Auto</span></button>
     </div>
     <div class="side">
       <span class="label">Side games</span>
@@ -367,20 +370,44 @@ const rng = mulberry32(1337);
 const rr = (a, b) => a + rng() * (b - a);
 const rand = (a, b) => a + Math.random() * (b - a);
 
+// ---------------------------------------------------------------- graphics quality
+// Low is for older laptops and integrated graphics: no shadows or antialiasing, lower render
+// resolution, shorter view distance, fewer particles. Auto picks Low on Intel and mobile GPUs.
+const QUALITY = {
+  low: { scale: .7, aa: false, shadows: false, shadowMap: 1024, far: 1500, fogNear: 180, fogFar: 1400, debris: .35, sprites: .45, light: false, lean: true },
+  medium: { scale: .85, aa: false, shadows: true, shadowMap: 1024, far: 2600, fogNear: 240, fogFar: 2200, debris: .6, sprites: .7, light: true, lean: false },
+  high: { scale: 1, aa: true, shadows: true, shadowMap: 2048, far: 5000, fogNear: 280, fogFar: 2700, debris: 1, sprites: 1, light: true, lean: false },
+};
+let savedRaw = {}; try { savedRaw = JSON.parse(localStorage.getItem('skybreaker-save-v1')) || {}; } catch (e) { /* no storage */ }
+function detectQuality() {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl'), ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+    const name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+    const lose = gl && gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    if (/Intel|HD Graphics|Iris|Mali|Adreno|PowerVR|SwiftShader|llvmpipe|Software/i.test(name)) return 'low';
+  } catch (e) { /* fall through */ }
+  return isTouch ? 'medium' : 'high';
+}
+const qualityPick = savedRaw.quality || 'auto';
+const QID = QUALITY[qualityPick] ? qualityPick : detectQuality();
+const Q = QUALITY[QID];
+
 // ---------------------------------------------------------------- renderer
 const canvas = $('game');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: Q.aa, powerPreference: 'high-performance' });
+const baseDPR = Math.min(devicePixelRatio, isTouch ? 1.5 : 2);
+let renderScale = Q.scale;
+renderer.setPixelRatio(baseDPR * renderScale);
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.92;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = Q.shadows;
+renderer.shadowMap.type = QID === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
 const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.3, 5000);
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.3, Q.far);
 scene.add(camera);
 
 // ---------------------------------------------------------------- sky
@@ -410,7 +437,7 @@ const skyMat = new THREE.ShaderMaterial({
 const sky = new THREE.Mesh(new THREE.SphereGeometry(4000, 32, 16), skyMat);
 sky.renderOrder = -1; sky.frustumCulled = false;
 scene.add(sky);
-scene.fog = new THREE.Fog(HORIZON, 280, 2700);
+scene.fog = new THREE.Fog(HORIZON, Q.fogNear, Q.fogFar);
 
 // image-based lighting from the sky so glass towers reflect it
 {
@@ -424,8 +451,8 @@ scene.fog = new THREE.Fog(HORIZON, 280, 2700);
 const hemi = new THREE.HemisphereLight(0xdbe8ff, 0x8a7d6a, 0.35);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffefd6, 2.4);
-sun.castShadow = true;
-sun.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+sun.castShadow = Q.shadows;
+sun.shadow.mapSize.set(Q.shadowMap, Q.shadowMap);
 const SH = 230;
 Object.assign(sun.shadow.camera, { left: -SH, right: SH, top: SH, bottom: -SH, near: 10, far: 1600 });
 sun.shadow.bias = -0.0004;
@@ -648,6 +675,46 @@ function makeEntity(kind, cx, cz, w, d, y0, h, style, parent, opt = {}) {
 }
 const waterGeo = new THREE.CylinderGeometry(5.3, 5.3, .2, 40), waterMat = new THREE.MeshStandardMaterial({ color: 0x4f8fb8, roughness: .1, metalness: .3 });
 function attachWater(e) { const w = new THREE.Mesh(waterGeo, waterMat); w.position.set(e.cx, 1.25, e.cz); scene.add(w); e.extra = w; }
+// Untouched buildings are merged into 160 m regions: one draw call per material per region
+// instead of one per building. Hitting a building gives it its own mesh and rebuilds its region.
+const REG = 160, REGN = Math.ceil(16 * 80 / REG);
+const regions = Array.from({ length: REGN * REGN }, () => ({ ents: [], mesh: null, dirty: true }));
+function regionOf(x, z) { const half = 16 * 80 / 2; return regions[clamp(Math.floor((z + half) / REG), 0, REGN - 1) * REGN + clamp(Math.floor((x + half) / REG), 0, REGN - 1)]; }
+function rebuildRegion(r) {
+  if (r.mesh) { cityRoot.remove(r.mesh); r.mesh.geometry.dispose(); r.mesh = null; }
+  const buckets = new Map();
+  for (const e of r.ents) {
+    if (e.mask || !e.alive) continue;
+    const g = buildIntact(e), pos = g.attributes.position.array, nor = g.attributes.normal.array, uv = g.attributes.uv.array, col = g.attributes.color.array, idx = g.index.array;
+    for (const grp of g.groups) {
+      const mat = e.style.mats[grp.materialIndex];
+      let B = buckets.get(mat); if (!B) buckets.set(mat, B = { p: [], n: [], u: [], c: [], i: [] });
+      let mn = Infinity, mx = -1;
+      for (let k = grp.start; k < grp.start + grp.count; k++) { const v = idx[k]; if (v < mn) mn = v; if (v > mx) mx = v; }
+      const base = B.p.length / 3;
+      for (let v = mn; v <= mx; v++) {
+        B.p.push(pos[v * 3] + e.cx, pos[v * 3 + 1], pos[v * 3 + 2] + e.cz); B.n.push(nor[v * 3], nor[v * 3 + 1], nor[v * 3 + 2]);
+        B.u.push(uv[v * 2], uv[v * 2 + 1]); B.c.push(col[v * 3], col[v * 3 + 1], col[v * 3 + 2]);
+      }
+      for (let k = grp.start; k < grp.start + grp.count; k++) B.i.push(idx[k] - mn + base);
+    }
+    g.dispose();
+  }
+  if (!buckets.size) return;
+  let nv = 0, ni = 0; for (const B of buckets.values()) { nv += B.p.length / 3; ni += B.i.length; }
+  const P3 = new Float32Array(nv * 3), N3 = new Float32Array(nv * 3), U2 = new Float32Array(nv * 2), C3 = new Float32Array(nv * 3), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  const geo = new THREE.BufferGeometry(), mats = []; let vo = 0, io = 0;
+  for (const [mat, B] of buckets) {
+    P3.set(B.p, vo * 3); N3.set(B.n, vo * 3); U2.set(B.u, vo * 2); C3.set(B.c, vo * 3);
+    for (let k = 0; k < B.i.length; k++) I[io + k] = B.i[k] + vo;
+    geo.addGroup(io, B.i.length, mats.length); mats.push(mat);
+    vo += B.p.length / 3; io += B.i.length;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(P3, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N3, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(U2, 2)); geo.setAttribute('color', new THREE.BufferAttribute(C3, 3));
+  geo.setIndex(new THREE.BufferAttribute(I, 1)); geo.computeBoundingSphere();
+  r.mesh = new THREE.Mesh(geo, mats); r.mesh.castShadow = r.mesh.receiveShadow = true; cityRoot.add(r.mesh);
+}
 function spawnEntity(spec) {
   const { kind, cx, cz, w, d, y0, h, style, opt, tint } = spec, parent = spec.parent ? spec.parent.ent : null;
   const e = { spec, kind, cx, cz, w, d, y0, h, style, tint, parent, children: [], alive: true, hit: false, mask: null, extra: null, cells: [] };
@@ -658,10 +725,8 @@ function spawnEntity(spec) {
   e.ny = Math.max(1, Math.round(h / (opt.ch || 5)));
   e.cw = w / e.nx; e.cd = d / e.nz; e.ch = h / e.ny; e.layer = e.nx * e.nz; e.topK = e.ny - 1;
   e.cR = kind === 'box' ? 0 : .5 * Math.max(e.ch, w / 2 * Math.PI * 2 / e.nx * .55, w / 2 * .6);
-  e.mesh = new THREE.Mesh(buildIntact(e), style.mats);
-  e.mesh.position.set(cx, 0, cz);
-  e.mesh.castShadow = e.mesh.receiveShadow = true;
-  cityRoot.add(e.mesh);
+  // untouched buildings are drawn merged with their neighbours; a building gets its own mesh on its first hit
+  e.mesh = null; e.region = regionOf(cx, cz); e.region.ents.push(e); e.region.dirty = true;
   if (parent) parent.children.push(e);
   entities.push(e); gridAdd(e);
   return e;
@@ -733,6 +798,17 @@ function groundH(x, z) {
   }
 }
 let craterQueued = false;
+const craterBox = [GS, 0, GS, 0];
+// heightfield normals for just the dented area (world normal (-dh/dx, 1, -dh/dz), stored in the plane's local frame)
+function groundNormals() {
+  const nor = groundGeo.attributes.normal, [i0, i1, j0, j1] = craterBox;
+  for (let j = Math.max(0, j0 - 1); j <= Math.min(GS, j1 + 1); j++) for (let i = Math.max(0, i0 - 1); i <= Math.min(GS, i1 + 1); i++) {
+    const hl = hts[j * GR + Math.max(i - 1, 0)], hr = hts[j * GR + Math.min(i + 1, GS)], hd = hts[Math.max(j - 1, 0) * GR + i], hu = hts[Math.min(j + 1, GS) * GR + i];
+    const nx = -(hr - hl) / (2 * GC), nz = -(hu - hd) / (2 * GC), l = Math.hypot(nx, 1, nz);
+    nor.setXYZ(j * GR + i, nx / l, -nz / l, 1 / l);
+  }
+  nor.needsUpdate = true; craterBox[0] = craterBox[2] = GS; craterBox[1] = craterBox[3] = 0;
+}
 function crater(x, z, R, depth) {
   const pos = groundGeo.attributes.position, col = groundGeo.attributes.color, R2 = R * 1.5;
   const i0 = clamp(Math.floor((x - R2 + GW / 2) / GC), 0, GS), i1 = clamp(Math.ceil((x + R2 + GW / 2) / GC), 0, GS);
@@ -748,6 +824,7 @@ function crater(x, z, R, depth) {
   }
   pos.needsUpdate = true; col.needsUpdate = true;
   craterQueued = true;
+  craterBox[0] = Math.min(craterBox[0], i0); craterBox[1] = Math.max(craterBox[1], i1); craterBox[2] = Math.min(craterBox[2], j0); craterBox[3] = Math.max(craterBox[3], j1);
   reconformDecals(x, z, R);
   settleExplosives(x, z, R * 1.6); // normals recomputed once at end of frame
 }
@@ -825,7 +902,7 @@ for (let bx = 0; bx < N; bx++) for (let bz = 0; bz < N; bz++) {
 const trees = treeSpots.map(([x, z, s]) => ({ x, z, s, st: 0, ang: 0, w: 0, axis: new V3(1, 0, 0), t: 0 }));
 const trunkL = [], crownL = [];
 const trunkMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .34, 3, 8), new THREE.MeshStandardMaterial({ color: 0x6b4a30, roughness: 1 }), trees.length);
-const crownMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshStandardMaterial({ roughness: .95 }), trees.length * 2);
+const crownMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, QID === 'high' ? 2 : 1), new THREE.MeshStandardMaterial({ roughness: .95 }), trees.length * 2);
 {
   const o = new THREE.Object3D(), col = new THREE.Color();
   trees.forEach((t, i) => {
@@ -857,7 +934,7 @@ trees.forEach((t, i) => writeTree(i));
 // clouds
 {
   const n = 46 * 6;
-  const cl = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0x8899aa, emissiveIntensity: .35 }), n);
+  const cl = new THREE.InstancedMesh((QID === 'high' ? new THREE.SphereGeometry(1, 20, 14) : new THREE.SphereGeometry(1, 10, 7)), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0x8899aa, emissiveIntensity: .35 }), n);
   const o = new THREE.Object3D(); let k = 0;
   for (let c = 0; c < 46; c++) {
     const a = rand(0, Math.PI * 2), d = rand(300, 2300), y = rand(380, 560), cx = Math.cos(a) * d, cz = Math.sin(a) * d, s = rand(25, 55);
@@ -921,8 +998,8 @@ class DebrisPool {
 }
 const chunkGeo = new THREE.BoxGeometry(1, 1, 1);
 const rockGeo = new THREE.DodecahedronGeometry(.62, 0);
-const pools = [new DebrisPool(chunkGeo, isTouch ? 1200 : 2600), new DebrisPool(rockGeo, isTouch ? 800 : 1800)];
-const glassPool = new DebrisPool(new THREE.BoxGeometry(1, .08, 1), isTouch ? 300 : 700);
+const pools = [new DebrisPool(chunkGeo, Math.round(2600 * Q.debris)), new DebrisPool(rockGeo, Math.round(1800 * Q.debris))];
+const glassPool = new DebrisPool(new THREE.BoxGeometry(1, .08, 1), Math.round(700 * Q.debris));
 glassPool.mesh.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .1, metalness: .6, transparent: true, opacity: .85 });
 
 // dust puffs
@@ -932,7 +1009,7 @@ const dustTex = canvasTex(128, (g, S) => {
   g.fillStyle = gr; g.fillRect(0, 0, S, S);
 });
 const dust = [];
-for (let i = 0; i < (isTouch ? 90 : 180); i++) {
+for (let i = 0; i < Math.round(180 * Q.sprites); i++) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: dustTex, color: 0xcfc6b6, transparent: true, depthWrite: false, opacity: 0 }));
   s.visible = false; scene.add(s); dust.push({ s, v: new V3(), life: 0, max: 1, size: 1, grow: 1 });
 }
@@ -984,7 +1061,7 @@ const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true
 const speedLines = new THREE.LineSegments(lineGeo, lineMat); speedLines.frustumCulled = false; camera.add(speedLines);
 
 // ---------------------------------------------------------------- cars
-const CARS = isTouch ? 110 : 180;
+const CARS = QID === 'low' || isTouch ? 110 : 180;
 const carGeo = new THREE.CapsuleGeometry(.95, 2.6, 6, 12); carGeo.rotateX(Math.PI / 2); carGeo.scale(1, .62, 1); carGeo.translate(0, .62, 0);
 const cars = new THREE.InstancedMesh(carGeo, new THREE.MeshStandardMaterial({ roughness: .3, metalness: .5 }), CARS);
 cars.castShadow = true; cars.frustumCulled = false; cars.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(cars);
@@ -1175,6 +1252,10 @@ const ROOF_COL = new THREE.Color(0x8a8c8f), CONCRETE_COL = new THREE.Color(0x9a9
 function ensureMask(e) {
   if (e.mask) return;
   e.mask = new Uint8Array(e.layer * e.ny).fill(1);
+  if (!e.mesh) { // leave the merged batch, get a mesh of its own
+    e.mesh = new THREE.Mesh(buildIntact(e), e.style.mats); e.mesh.position.set(e.cx, 0, e.cz);
+    e.mesh.castShadow = e.mesh.receiveShadow = true; cityRoot.add(e.mesh); e.region.dirty = true;
+  }
   if (e.extra) { // fountain water
     scene.remove(e.extra); spawnDust(tmpV.set(e.cx, 2, e.cz), 5, 6, new THREE.Color(0x9cc7e6)); e.extra = null;
   }
@@ -1400,7 +1481,8 @@ function rebuildDirty() {
     else { cityRoot.remove(e.mesh); e.mesh = null; }
   }
   dirty.clear();
-  if (craterQueued) { groundGeo.computeVertexNormals(); craterQueued = false; }
+  for (const r of regions) if (r.dirty) { r.dirty = false; rebuildRegion(r); }
+  if (craterQueued) { groundNormals(); craterQueued = false; }
 }
 
 // trees + cars react to the chaos
@@ -1607,7 +1689,7 @@ const fireTex = canvasTex(128, (g, S) => {
   g.fillStyle = gr; g.fillRect(0, 0, S, S);
 });
 const fires = [];
-for (let i = 0; i < (isTouch ? 70 : 140); i++) {
+for (let i = 0; i < Math.round(140 * Q.sprites); i++) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
   s.visible = false; scene.add(s); fires.push({ s, v: new V3(), life: 0, max: 1, size: 1 });
 }
@@ -1631,7 +1713,7 @@ function updateFire(dt) {
     f.s.material.opacity = (1 - t) * (1 - t);
   }
 }
-const boomLight = new THREE.PointLight(0xff9a40, 0, 220, 2); scene.add(boomLight);
+const boomLight = new THREE.PointLight(0xff9a40, 0, 220, 2); if (Q.light) scene.add(boomLight); // an extra light costs every pixel, so Low skips it
 const SMOKE_COL = new THREE.Color(0x3b3632);
 
 // ---------------------------------------------------------------- explosives
@@ -2732,6 +2814,7 @@ function updateMode(dt) {
 function resetWorld() {
   for (const e of entities) { if (e.mesh) { cityRoot.remove(e.mesh); e.mesh.geometry.dispose(); } if (e.extra) scene.remove(e.extra); }
   entities.length = 0; grid.clear(); dirty.clear();
+  for (const r of regions) { r.ents.length = 0; r.dirty = true; }
   for (const f of falling) { cityRoot.remove(f.g); f.mesh.geometry.dispose(); }
   falling.length = 0;
   for (const spec of citySpecs) spawnEntity(spec);
@@ -2774,6 +2857,16 @@ $('rNext').addEventListener('click', () => { const n = VILLAINS[VILLAINS.indexOf
 for (const d of ['easy', 'normal', 'hard']) $('sd-' + d).addEventListener('click', () => startMode('showdown', d));
 $('rMenu').addEventListener('click', () => { musStop(); endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('pauseBtn').addEventListener('click', pauseGame);
+const GFX_ORDER = ['auto', 'low', 'medium', 'high'];
+function gfxLabel() {
+  const pick = save.quality || 'auto', name = (q) => q[0].toUpperCase() + q.slice(1);
+  $('gfxMini').textContent = (pick === 'auto' ? 'Auto (' + name(QID) + ')' : name(pick)) + (pick !== qualityPick ? ' · reload to apply' : '');
+}
+$('gfxBtn').addEventListener('click', () => {
+  const pick = save.quality || 'auto';
+  save.quality = GFX_ORDER[(GFX_ORDER.indexOf(pick) + 1) % GFX_ORDER.length]; saveNow(); gfxLabel();
+});
+gfxLabel();
 $('pMusic').addEventListener('click', toggleMusic);
 applySuit(save.suit);
 
@@ -2871,6 +2964,7 @@ function startShowdown(diffId) {
   bindFoe(S.foes[0]);
   bar.hidden = false;
   updateBars();
+  requestAnimationFrame(() => document.body.style.setProperty('--bossH', bar.offsetHeight + 'px'));
   P.pos.set(0, 30, 690); P.yaw = 0; P.pitch = -.05;
 }
 function endShowdownWorld() {
@@ -3211,7 +3305,6 @@ function updateVillain(dt) {
     S.stunT = Math.max(0, S.stunT - dt); S.slowT = Math.max(0, S.slowT - dt);
     $('hurt').classList.toggle('frozen', S.slowT > 0);
   }
-  document.body.style.setProperty('--bossH', $('bossbar').offsetHeight + 'px');
   for (const f of S.foes) { if (!f.group.visible) { f.mark.hidden = true; continue; } bindFoe(f); updateFoe(dt); }
   bindFoe(S.foes[0]);
 }
@@ -3392,8 +3485,8 @@ function musInit() {
   MUS.out = AC.createGain(); MUS.out.gain.value = 0;
   const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
   MUS.out.connect(comp); comp.connect(master);
-  const len = AC.sampleRate * 2.4, ir = AC.createBuffer(2, len, AC.sampleRate);
-  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+  const len = AC.sampleRate * (Q.lean ? 1.2 : 2.4), chans = Q.lean ? 1 : 2, ir = AC.createBuffer(chans, len, AC.sampleRate);
+  for (let c = 0; c < chans; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
   const conv = AC.createConvolver(); conv.buffer = ir;
   MUS.rev = AC.createGain(); MUS.rev.gain.value = .5; MUS.rev.connect(conv); conv.connect(MUS.out);
   MUS.white = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
@@ -3403,7 +3496,7 @@ function env(g, t, a, peak, d, tail = .001) { g.gain.setValueAtTime(.0001, t); g
 function voice(type, freq, t, dur, vol, o = {}) {
   const g = AC.createGain(); let node = g;
   if (o.cut) { const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = o.q || .7; f.frequency.setValueAtTime(o.cut, t); if (o.cutTo) f.frequency.exponentialRampToValueAtTime(o.cutTo, t + dur); f.connect(g); node = f; }
-  const oscs = (o.det || [0]).map((det) => { const os = AC.createOscillator(); os.type = type; os.frequency.setValueAtTime(freq, t); os.detune.value = det; os.connect(node); os.start(t); os.stop(t + dur + (o.rel || .15) + .05); return os; });
+  const oscs = (Q.lean ? [0] : o.det || [0]).map((det) => { const os = AC.createOscillator(); os.type = type; os.frequency.setValueAtTime(freq, t); os.detune.value = det; os.connect(node); os.start(t); os.stop(t + dur + (o.rel || .15) + .05); return os; });
   g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (o.att || .01));
   g.gain.setValueAtTime(vol, t + Math.max(o.att || .01, dur - .02)); g.gain.exponentialRampToValueAtTime(.0001, t + dur + (o.rel || .15));
   g.connect(MUS.out); if (o.rev) { const s = AC.createGain(); s.gain.value = o.rev; g.connect(s); s.connect(MUS.rev); }
@@ -3444,7 +3537,7 @@ function musStep(t) {
   if (s % 2 === 0) voice('sawtooth', mtof(root - 12 + (s === 6 || s === 14 ? 12 : 0)), t, STEP * 1.6, .16, { cut: 420, q: 2, rel: .05 });
   // string ostinato: sixteenth arpeggio
   const arp = [0, tri[1], tri[2], 12][s % 4];
-  voice('sawtooth', mtof(root + 12 + arp), t, STEP * .9, .028, { det: [-6, 6], cut: 2400, rel: .06, rev: .25 });
+  if (!Q.lean || s % 2 === 0) voice('sawtooth', mtof(root + 12 + arp), t, STEP * (Q.lean ? 1.8 : .9), .028, { det: [-6, 6], cut: 2400, rel: .06, rev: .25 });
   // pad
   if (s === 0) for (const iv of tri) voice('triangle', mtof(root + 12 + iv), t, STEP * 15.5, .04, { det: [-5, 5], att: .3, rel: .5, rev: .7 });
   // brass stabs, bigger in the second half
@@ -3458,14 +3551,15 @@ function musStep(t) {
 }
 function musTick() {
   if (!AC || MUS.mode === 'off') return;
-  while (MUS.nextT < AC.currentTime + .15) { musStep(MUS.nextT); MUS.nextT += STEP; MUS.step++; }
+  if (MUS.nextT < AC.currentTime) MUS.nextT = AC.currentTime + .05; // we fell behind: skip rather than pile up
+  while (MUS.nextT < AC.currentTime + .6) { musStep(MUS.nextT); MUS.nextT += STEP; MUS.step++; }
 }
 function musVol(v, ramp = .4) { if (MUS.out) MUS.out.gain.setTargetAtTime(MUS.on ? v : 0, AC.currentTime, ramp); }
 function musPlay(mode) {
   if (!AC) return; musInit();
   if (MUS.mode === 'off' || mode === 'fight') { MUS.step = 0; MUS.nextT = AC.currentTime + .08; }
   MUS.mode = mode; MUS.introT = 0;
-  if (!MUS.timer) MUS.timer = setInterval(musTick, 25);
+  if (!MUS.timer) MUS.timer = setInterval(musTick, 90);
   musVol(mode === 'intro' ? .8 : 1, mode === 'intro' ? .8 : .05);
 }
 function musStop(fade = .6) { if (!AC || MUS.mode === 'off') return; MUS.mode = 'off'; musVol(0, fade / 3); clearInterval(MUS.timer); MUS.timer = null; }
@@ -3521,8 +3615,23 @@ function simulate(dt) {
   updateHud(dt);
   rebuildDirty();
 }
+// drop the render resolution when frames run long, raise it again when there's headroom
+const perf = { acc: 0, n: 0, check: 0, fps: 60 };
+function adaptResolution(raw) {
+  perf.acc += raw; perf.n++; perf.check += raw;
+  if (perf.check < 1) return;
+  const avg = perf.acc / perf.n; perf.fps = 1 / avg; perf.acc = perf.n = perf.check = 0;
+  const floor = QID === 'low' ? .5 : .6;
+  let next = renderScale;
+  if (avg > 1 / 42 && renderScale > floor) next = Math.max(floor, renderScale - .1);
+  else if (avg < 1 / 57 && renderScale < Q.scale) next = Math.min(Q.scale, renderScale + .05);
+  if (next !== renderScale) { renderScale = next; renderer.setPixelRatio(baseDPR * renderScale); renderer.setSize(innerWidth, innerHeight); }
+  $('fps').textContent = Math.round(perf.fps) + ' FPS · ' + QID.toUpperCase() + (renderScale < Q.scale ? ' · ' + Math.round(renderScale * 100) + '%' : '');
+}
 function frame() {
-  simulate(Math.min(clock.getDelta(), .05));
+  const raw = clock.getDelta();
+  adaptResolution(raw);
+  simulate(Math.min(raw, .05));
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
@@ -3532,6 +3641,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>

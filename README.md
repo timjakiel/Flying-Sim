@@ -78,6 +78,20 @@ Every achievement unlocks a suit. Only Rampage rounds count toward them; Sandbox
 | Warlord (with cape) | Nemesis: beat all five villains on Hard |
 | Solid Gold (with cape) | Billionaire Problems: $10B of damage in one Rampage round |
 
+## Performance
+**Graphics** on the main menu cycles Auto / Low / Medium / High (takes effect the next time the page loads). Auto picks Low on Intel and other integrated or mobile graphics.
+
+| | Low | Medium | High |
+| --- | --- | --- | --- |
+| Render resolution | 70% | 85% | 100% |
+| Shadows | off | 1024 | 2048 soft |
+| Antialiasing | off | off | on |
+| View distance | 1.5 km | 2.6 km | 5 km |
+| Debris / particles | 35% / 45% | 60% / 70% | full |
+| Explosion lighting, rounder trees and clouds, richer music voices | off | partly | on |
+
+On every setting, untouched buildings are merged into 64 batches (about 1,850 draw calls down to about 410), the render resolution drops automatically when frames run long, crater lighting only updates the dented patch, and the music is scheduled 0.6 s ahead so a frame hitch doesn't cut it out. The top-right corner shows FPS, the preset, and the current resolution if it has been lowered.
+
 ## Controls
 | Key | Action |
 | --- | --- |
