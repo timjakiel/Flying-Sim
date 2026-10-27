@@ -43,9 +43,62 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ink); 
   70% { opacity: 1; } 100% { transform: translate(-50%, -90px) scale(1) rotate(-3deg); opacity: 0; } }
 #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 4; }
 
-#overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, rgba(11,20,36,.35), rgba(11,20,36,.85));
+#overlay { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; overflow-y: auto; background: radial-gradient(ellipse at 50% 40%, rgba(11,20,36,.35), rgba(11,20,36,.85));
   padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-.card { max-width: 560px; width: 100%; text-align: center; display: grid; gap: 18px; }
+.card { max-width: 560px; width: 100%; text-align: center; display: grid; gap: 18px; margin: auto; }
+.card.wide { max-width: 760px; }
+h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 8vw, 64px); line-height: 1; color: var(--yellow); letter-spacing: .03em;
+  -webkit-text-stroke: 2px var(--ink); text-shadow: 4px 4px 0 var(--blue); transform: rotate(-2deg); }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.mode { display: grid; gap: 6px; text-align: left; padding: 16px 18px 18px; border: 3px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer;
+  box-shadow: 5px 5px 0 var(--blue); transform: skew(-4deg); transition: transform .12s, box-shadow .12s; font-family: var(--ui); }
+.mode.hot { background: var(--yellow); box-shadow: 5px 5px 0 var(--red); }
+.mode:hover { transform: skew(-4deg) translate(-2px, -2px); box-shadow: 7px 7px 0 var(--blue); }
+.mode.hot:hover { box-shadow: 7px 7px 0 var(--red); }
+.mode:focus-visible, .btn:focus-visible, .ghost:focus-visible, .equip:focus-visible { outline: 3px solid var(--paper); outline-offset: 4px; }
+.mname { font-family: var(--display); font-size: 34px; letter-spacing: .05em; line-height: 1; }
+.mdesc { font-size: 17px; font-weight: 500; line-height: 1.25; }
+.mbest { font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; font-variant-numeric: tabular-nums; }
+.btn { justify-self: center; font-family: var(--display); font-size: 28px; letter-spacing: .06em; color: var(--ink); background: var(--yellow); border: 3px solid var(--ink);
+  padding: 8px 36px; cursor: pointer; box-shadow: 5px 5px 0 var(--blue); transform: skew(-8deg); }
+.ghost { justify-self: center; font-family: var(--ui); font-size: 18px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--paper);
+  background: var(--glass); border: 2px solid rgba(247,243,232,.4); padding: 8px 22px; border-radius: 6px; cursor: pointer; }
+.ghost:hover { border-color: var(--yellow); color: var(--yellow); }
+.ghost span { color: var(--yellow); margin-left: 6px; }
+.suits { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; text-align: left; }
+.suit { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; background: var(--glass); border: 2px solid transparent; border-radius: 8px; }
+.suit.on { border-color: var(--yellow); }
+.swatch { width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); }
+.suit.locked .swatch { filter: grayscale(.85) brightness(.55); }
+.sname { font-family: var(--display); font-size: 24px; letter-spacing: .04em; line-height: 1; }
+.sdesc { font-size: 15px; line-height: 1.25; opacity: .9; }
+.bar { height: 6px; margin-top: 6px; background: rgba(247,243,232,.18); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--yellow); }
+.snum { font-size: 13px; font-weight: 600; opacity: .75; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.equip { font-family: var(--display); font-size: 18px; letter-spacing: .05em; padding: 6px 12px; border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); cursor: pointer; }
+.equip:disabled { background: transparent; color: var(--paper); border-color: rgba(247,243,232,.35); cursor: default; opacity: .8; }
+.score { font-family: var(--display); font-size: clamp(40px, 10vw, 72px); color: var(--yellow); -webkit-text-stroke: 2px var(--ink); text-shadow: 4px 4px 0 var(--blue); line-height: 1; font-variant-numeric: tabular-nums; }
+#rBest { font-size: 20px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+#rBest.newbest { color: var(--yellow); }
+.rstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px 18px; background: var(--glass); padding: 12px 18px; border-radius: 8px; font-size: 17px; }
+.rstats div { display: flex; justify-content: space-between; gap: 10px; }
+.rstats span:last-child { color: var(--yellow); font-weight: 700; font-variant-numeric: tabular-nums; }
+.unlock { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--display); font-size: 22px; letter-spacing: .04em; }
+.unlock i, #toastSwatch { display: inline-block; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ink); flex: none; }
+#timer { top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); font-family: var(--display); font-size: clamp(34px, 6vw, 54px);
+  line-height: 1; -webkit-text-stroke: 1.5px var(--ink); text-shadow: 3px 3px 0 var(--red); font-variant-numeric: tabular-nums; }
+#timer.hurry { color: var(--red); text-shadow: 3px 3px 0 var(--ink); animation: hurry .5s ease-in-out infinite alternate; }
+@keyframes hurry { to { transform: translateX(-50%) scale(1.12); } }
+#pauseBtn { position: fixed; z-index: 8; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); width: 40px; height: 40px;
+  border-radius: 50%; border: 2px solid var(--ink); background: rgba(247,243,232,.85); color: var(--ink); font: 700 16px var(--ui); cursor: pointer; }
+#hud-right { margin-top: 48px; }
+#toast { position: fixed; z-index: 9; top: calc(76px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
+  background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--blue); padding: 10px 16px; pointer-events: none; max-width: calc(100vw - 32px); }
+#toast.show { animation: toastIn 3.6s ease forwards; }
+@keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, -20px); } 8%, 88% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -10px); } }
+.tlabel { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--red); }
+#toastTitle { font-family: var(--display); font-size: 24px; letter-spacing: .04em; line-height: 1; }
+#toastSuit { font-size: 15px; font-weight: 600; }
 h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(64px, 15vw, 128px); line-height: .9; color: var(--yellow); letter-spacing: .03em;
   -webkit-text-stroke: 3px var(--ink); text-shadow: 6px 6px 0 var(--blue), 9px 9px 0 var(--ink); transform: rotate(-3deg); text-wrap: balance; }
 .tag { font-size: 20px; font-weight: 500; margin: 0; text-wrap: balance; }
@@ -67,13 +120,13 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   font-family: var(--display); font-size: 18px; letter-spacing: .04em; display: grid; place-items: center; user-select: none; -webkit-user-select: none; }
 .tbtn.big { background: var(--yellow); }
 .tbtn.held { transform: scale(.92); filter: brightness(.85); }
-@media (prefers-reduced-motion: reduce) { .pop { animation-duration: .01s; } }
+@media (prefers-reduced-motion: reduce) { .pop, #toast.show { animation-duration: .01s; } #timer.hurry { animation: none; } }
 </style>
 
 <canvas id="game" tabindex="0"></canvas>
 <div id="flash"></div>
 <div class="hud" id="hud-left">
-  <div class="label">Collateral damage</div>
+  <div class="label" id="dmgLabel">Collateral damage</div>
   <div id="damage">$0</div>
   <div id="wrecked">0 buildings wrecked</div>
 </div>
@@ -82,7 +135,10 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   <div id="alt">ALT 0 m</div>
   <div id="boostTag">SUPERSONIC</div>
 </div>
-<div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>X</b> launch / slam down</div>
+<div class="hud" id="timer" hidden>2:00</div>
+<button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
+<div id="toast" hidden><i id="toastSwatch"></i><div><div class="tlabel">Achievement unlocked</div><div id="toastTitle"></div><div id="toastSuit"></div></div></div>
+<div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>X</b> launch / slam down · <b>P</b> pause</div>
 <div id="popups"></div>
 
 <div id="touch" hidden>
@@ -97,10 +153,14 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 </div>
 
 <div id="overlay">
-  <div class="card">
+  <div class="card" id="scr-main">
     <h1>Skybreaker</h1>
     <p class="tag" id="tagline">A whole city, and you're stronger than every building in it. Fly fast, punch through, watch it come down.</p>
-    <button id="play" type="button">FLY</button>
+    <div class="modes">
+      <button class="mode" id="mSandbox" type="button"><span class="mname">Sandbox</span><span class="mdesc">Fly around and wreck whatever you like. No clock. Rebuild the city any time.</span></button>
+      <button class="mode hot" id="mRampage" type="button"><span class="mname">Rampage</span><span class="mdesc">Two minutes on the clock. Every dollar of damage is points.</span><span class="mbest" id="bestLine">No score yet</span></button>
+    </div>
+    <button class="ghost" id="openSuits" type="button">Suits &amp; achievements<span id="suitCount">1/11</span></button>
     <div class="keys" id="keys">
       <div><span>MOUSE</span><span>Steer / look</span></div>
       <div><span>W A S D</span><span>Fly</span></div>
@@ -111,8 +171,31 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
       <div><span>X</span><span>Launch / slam down</span></div>
       <div><span>DIVE</span><span>Crater the street</span></div>
       <div><span>R</span><span>Back to the sky</span></div>
-      <div><span>M</span><span>Mute</span></div>
+      <div><span>P / ESC</span><span>Pause</span></div>
     </div>
+  </div>
+  <div class="card" id="scr-pause" hidden>
+    <h2 id="pauseTitle">Paused</h2>
+    <button class="btn" id="pResume" type="button">RESUME</button>
+    <button class="ghost" id="pRebuild" type="button">Rebuild the city</button>
+    <button class="ghost" id="pSuits" type="button">Suits &amp; achievements</button>
+    <button class="ghost" id="pQuit" type="button">Quit to menu</button>
+  </div>
+  <div class="card wide" id="scr-suits" hidden>
+    <h2>Suits</h2>
+    <p class="tag">Every achievement unlocks a suit. Progress counts in both modes.</p>
+    <div class="suits" id="suitList"></div>
+    <button class="ghost" id="sBack" type="button">Back</button>
+  </div>
+  <div class="card" id="scr-results" hidden>
+    <h2>Time's up</h2>
+    <div class="score" id="rScore">$0</div>
+    <div id="rBest"></div>
+    <div class="rstats" id="rStats"></div>
+    <div id="rUnlocks"></div>
+    <button class="btn" id="rAgain" type="button">GO AGAIN</button>
+    <button class="ghost" id="rSuits" type="button">Suits &amp; achievements</button>
+    <button class="ghost" id="rMenu" type="button">Main menu</button>
   </div>
 </div>
 
@@ -404,9 +487,20 @@ function gridRemove(e) {
   for (const k of e.cells) { const arr = grid.get(k); if (!arr) continue; const i = arr.indexOf(e); if (i >= 0) arr.splice(i, 1); }
   e.cells = [];
 }
+// the city is kept as a plan of specs so it can be rebuilt between runs
+const citySpecs = [];
 function makeEntity(kind, cx, cz, w, d, y0, h, style, parent, opt = {}) {
-  const tint = new THREE.Color().setHSL(rr(0, 1), rr(0, .12), rr(.82, 1));
-  const e = { kind, cx, cz, w, d, y0, h, style, tint, parent, children: [], alive: true, hit: false, mask: null, extra: null, cells: [] };
+  const spec = { kind, cx, cz, w, d, y0, h, style, opt, parent: parent ? parent.spec : null, tint: new THREE.Color().setHSL(rr(0, 1), rr(0, .12), rr(.82, 1)) };
+  citySpecs.push(spec);
+  return spawnEntity(spec);
+}
+const waterGeo = new THREE.CylinderGeometry(5.3, 5.3, .2, 40), waterMat = new THREE.MeshStandardMaterial({ color: 0x4f8fb8, roughness: .1, metalness: .3 });
+function attachWater(e) { const w = new THREE.Mesh(waterGeo, waterMat); w.position.set(e.cx, 1.25, e.cz); scene.add(w); e.extra = w; }
+function spawnEntity(spec) {
+  const { kind, cx, cz, w, d, y0, h, style, opt, tint } = spec, parent = spec.parent ? spec.parent.ent : null;
+  const e = { spec, kind, cx, cz, w, d, y0, h, style, tint, parent, children: [], alive: true, hit: false, mask: null, extra: null, cells: [] };
+  spec.ent = e;
+  if (spec.water) attachWater(e);
   if (kind === 'box') { e.nx = clamp(Math.round(w / 6), 1, 12); e.nz = clamp(Math.round(d / 6), 1, 12); }
   else { e.nx = opt.sectors || (w > 8 ? 12 : w > 3 ? 6 : 4); e.nz = 1; }
   e.ny = Math.max(1, Math.round(h / (opt.ch || 5)));
@@ -519,9 +613,7 @@ function makePark(x0, z0) {
   }
   if (rng() < .6) {
     const f = makeEntity('cyl', x0 + BLOCK / 2, z0 + BLOCK / 2, 13, 13, 0, 1.2, STONE_STYLE, null, { sectors: 8, ch: 1.2 });
-    const w = new THREE.Mesh(new THREE.CylinderGeometry(5.3, 5.3, .2, 40), new THREE.MeshStandardMaterial({ color: 0x4f8fb8, roughness: .1, metalness: .3 }));
-    w.position.set(x0 + BLOCK / 2, 1.25, z0 + BLOCK / 2); scene.add(w);
-    f.extra = w;
+    f.spec.water = true; attachWater(f);
   }
 }
 
@@ -644,6 +736,11 @@ class DebrisPool {
     it.s.set(size * rand(.6, 1.4), size * rand(.4, 1), size * rand(.6, 1.4)); it.max = it.life = rand(7, 12); it.rest = 0;
     this.mesh.setColorAt(i, color); this.mesh.instanceColor.needsUpdate = true;
     this.active.push(i);
+  }
+  clear() {
+    dummy.scale.set(0, 0, 0); dummy.updateMatrix();
+    for (const i of this.active) { this.mesh.setMatrixAt(i, dummy.matrix); this.free.push(i); }
+    this.active.length = 0; this.mesh.instanceMatrix.needsUpdate = true;
   }
   update(dt) {
     const G = 26;
@@ -773,9 +870,14 @@ function updateCars(dt) {
 // ---------------------------------------------------------------- hero
 const hero = new THREE.Group(); scene.add(hero);
 const heroModel = new THREE.Group(); hero.add(heroModel);
+const heroMat = {}, heroMask = new THREE.Group();
+const capeGeo = new THREE.PlaneGeometry(.8, 1.5, 4, 10); capeGeo.translate(0, -.75, 0);
+const capeBase = capeGeo.attributes.position.array.slice();
+const heroCape = new THREE.Mesh(capeGeo, new THREE.MeshStandardMaterial({ color: 0xb3121f, roughness: .75, side: THREE.DoubleSide, envMapIntensity: .4 }));
 {
   const std = (c, r = .5, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, envMapIntensity: .45 });
-  const YEL = std(0xffb300, .45), BLU = std(0x1546c8, .42), DBL = std(0x0c2160, .4), SKIN = std(0xe2ad86, .6), BLK = std(0x0f1114, .3, .2), LENS = std(0xe9f3ff, .1, .3);
+  const YEL = std(0xffb300, .45), BLU = std(0x1546c8, .42), DBL = std(0x0c2160, .4), SKIN = std(0xe2ad86, .6), BLK = std(0x0f1114, .3, .2), LENS = std(0xe9f3ff, .1, .3), MASK = std(0x0f1114, .3, .2);
+  Object.assign(heroMat, { main: YEL, limb: BLU, accent: DBL, mask: MASK, lens: LENS });
   const cap = (r, l, mat) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 8, 16), mat); m.castShadow = true; return m; };
   const sph = (r, mat) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), mat); m.castShadow = true; return m; };
   const torso = cap(.27, .42, YEL); torso.position.y = .36; torso.scale.set(1.18, 1, .78); heroModel.add(torso);
@@ -786,8 +888,10 @@ const heroModel = new THREE.Group(); hero.add(heroModel);
   const neck = cap(.08, .08, SKIN); neck.position.y = .74; heroModel.add(neck);
   const head = sph(.165, SKIN); head.position.y = .93; head.scale.set(.95, 1.08, 1); heroModel.add(head);
   const hair = sph(.175, BLK); hair.position.set(0, .99, -.03); hair.scale.set(1, .85, 1.02); heroModel.add(hair);
-  const mask = new THREE.Mesh(new THREE.CylinderGeometry(.168, .168, .085, 32, 1, true), BLK); mask.position.y = .935; heroModel.add(mask);
-  for (const s of [-1, 1]) { const l = sph(.04, LENS); l.position.set(s * .06, .935, .158); l.scale.set(1.3, .8, .5); heroModel.add(l); }
+  const mask = new THREE.Mesh(new THREE.CylinderGeometry(.168, .168, .085, 32, 1, true), MASK); mask.position.y = .935; heroMask.add(mask);
+  for (const s of [-1, 1]) { const l = sph(.04, LENS); l.position.set(s * .06, .935, .158); l.scale.set(1.3, .8, .5); heroMask.add(l); }
+  heroModel.add(heroMask);
+  heroCape.position.set(0, .66, -.2); heroCape.castShadow = true; heroCape.visible = false; heroModel.add(heroCape);
   const mkArm = (s) => {
     const pivot = new THREE.Group(); pivot.position.set(s * .38, .6, 0);
     const sh = sph(.13, BLU); pivot.add(sh);
@@ -810,7 +914,7 @@ const heroModel = new THREE.Group(); hero.add(heroModel);
 // ---------------------------------------------------------------- state
 const START = { pos: new V3(0, 150, HALF + 160), yaw: 0, pitch: -0.18 };
 const P = { pos: START.pos.clone(), vel: new V3(), yaw: START.yaw, pitch: START.pitch, boosting: false, dashT: 0, slamming: false, landT: 0, launchT: 0 };
-const state = { damage: 0, wrecked: 0, combo: 0, comboT: 0, comboCash: 0, shake: 0, slamCd: 0, started: false, muted: false, lastCrash: 0 };
+const state = { damage: 0, wrecked: 0, combo: 0, comboT: 0, comboCash: 0, shake: 0, slamCd: 0, playing: false, mode: null, run: null, timeLeft: 0, boostStreak: 0, muted: false, lastCrash: 0 };
 const keys = new Set();
 const input = { lookX: 0, lookY: 0, stickX: 0, stickY: 0, tUp: false, tDown: false, tBoost: false };
 
@@ -850,6 +954,16 @@ function sfxBoom() {
   const src = AC.createBufferSource(); src.buffer = noiseBuf; const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 600;
   const g2 = AC.createGain(); g2.gain.setValueAtTime(.5, t); g2.gain.exponentialRampToValueAtTime(.001, t + .35);
   src.connect(f); f.connect(g2); g2.connect(master); src.start(t); src.stop(t + .4);
+}
+
+function sfxUnlock() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  [523, 659, 784, 1047].forEach((f, i) => {
+    const o = AC.createOscillator(); o.type = 'square'; o.frequency.value = f;
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t + i * .08); g.gain.exponentialRampToValueAtTime(.12, t + i * .08 + .01); g.gain.exponentialRampToValueAtTime(.001, t + i * .08 + .25);
+    o.connect(g); g.connect(master); o.start(t + i * .08); o.stop(t + i * .08 + .3);
+  });
 }
 
 // ---------------------------------------------------------------- destruction
@@ -1013,7 +1127,7 @@ function structural(e, push) {
     if (l > .5) lean = new V3(holeX / l, 0, holeZ / l);
   }
   e.topK = topLayer(mask, e);
-  if (e.topK < 0) { e.alive = false; gridRemove(e); }
+  if (e.topK < 0) { e.alive = false; gridRemove(e); if (!e.parent && STYLES.includes(e.style)) statAdd('leveled'); }
   dirty.add(e);
   if (any) makePiece(e, piece, push, lean);
   for (const c of e.children) if (c.alive && !baseSupported(c)) dropWhole(c, push);
@@ -1034,6 +1148,7 @@ function makePiece(e, pmask, push, lean) {
   const cols = new Set(); for (let q = 0; q < pmask.length; q++) if (pmask[q]) cols.add(q % e.layer);
   if (e.alive) for (const col of cols) for (let k = kmin - 1; k >= 0; k--) if (e.mask[k * e.layer + col]) { support = Math.max(support, e.y0 + (k + 1) * e.ch); break; }
   if (support === -Infinity) support = baseSupportY(e);
+  if (STYLES.includes(e.style) && e.y0 + e.h >= 150 && layerCount(pmask, e, e.ny - 1)) statMax('tallTops', 1);
   const pivotY = e.y0 + kmin * e.ch;
   const g = new THREE.Group(); g.position.set(e.cx, pivotY, e.cz);
   const mesh = new THREE.Mesh(buildChunks(e, pmask), e.style.mats);
@@ -1045,7 +1160,7 @@ function makePiece(e, pmask, push, lean) {
 }
 function smashEntity(e, lp, r, vel) {
   ensureMask(e);
-  if (!e.hit) { e.hit = true; if (!e.parent && e.style !== STONE_STYLE) state.wrecked++; }
+  if (!e.hit) { e.hit = true; if (!e.parent && e.style !== STONE_STYLE) { state.wrecked++; statAdd('wrecked'); } }
   const killed = killInSphere(e, e.mask, lp, r);
   if (!killed.length) return 0;
   e.mesh.updateMatrixWorld();
@@ -1094,7 +1209,7 @@ function rebuildDirty() {
 function toppleTree(t, mx, mz) {
   if (t.st !== 0) return;
   const l = Math.hypot(mx, mz) || 1; mx /= l; mz /= l;
-  t.axis.set(mz, 0, -mx); t.st = 1; t.w = .8; t.ang = 0;
+  t.axis.set(mz, 0, -mx); t.st = 1; t.w = .8; t.ang = 0; statAdd('trees');
   state.damage += 6000;
   if (Math.random() < .5) spawnDust(tmpV.set(t.x, 1, t.z), 2, 1, new THREE.Color(0x8a7a5c));
 }
@@ -1121,6 +1236,7 @@ function crushCars(x0, x1, z0, z1) {
   }
 }
 function flingCar(c, vx, vy, vz) {
+  statAdd('cars');
   c.fly = 6; c.crush = 0; c.v.set(vx, vy, vz); c.av.set(rand(-6, 6), rand(-6, 6), rand(-6, 6)); c.r.set(0, c.axis === 'x' ? Math.PI / 2 : 0, 0);
   state.damage += 38000;
 }
@@ -1211,7 +1327,7 @@ function updateDecals(dt) {
 
 // one key does both: punch off the ground like a rocket, or drop out of the sky feet-first
 function superMove() {
-  if (!state.started) return;
+  if (!state.playing) return;
   const h = P.pos.y - groundH(P.pos.x, P.pos.z);
   if (h < 6) launch();
   else if (!P.slamming) { P.slamming = true; P.dashT = 0; spawnRing(P.pos.clone(), DOWN, false); sfxBoom(); state.shake = Math.max(state.shake, .4); }
@@ -1239,6 +1355,7 @@ function launch() {
 
 function groundSlam(p, impact, meteor) {
   const R = meteor ? 30 : clamp(impact / 8, 7, 24);
+  if (meteor) statAdd('slams');
   crater(p.x, p.z, R, R * .32);
   addCracks(p.x, p.z, R * 3.2);
   const cash = blast(tmpV2.set(p.x, groundH(p.x, p.z) + 1, p.z).clone(), R * 1.1, P.vel.clone().multiplyScalar(.2));
@@ -1263,6 +1380,7 @@ function hitFeedback(cash, speed, noShake) {
   sfxCrash(clamp(speed / 160, .4, 1.2));
   const fl = $('flash'); fl.style.transition = 'none'; fl.style.opacity = '.18'; requestAnimationFrame(() => { fl.style.transition = 'opacity .35s'; fl.style.opacity = '0'; });
   state.combo = state.comboT > 0 ? state.combo + 1 : 1; state.comboT = 2.2;
+  statMax('maxCombo', state.combo); if (state.run) state.run.maxCombo = Math.max(state.run.maxCombo, state.combo);
   popup('+' + fmtMoney(cash), false);
   if (state.combo > 1 && state.combo % 4 === 0) popup('COMBO ×' + state.combo, true);
 }
@@ -1338,26 +1456,27 @@ let locked = false, dragging = false, noLock = isTouch;
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(); keys.add(k);
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
-  if (!state.started) return;
+  if (!state.playing) return;
+  if (k === 'p' || (k === 'escape' && noLock)) { pauseGame(); return; }
   if (k === 'f') dash();
   if (k === 'x') superMove();
-  if (k === 'r') { P.slamming = false; P.landT = 0; P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch; }
+  if (k === 'r') resetHero();
   if (k === 'm') { state.muted = !state.muted; if (master) master.gain.value = state.muted ? 0 : .55; }
 });
 addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => keys.clear());
 document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
-  if (!locked && state.started && !noLock) showOverlay(true);
+  if (!locked && state.playing && !noLock) pauseGame();
 });
 canvas.addEventListener('mousedown', (e) => {
-  if (!state.started || isTouch) return;
+  if (!state.playing || isTouch) return;
   if (locked) { if (e.button === 0) dash(); return; }
   dragging = true;
 });
 addEventListener('mouseup', () => { dragging = false; });
 addEventListener('mousemove', (e) => {
-  if (!state.started || isTouch) return;
+  if (!state.playing || isTouch) return;
   if (locked) lookDelta(e.movementX, e.movementY, .0022);
   else if (dragging) lookDelta(e.movementX, e.movementY, .004);
 });
@@ -1373,6 +1492,7 @@ if (isTouch) {
   $('touch').hidden = false;
   $('help').hidden = true;
   $('keys').hidden = true;
+  $('pauseBtn').style.top = 'calc(14px + env(safe-area-inset-top, 0px))';
   $('tagline').textContent = 'A whole city, and you\'re stronger than every building in it. Left stick flies, drag to look, punch through everything.';
   const stick = $('stick'), knob = $('knob'); let sid = null;
   const setStick = (e) => { const r = stick.getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2);
@@ -1393,25 +1513,6 @@ if (isTouch) {
   const endLook = (e) => looks.delete(e.pointerId);
   canvas.addEventListener('pointerup', endLook); canvas.addEventListener('pointercancel', endLook);
 }
-
-function showOverlay(paused) {
-  $('overlay').hidden = false;
-  $('play').textContent = paused ? 'RESUME' : 'FLY';
-  $('play').focus({ preventScroll: true });
-}
-$('play').addEventListener('click', () => {
-  $('overlay').hidden = true;
-  state.started = true;
-  initAudio();
-  if (!isTouch) {
-    try {
-      const r = canvas.requestPointerLock();
-      if (r && r.catch) r.catch(() => { noLock = true; $('help').innerHTML = '<b>Drag</b> to steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>F</b> punch-dash · <b>Space/Q</b> up/down'; });
-    } catch (e) { noLock = true; }
-    canvas.focus();
-  }
-  setTimeout(() => { $('help').style.opacity = '0'; }, 14000);
-});
 
 // ---------------------------------------------------------------- flight
 function forwardVec(out) { const cp = Math.cos(P.pitch); return out.set(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp); }
@@ -1447,6 +1548,8 @@ function updateFlight(dt) {
   }
   if (P.boosting && !wasBoost) { spawnRing(P.pos.clone(), fwd, true); sfxBoom(); state.shake = Math.max(state.shake, .5); }
   wasBoost = P.boosting;
+  state.boostStreak = P.boosting && P.vel.length() > 200 ? state.boostStreak + dt : 0;
+  if (state.boostStreak > 1) statMax('boostStreak', Math.round(state.boostStreak * 10) / 10);
 
   // substeps keep fast flight from skipping through thin walls
   const steps = Math.ceil(P.vel.length() * dt / 2.5) || 1;
@@ -1506,6 +1609,16 @@ function updateHero(dt) {
     u.armR.rotation.x = lerp(u.armR.rotation.x, -.3, c); u.armR.rotation.z = lerp(u.armR.rotation.z, .1, c);
     u.armL.rotation.x = lerp(u.armL.rotation.x, .7, c); u.armL.rotation.z = lerp(u.armL.rotation.z, -.55, c);
   }
+  if (heroCape.visible) {
+    const pos = capeGeo.attributes.position, f01 = clamp(sp / 120, 0, 1);
+    for (let i = 0; i < pos.count; i++) {
+      const x = capeBase[i * 3], y = capeBase[i * 3 + 1], f = -y / 1.5;
+      const wave = Math.sin(animT * (5 + 12 * f01) + f * 5 + x * 2) * (.03 + .12 * f01) * f;
+      pos.setXYZ(i, x * (1 + f * .3), y, -f * (.1 + .12 * f01) + wave);
+    }
+    pos.needsUpdate = true; capeGeo.computeVertexNormals();
+    heroCape.rotation.x = lerp(heroCape.rotation.x, P.slamming ? 2.8 : .08 + c * .5, 1 - Math.exp(-dt * 8));
+  }
 }
 const camPos = new V3(), lookAt = new V3();
 let fovNow = 70;
@@ -1553,7 +1666,7 @@ function updateCamera(dt) {
 }
 
 // ---------------------------------------------------------------- HUD
-let hudT = 0;
+let hudT = 0, hudT2 = 3;
 function updateHud(dt) {
   state.comboT -= dt; if (state.comboT <= 0) { state.combo = 0; state.comboCash = 0; }
   hudT -= dt; if (hudT > 0) return; hudT = .1;
@@ -1562,13 +1675,215 @@ function updateHud(dt) {
   $('speed').innerHTML = Math.round(P.vel.length() * 3.6).toLocaleString('en-US') + '<small>KM/H</small>';
   $('alt').textContent = 'ALT ' + Math.round(P.pos.y) + ' m';
   $('boostTag').classList.toggle('on', P.boosting);
+  if (saveDirty && (hudT2 -= .1) <= 0) { hudT2 = 3; saveNow(); }
   if (isTouch) $('tSlam').textContent = P.pos.y - groundH(P.pos.x, P.pos.z) < 6 ? 'LAUNCH' : 'SLAM';
 }
+
+// ---------------------------------------------------------------- suits, achievements, save
+const SUITS = [
+  { id: 'classic', name: 'Classic', main: 0xffb300, limb: 0x1546c8, accent: 0x0c2160, mask: 0x0f1114, lens: 0xe9f3ff },
+  { id: 'midnight', name: 'Midnight', main: 0x1d4fd6, limb: 0x111318, accent: 0x050608, mask: 0x050608, lens: 0xbfe3ff, ach: 'wrecker' },
+  { id: 'demolition', name: 'Demolition', main: 0xf29a12, limb: 0x2d3640, accent: 0xf5f1e6, mask: 0x2d3640, lens: 0xfff6cc, ach: 'leveler' },
+  { id: 'patriarch', name: 'Patriarch', main: 0xf1efe9, limb: 0xe9e6de, accent: 0xb3121f, mask: null, cape: 0xb3121f, ach: 'skyline' },
+  { id: 'crimson', name: 'Crimson', main: 0xc81e2b, limb: 0x16181d, accent: 0xe8e2d6, mask: 0x16181d, lens: 0xffe6a8, ach: 'combo' },
+  { id: 'magenta', name: 'Magenta', main: 0xd6358f, limb: 0x2b1838, accent: 0xf2c6e0, mask: 0x2b1838, lens: 0xffffff, ach: 'juggler' },
+  { id: 'stealth', name: 'Stealth', main: 0x2a2d33, limb: 0x16181c, accent: 0x3a3f47, mask: 0x0a0b0d, lens: 0xff3b30, rough: .85, ach: 'rookie' },
+  { id: 'inferno', name: 'Inferno', main: 0xff6a1a, limb: 0x1a1412, accent: 0xffc23a, mask: 0x1a1412, lens: 0xfff2b0, emissive: 0xff4a00, ach: 'meteor' },
+  { id: 'ranger', name: 'Ranger', main: 0x4f8a3a, limb: 0x5a3b22, accent: 0x2b2014, mask: 0x2b2014, lens: 0xe8ffd0, ach: 'timber' },
+  { id: 'chrome', name: 'Chrome', main: 0xdfe3e8, limb: 0xb8bec6, accent: 0x8d949c, mask: 0x1b1e22, lens: 0x7fe0ff, metal: .95, rough: .18, ach: 'sonic' },
+  { id: 'gold', name: 'Solid Gold', main: 0xffcc33, limb: 0xe0a92a, accent: 0xb07d12, mask: 0x2a1d05, lens: 0xffffff, metal: 1, rough: .25, cape: 0x7a0f18, ach: 'billion' },
+];
+const ACHS = {
+  wrecker: { name: 'Wrecking Ball', desc: 'Wreck 25 buildings', stat: 'wrecked', goal: 25 },
+  leveler: { name: 'Urban Renewal', desc: 'Flatten 10 buildings right down to the street', stat: 'leveled', goal: 10 },
+  skyline: { name: 'Skyline Edit', desc: 'Bring down the top of a tower over 150 m tall', stat: 'tallTops', goal: 1 },
+  combo: { name: 'Combo Breaker', desc: 'Hit a ×30 combo', stat: 'maxCombo', goal: 30 },
+  juggler: { name: 'Car Juggler', desc: 'Send 30 cars flying', stat: 'cars', goal: 30 },
+  rookie: { name: 'Rampage Rookie', desc: 'Finish a Rampage run', stat: 'rampages', goal: 1 },
+  meteor: { name: 'Superhero Landing', desc: 'Land 10 meteor slams (X while airborne)', stat: 'slams', goal: 10 },
+  timber: { name: 'Timber!', desc: 'Knock down 75 trees', stat: 'trees', goal: 75 },
+  sonic: { name: 'Sound Barrier', desc: 'Stay supersonic for 10 seconds straight', stat: 'boostStreak', goal: 10 },
+  billion: { name: 'Billionaire Problems', desc: 'Cause $1B of damage in one Rampage', stat: 'bestRampage', goal: 1e9 },
+};
+const SAVE_KEY = 'skybreaker-save-v1';
+const save = { stats: {}, unlocked: ['classic'], suit: 'classic' };
+try { const raw = localStorage.getItem(SAVE_KEY); if (raw) Object.assign(save, JSON.parse(raw)); } catch (e) { /* private mode: progress lasts this visit */ }
+if (!save.unlocked.includes('classic')) save.unlocked.push('classic');
+let saveDirty = false;
+function saveNow() { saveDirty = false; try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* storage blocked */ } }
+const stat = (k) => save.stats[k] || 0;
+function statAdd(k, n = 1) { save.stats[k] = stat(k) + n; if (state.run) state.run[k] = (state.run[k] || 0) + n; saveDirty = true; checkAch(); }
+function statMax(k, v) { if (v > stat(k)) { save.stats[k] = v; saveDirty = true; checkAch(); } }
+function checkAch() {
+  for (const s of SUITS) {
+    if (!s.ach || save.unlocked.includes(s.id)) continue;
+    const a = ACHS[s.ach];
+    if (stat(a.stat) >= a.goal) { save.unlocked.push(s.id); saveNow(); toast(a.name, s); if (state.run) state.run.unlocks.push(s); }
+  }
+}
+const toastQ = []; let toastBusy = false;
+function toast(title, suit) { toastQ.push([title, suit]); if (!toastBusy) nextToast(); }
+function nextToast() {
+  const t = toastQ.shift(); if (!t) { toastBusy = false; return; }
+  toastBusy = true;
+  const el = $('toast');
+  $('toastTitle').textContent = t[0]; $('toastSuit').textContent = t[1].name + ' suit unlocked';
+  $('toastSwatch').style.background = swatchCss(t[1]);
+  el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  sfxUnlock();
+  setTimeout(() => { el.hidden = true; nextToast(); }, 3600);
+}
+const hex = (c) => '#' + c.toString(16).padStart(6, '0');
+const swatchCss = (s) => `linear-gradient(90deg, ${hex(s.limb)} 0 22%, ${hex(s.main)} 22% 78%, ${hex(s.limb)} 78%), ${hex(s.main)}`;
+
+function applySuit(id) {
+  const s = SUITS.find((x) => x.id === id && save.unlocked.includes(x.id)) || SUITS[0];
+  save.suit = s.id; saveDirty = true;
+  heroMat.main.color.setHex(s.main); heroMat.limb.color.setHex(s.limb); heroMat.accent.color.setHex(s.accent);
+  for (const m of [heroMat.main, heroMat.limb, heroMat.accent]) { m.metalness = s.metal || 0; m.roughness = s.rough || .45; m.envMapIntensity = s.metal ? 1.1 : .45; }
+  heroMat.main.emissive.setHex(s.emissive || 0); heroMat.main.emissiveIntensity = s.emissive ? .35 : 0;
+  heroMask.visible = s.mask != null;
+  if (s.mask != null) { heroMat.mask.color.setHex(s.mask); heroMat.lens.color.setHex(s.lens || 0xffffff); }
+  heroCape.visible = !!s.cape; if (s.cape) heroCape.material.color.setHex(s.cape);
+}
+
+// ---------------------------------------------------------------- modes + menus
+const RAMPAGE_TIME = 120;
+let suitsBack = 'main';
+function showScreen(name) {
+  for (const s of ['main', 'pause', 'suits', 'results']) $('scr-' + s).hidden = s !== name;
+  $('overlay').hidden = !name;
+  $('pauseBtn').hidden = !!name || !state.mode;
+  $('timer').hidden = !!name || state.mode !== 'rampage';
+  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; }
+  if (name === 'suits') renderSuits();
+  if (name) saveNow();
+  const first = name && document.querySelector('#scr-' + name + ' button'); if (first) first.focus({ preventScroll: true });
+}
+function renderSuits() {
+  const list = $('suitList'); list.textContent = '';
+  for (const s of SUITS) {
+    const open = save.unlocked.includes(s.id), a = s.ach && ACHS[s.ach];
+    const card = document.createElement('div'); card.className = 'suit' + (open ? '' : ' locked') + (save.suit === s.id ? ' on' : '');
+    const sw = document.createElement('div'); sw.className = 'swatch'; sw.style.background = swatchCss(s);
+    if (s.cape) sw.style.boxShadow = `inset 0 -8px 0 ${hex(s.cape)}`;
+    const body = document.createElement('div'); body.className = 'sbody';
+    const nm = document.createElement('div'); nm.className = 'sname'; nm.textContent = s.name;
+    const ds = document.createElement('div'); ds.className = 'sdesc';
+    ds.textContent = a ? a.name + ': ' + a.desc : 'The original. Always yours.';
+    body.append(nm, ds);
+    if (a && !open) {
+      const v = Math.min(stat(a.stat), a.goal), bar = document.createElement('div'); bar.className = 'bar';
+      const fill = document.createElement('i'); fill.style.width = (v / a.goal * 100) + '%'; bar.append(fill);
+      const num = document.createElement('div'); num.className = 'snum';
+      num.textContent = a.stat === 'bestRampage' ? fmtMoney(v) + ' / $1B' : a.stat === 'boostStreak' ? v.toFixed(1) + ' / 10 s' : Math.floor(v) + ' / ' + a.goal;
+      body.append(bar, num);
+    }
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'equip';
+    btn.textContent = !open ? 'LOCKED' : save.suit === s.id ? 'WEARING' : 'WEAR';
+    btn.disabled = !open || save.suit === s.id;
+    btn.addEventListener('click', () => { applySuit(s.id); saveNow(); renderSuits(); });
+    card.append(sw, body, btn); list.append(card);
+  }
+}
+function requestLock() {
+  if (isTouch || noLock) return;
+  try {
+    const r = canvas.requestPointerLock();
+    if (r && r.catch) r.catch(() => { noLock = true; $('help').innerHTML = '<b>Drag</b> to steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>F</b> punch-dash · <b>X</b> launch / slam · <b>P</b> pause'; });
+  } catch (e) { noLock = true; }
+  canvas.focus();
+}
+function enterPlay() { showScreen(null); state.playing = true; initAudio(); requestLock(); }
+function resetHero() {
+  P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch;
+  P.slamming = false; P.landT = 0; P.launchT = 0; P.dashT = 0; state.boostStreak = 0;
+}
+function startMode(mode) {
+  resetWorld();
+  state.mode = mode; state.timeLeft = RAMPAGE_TIME;
+  state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
+  $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
+  $('help').style.opacity = '1'; clearTimeout(startMode.t); startMode.t = setTimeout(() => { $('help').style.opacity = '0'; }, 12000);
+  enterPlay();
+  if (mode === 'rampage') popup('RAMPAGE!', true);
+}
+function pauseGame() {
+  if (!state.playing) return;
+  state.playing = false; keys.clear();
+  $('pRebuild').hidden = state.mode !== 'sandbox';
+  $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : 'Paused';
+  if (document.pointerLockElement) document.exitPointerLock();
+  showScreen('pause');
+}
+function endRampage() {
+  state.playing = false; keys.clear();
+  if (document.pointerLockElement) document.exitPointerLock();
+  statMax('bestRampage', state.damage);
+  statAdd('rampages', 1);
+  const r = state.run;
+  $('rScore').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
+  $('rBest').textContent = state.damage > r.prevBest ? 'New best!' : 'Best: $' + Math.round(stat('bestRampage')).toLocaleString('en-US');
+  $('rBest').classList.toggle('newbest', state.damage > r.prevBest);
+  const rows = [['Buildings wrecked', state.wrecked], ['Buildings flattened', r.leveled || 0], ['Cars thrown', r.cars || 0], ['Trees down', r.trees || 0], ['Meteor slams', r.slams || 0], ['Best combo', '×' + r.maxCombo]];
+  const st = $('rStats'); st.textContent = '';
+  for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
+  const un = $('rUnlocks'); un.textContent = '';
+  for (const s of r.unlocks) { const d = document.createElement('div'); d.className = 'unlock'; const sw = document.createElement('i'); sw.style.background = swatchCss(s); d.append(sw, document.createTextNode(s.name + ' suit unlocked')); un.append(d); }
+  showScreen('results');
+}
+function updateMode(dt) {
+  if (!state.playing || state.mode !== 'rampage') return;
+  state.timeLeft -= dt;
+  statMax('bestRampage', state.damage); // live, so the $1B suit can pop mid-run
+  if (state.timeLeft <= 0) { state.timeLeft = 0; endRampage(); }
+  const t = Math.ceil(state.timeLeft);
+  $('timer').textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+  $('timer').classList.toggle('hurry', state.timeLeft < 10);
+}
+
+// rebuild everything from the stored city plan
+function resetWorld() {
+  for (const e of entities) { if (e.mesh) { cityRoot.remove(e.mesh); e.mesh.geometry.dispose(); } if (e.extra) scene.remove(e.extra); }
+  entities.length = 0; grid.clear(); dirty.clear();
+  for (const f of falling) { cityRoot.remove(f.g); f.mesh.geometry.dispose(); }
+  falling.length = 0;
+  for (const spec of citySpecs) spawnEntity(spec);
+  hts.fill(0);
+  const pos = groundGeo.attributes.position, col = groundGeo.attributes.color;
+  for (let i = 0; i < pos.count; i++) { pos.setZ(i, 0); col.setXYZ(i, 1, 1, 1); }
+  pos.needsUpdate = col.needsUpdate = true; groundGeo.computeVertexNormals();
+  for (const d of decals) { d.life = 0; d.m.visible = false; }
+  trees.forEach((t, i) => { t.st = 0; t.ang = 0; t.w = 0; writeTree(i); });
+  trunkMesh.instanceMatrix.needsUpdate = crownMesh.instanceMatrix.needsUpdate = true;
+  carList.forEach(placeCar);
+  for (const p of pools) p.clear(); glassPool.clear();
+  for (const d of dust) { d.life = 0; d.s.visible = false; }
+  for (const r of rings) { r.life = 0; r.m.visible = false; }
+  $('popups').textContent = '';
+  Object.assign(state, { damage: 0, wrecked: 0, combo: 0, comboT: 0, shake: 0 }); hudT = 0;
+  resetHero();
+}
+
+$('mSandbox').addEventListener('click', () => startMode('sandbox'));
+$('mRampage').addEventListener('click', () => startMode('rampage'));
+$('openSuits').addEventListener('click', () => { suitsBack = 'main'; showScreen('suits'); });
+$('pSuits').addEventListener('click', () => { suitsBack = 'pause'; showScreen('suits'); });
+$('rSuits').addEventListener('click', () => { suitsBack = 'results'; showScreen('suits'); });
+$('sBack').addEventListener('click', () => showScreen(suitsBack));
+$('pResume').addEventListener('click', enterPlay);
+$('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
+$('pQuit').addEventListener('click', () => { state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('rAgain').addEventListener('click', () => startMode('rampage'));
+$('rMenu').addEventListener('click', () => { state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('pauseBtn').addEventListener('click', pauseGame);
+applySuit(save.suit);
 
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
 function simulate(dt) {
-  if (state.started && $('overlay').hidden) updateFlight(dt);
+  if (state.playing) updateFlight(dt);
+  updateMode(dt);
   updateHero(dt);
   updateFalling(dt);
   updateTrees(dt);
@@ -1589,13 +1904,10 @@ function frame() {
 }
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
 
-function start(data) {
-  if (data && data.damage) { state.damage = data.damage; state.wrecked = data.wrecked || 0; }
-  requestAnimationFrame(frame);
-}
+function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
-if (hot && hot.snapshot) hot.snapshot(() => ({ damage: state.damage, wrecked: state.wrecked }));
-if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
-window.__game = { superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+if (hot && hot.ready) hot.ready(start); else start();
+addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
+window.__game = { applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>

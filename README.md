@@ -4,6 +4,27 @@ Fly around a big city like a certain yellow-and-blue superhero and punch straigh
 
 Open `index.html` in a browser (needs internet for Three.js from the CDN).
 
+## Modes
+- **Sandbox**: fly around and wreck whatever you like. No clock. Pause and hit *Rebuild the city* to get a fresh skyline.
+- **Rampage**: two minutes on the clock. Your score is the dollar value of everything you destroy. Your best score is saved.
+
+## Suits
+Every achievement unlocks a suit. Equip them from *Suits & achievements* in the menu. Progress counts in both modes and is saved in your browser.
+
+| Suit | Achievement |
+| --- | --- |
+| Classic | Unlocked from the start |
+| Midnight | Wrecking Ball: wreck 25 buildings |
+| Demolition | Urban Renewal: flatten 10 buildings to the street |
+| Patriarch (with cape) | Skyline Edit: bring down the top of a tower over 150 m |
+| Crimson | Combo Breaker: hit a ×30 combo |
+| Magenta | Car Juggler: send 30 cars flying |
+| Stealth | Rampage Rookie: finish a Rampage run |
+| Inferno | Superhero Landing: land 10 meteor slams |
+| Ranger | Timber!: knock down 75 trees |
+| Chrome | Sound Barrier: stay supersonic for 10 seconds |
+| Solid Gold (with cape) | Billionaire Problems: $1B of damage in one Rampage |
+
 ## Controls
 | Key | Action |
 | --- | --- |
@@ -15,6 +36,7 @@ Open `index.html` in a browser (needs internet for Three.js from the CDN).
 | Click / F | Punch-dash |
 | X | On the ground: rocket launch. In the air: meteor slam down feet-first |
 | R | Back to the sky |
+| P / Esc | Pause |
 | M | Mute |
 
 On phones: left stick flies, drag to look, buttons for boost / punch / up / down.
