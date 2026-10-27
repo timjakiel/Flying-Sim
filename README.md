@@ -22,17 +22,28 @@ Open `index.html` in a browser (needs internet for Three.js from the CDN).
 | Normal | 1,300 | 70% | leads his shots | 3 | $4M |
 | Hard | 2,200 | 120% | fast, tight aim, short tells | 5 | $12M |
 
-## Powers
-Sandbox has every power at max level. In Rampage you buy them, then pay to upgrade them (each level hits about 25% harder; Titan Fists +15% punch size per level; Overtime +30 s per level).
+## Heroes
+Pick a hero from **Hero** on the main menu. Everyone flies, punch-dashes (left-click) and meteor-slams (X). Each hero has three powers of their own: **mouse wheel** (or 1/2/3) picks one, **right-click** (or V) uses it, and you hold it for beams.
 
-| Power | Key | Buy | Lv 2 | Lv 3 | Lv 4 | Lv 5 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Meteor Slam | X | $2.5M | $5.8M | $13.2M | $30.4M | $70.0M |
-| Super Shout | V | $8M | $18.4M | $42.3M | $97.3M | $223.9M |
-| Overtime | passive | $6M | $15.6M | $40.6M | | |
-| Thunder Clap | G | $12M | $27.6M | $63.5M | $146.0M | $335.8M |
-| Laser Vision | L / right-click | $20M | $44.0M | $96.8M | $213.0M | $468.5M |
-| Titan Fists | passive | $15M | $36.0M | $86.4M | $207.4M | $497.7M |
+| Hero | 1 | 2 | 3 (hold) |
+| --- | --- | --- | --- |
+| Skybreaker: strength, sonic voice, laser eyes | Super Shout (cone) | Thunder Clap (around you) | Laser Vision |
+| Blaze: fire | Fireball (exploding projectile) | Supernova (ring of fire) | Flamethrower |
+| Mindstorm: telekinesis | Psychic Push (force cone) | Rip & Hurl (tear a chunk off the nearest building and throw it) | Gravity Well (lift everything, then slam it down) |
+| Volt: lightning | Lightning Bolt (arcs to explosives and cars) | EMP Burst (stuns enemies) | Thunderstorm |
+| Frostbite: ice | Ice Spikes (a line of spikes erupts ahead) | Blizzard (slows enemies) | Ice Beam |
+
+## Powers
+Sandbox has every power at max level; Showdown gives you every power at your shop level (minimum 1). In Rampage you buy them in the power shop, then pay to upgrade them (each level hits about 25% harder).
+
+| Power | Buy | Lv 2 | Lv 3 | Lv 4 | Lv 5 |
+| --- | --- | --- | --- | --- | --- |
+| Meteor Slam (every hero) | $2.5M | $5.8M | $13.2M | $30.4M | $70.0M |
+| Overtime (+30 s per level) | $6M | $15.6M | $40.6M | | |
+| Titan Fists (every hero) | $15M | $36.0M | $86.4M | $207.4M | $497.7M |
+| Each hero's power 1 | $8M | $18.4M | $42.3M | $97.3M | $223.9M |
+| Each hero's power 2 | $12M | $27.6M | $63.5M | $146.0M | $335.8M |
+| Each hero's power 3 | $20M | $44.0M | $96.8M | $213.0M | $468.5M |
 
 ## Explosives
 Gas cans, oil drums, propane tanks and parked fuel tankers are scattered around the streets. Fly into one, laser it, or catch it in a blast and it goes up, setting off anything else nearby in a chain reaction.
@@ -42,6 +53,7 @@ Every achievement unlocks a suit. Only Rampage rounds count toward them; Sandbox
 
 | Suit | Achievement |
 | --- | --- |
+| Signature | Each hero in their own colors (default) |
 | Classic | Unlocked from the start |
 | Midnight | Wrecking Ball: wreck 400 buildings |
 | Demolition | Urban Renewal: flatten 120 buildings to the street |
@@ -65,7 +77,9 @@ Every achievement unlocks a suit. Only Rampage rounds count toward them; Sandbox
 | Q / C | Descend |
 | Shift | Supersonic boost |
 | Click / F | Punch-dash |
-| X / V / G / L | Powers (see above) |
+| X | Launch / meteor slam |
+| Mouse wheel / 1 2 3 | Pick a power |
+| Right-click / V | Use the power (hold for beams) |
 | R | Back to the sky |
 | P / Esc | Pause |
 | M | Mute |
