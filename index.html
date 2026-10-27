@@ -32,7 +32,8 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ink); 
 #boostTag.on { opacity: 1; }
 
 #help { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--glass); padding: 8px 16px; border-radius: 6px;
-  font-size: 15px; font-weight: 500; letter-spacing: .03em; white-space: nowrap; transition: opacity .6s; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+  font-size: 15px; font-weight: 500; letter-spacing: .03em; text-align: center; width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box; }
+#help b { white-space: nowrap; }
 #help b { color: var(--yellow); font-weight: 700; }
 
 #popups { position: fixed; inset: 0; pointer-events: none; z-index: 6; overflow: hidden; }
@@ -120,7 +121,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   font-family: var(--display); font-size: 18px; letter-spacing: .04em; display: grid; place-items: center; user-select: none; -webkit-user-select: none; }
 .tbtn.big { background: var(--yellow); }
 .tbtn.held { transform: scale(.92); filter: brightness(.85); }
-#powers { left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(64px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
+#powers { left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(90px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
 .chip { position: relative; overflow: hidden; display: flex; gap: 8px; align-items: center; padding: 4px 12px 4px 4px; background: var(--glass); border-radius: 6px; font-size: 16px; font-weight: 600; letter-spacing: .03em; }
 .chip b { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 4px; background: var(--yellow); color: var(--ink); border-radius: 4px; font-weight: 700; }
 .chip::after { content: ""; position: absolute; inset: 0; background: rgba(9,18,34,.7); transform-origin: left; transform: scaleX(var(--cd, 0)); }
@@ -2177,7 +2178,7 @@ function requestLock() {
   lockPending = true;
   try {
     const r = canvas.requestPointerLock();
-    if (r && r.catch) r.catch(() => { noLock = true; lockPending = false; $('help').innerHTML = '<b>Drag</b> to steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>F</b> punch-dash · <b>X</b> launch / slam · <b>P</b> pause'; });
+    if (r && r.catch) r.catch(() => { noLock = true; lockPending = false; $('help').innerHTML = '<b>Drag</b> to steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>F</b> punch-dash · <b>Space/Q</b> up/down · <b>X V G L</b> powers · <b>P</b> pause'; });
   } catch (e) { noLock = true; }
   canvas.focus();
 }
@@ -2192,7 +2193,6 @@ function startMode(mode) {
   buildPowerHud();
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
   $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
-  $('help').style.opacity = '1'; clearTimeout(startMode.t); startMode.t = setTimeout(() => { $('help').style.opacity = '0'; }, 12000);
   enterPlay();
   if (mode === 'rampage') popup('RAMPAGE!', true);
 }
