@@ -93,6 +93,7 @@ h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 #pauseBtn { position: fixed; z-index: 8; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); width: 40px; height: 40px;
   border-radius: 50%; border: 2px solid var(--ink); background: rgba(247,243,232,.85); color: var(--ink); font: 700 16px var(--ui); cursor: pointer; }
 #hud-right { margin-top: 48px; }
+body:has(#bossbar:not([hidden])) #hud-left { top: calc(84px + env(safe-area-inset-top, 0px)); }
 #toast { position: fixed; z-index: 9; top: calc(76px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
   background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--blue); padding: 10px 16px; pointer-events: none; max-width: calc(100vw - 32px); }
 #toast.show { animation: toastIn 3.6s ease forwards; }
@@ -139,6 +140,25 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 .pips i { width: 14px; height: 6px; border-radius: 2px; background: rgba(247,243,232,.2); }
 .pips i.on { background: var(--yellow); }
 .pips span { margin-left: 6px; }
+.modes { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.mode.boss { background: #2a0d12; color: var(--paper); box-shadow: 5px 5px 0 var(--red); cursor: default; }
+.mode.boss:hover { transform: skew(-4deg); box-shadow: 5px 5px 0 var(--red); }
+.diffs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+.diffs button { display: grid; gap: 2px; font-family: var(--display); font-size: 18px; letter-spacing: .05em; padding: 6px 4px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+.diffs button:hover { background: var(--yellow); }
+.diffs button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+#sd-hard { background: var(--red); color: var(--paper); }
+.diffs small { font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing: .06em; opacity: .8; font-variant-numeric: tabular-nums; }
+#bossbar { top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(520px, calc(100vw - 120px)); display: grid; gap: 6px; }
+.bar2 { display: grid; gap: 2px; }
+.bar2 span { font-family: var(--display); font-size: 16px; letter-spacing: .08em; line-height: 1; }
+.bar2.vil span { color: #ff8a7a; text-align: right; }
+.track { height: 12px; background: rgba(9,18,34,.7); border: 2px solid var(--ink); border-radius: 3px; overflow: hidden; }
+.track i { display: block; height: 100%; background: var(--yellow); transform-origin: left; transition: transform .15s; }
+.vil .track i { background: var(--red); transform-origin: right; }
+#hurt { position: fixed; inset: 0; pointer-events: none; z-index: 4; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,0,0,0) 45%, rgba(200,0,0,.75)); }
+#vmark { left: 0; top: 0; min-width: 28px; height: 28px; padding: 0 6px; display: grid; place-items: center; font: 700 12px var(--ui); color: var(--paper); background: rgba(158,15,26,.85); border: 2px solid var(--ink); border-radius: 14px; }
+#vmark.edge { width: 28px; padding: 0; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 4px rgba(255,90,60,.35); }
 @media (prefers-reduced-motion: reduce) { .pop, #toast.show { animation-duration: .01s; } #timer.hurry { animation: none; } }
 </style>
 
@@ -155,6 +175,12 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   <div id="boostTag">SUPERSONIC</div>
 </div>
 <div class="hud" id="timer" hidden>2:00</div>
+<div class="hud" id="bossbar" hidden>
+  <div class="bar2"><span>YOU</span><div class="track"><i id="pFill"></i></div></div>
+  <div class="bar2 vil"><span id="vName">THE WARLORD</span><div class="track"><i id="vFill"></i></div></div>
+</div>
+<div id="hurt"></div>
+<div class="hud" id="vmark" hidden></div>
 <button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
 <div id="toast" hidden><i id="toastSwatch"></i><div><div class="tlabel">Achievement unlocked</div><div id="toastTitle"></div><div id="toastSuit"></div></div></div>
 <div class="hud" id="powers"></div>
@@ -176,12 +202,19 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 </div>
 
 <div id="overlay">
-  <div class="card" id="scr-main">
+  <div class="card wide" id="scr-main">
     <h1>Skybreaker</h1>
     <p class="tag" id="tagline">A whole city, and you're stronger than every building in it. Fly fast, punch through, watch it come down.</p>
     <div class="modes">
       <button class="mode" id="mSandbox" type="button"><span class="mname">Sandbox</span><span class="mdesc">Every power unlocked, no clock. Wreck whatever you like and rebuild the city any time.</span></button>
       <button class="mode hot" id="mRampage" type="button"><span class="mname">Rampage</span><span class="mdesc">Two-minute rounds. You keep a cut of the damage and spend it on new powers.</span><span class="mbest" id="bestLine">No score yet</span></button>
+      <div class="mode boss"><span class="mname">Showdown</span><span class="mdesc">Fight the Warlord, a supervillain with all your powers. Every power you own, at your shop level.</span>
+        <div class="diffs">
+          <button type="button" id="sd-easy">EASY<small id="sdb-easy">—</small></button>
+          <button type="button" id="sd-normal">NORMAL<small id="sdb-normal">—</small></button>
+          <button type="button" id="sd-hard">HARD<small id="sdb-hard">—</small></button>
+        </div>
+      </div>
     </div>
     <div class="row">
       <button class="ghost" id="openShop" type="button">Power shop<span id="walletMini">$0</span></button>
@@ -201,7 +234,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
       <div><span>DIVE</span><span>Crater the street</span></div>
       <div><span>R</span><span>Back to the sky</span></div>
       <div><span>P / ESC</span><span>Pause</span></div>
-      <div class="foot">* Bought in the power shop for Rampage. Always on in Sandbox.</div>
+      <div class="foot">* Bought and upgraded in the power shop for Rampage. Always on in Sandbox and Showdown.</div>
     </div>
   </div>
   <div class="card" id="scr-pause" hidden>
@@ -213,7 +246,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
   </div>
   <div class="card wide" id="scr-suits" hidden>
     <h2>Suits</h2>
-    <p class="tag">Every achievement unlocks a suit. Only Rampage rounds count, Sandbox never does.</p>
+    <p class="tag">Every achievement unlocks a suit. Only Rampage rounds count (plus beating the Warlord on Hard). Sandbox never does.</p>
     <div class="suits" id="suitList"></div>
     <button class="ghost" id="sBack" type="button">Back</button>
   </div>
@@ -225,7 +258,7 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
     <button class="ghost" id="shBack" type="button">Back</button>
   </div>
   <div class="card" id="scr-results" hidden>
-    <h2>Time's up</h2>
+    <h2 id="rTitle">Time's up</h2>
     <div class="score" id="rScore">$0</div>
     <div id="rBest"></div>
     <div class="rstats" id="rStats"></div>
@@ -1405,6 +1438,7 @@ function launch() {
   addCracks(gx, gz, 30);
   const g0 = groundH(gx, gz);
   const cash = blast(new V3(gx, g0 + 1, gz), 6 * pmul('slam'), new V3(0, 40, 0));
+  if (villainInRange(new V3(gx, g0 + 2, gz), 10)) hurtVillain(60 * pmul('slam'), new V3(0, 1, 0), 140, 'UPPERCUT!');
   for (let q = 0; q < 34; q++) {
     const a = rand(0, Math.PI * 2), d = rand(0, 5);
     tmpV.set(gx + Math.cos(a) * d, g0 + .4, gz + Math.sin(a) * d);
@@ -1425,6 +1459,7 @@ function groundSlam(p, impact, meteor) {
   crater(p.x, p.z, R, R * .32);
   addCracks(p.x, p.z, R * 3.2);
   const cash = blast(tmpV2.set(p.x, groundH(p.x, p.z) + 1, p.z).clone(), R * 1.1, P.vel.clone().multiplyScalar(.2));
+  { const c = new V3(p.x, groundH(p.x, p.z) + 1, p.z); if (villainInRange(c, R * 1.3)) hurtVillain((meteor ? 200 * pmul('slam') : 50) * (1 - V.pos.distanceTo(c) / (R * 1.6)), tmpV2.subVectors(V.pos, c).setY(6), 180, meteor ? 'METEOR!' : null); }
   // chunks of road
   for (let q = 0; q < 40; q++) {
     const a = rand(0, Math.PI * 2), d = rand(0, R * .8);
@@ -1585,6 +1620,8 @@ function explode(x) {
   sfxBoom(); sfxCrash(clamp(1.3 - d / 400, .2, 1.3));
   hitFeedback(cash, 100, true);
   if (T.r > 15 || Math.random() < .3) popup(['KABOOM!', 'BOOM!', 'FWOOSH!', 'KRAKOOM!'][Math.random() * 4 | 0], true);
+  if (villainInRange(p, T.r * 1.3)) hurtVillain(T.r * 6 * (1 - V.pos.distanceTo(p) / (T.r * 1.5)), tmpV2.subVectors(V.pos, p), T.r * 5, 'KABOOM!');
+  if (state.mode === 'showdown' && d < T.r * 1.3) hurtPlayer(T.r * 3.5 * (1 - d / (T.r * 1.4)) / S.diff.dmg, null, 0);
   statAdd('explosions');
 }
 function touchExplosives() {
@@ -1608,7 +1645,8 @@ const POWERS = [
   { id: 'laser', name: 'Laser Vision', key: 'L', alt: 'or hold right-click', price: 20e6, max: 5, cost: 2.2, desc: 'Hold to carve through whatever you look at. Lights up explosives.', up: 'Wider, hotter beam' },
   { id: 'fists', name: 'Titan Fists', price: 15e6, max: 5, cost: 2.4, desc: 'Every punch tears a wider hole.', up: '+15% punch size' },
 ];
-const powerLevel = (id) => state.mode === 'sandbox' ? POWERS.find((x) => x.id === id).max : (save.levels[id] || 0);
+const powerLevel = (id) => state.mode === 'sandbox' ? POWERS.find((x) => x.id === id).max
+  : state.mode === 'showdown' && id !== 'overtime' ? Math.max(1, save.levels[id] || 0) : (save.levels[id] || 0);
 const hasPower = (id) => powerLevel(id) > 0;
 const pmul = (id) => 1 + .25 * (powerLevel(id) - 1); // damage/radius multiplier for the level
 const nextCost = (pw) => Math.round(pw.price * Math.pow(pw.cost, save.levels[pw.id] || 0) / 1e5) * 1e5;
@@ -1620,6 +1658,7 @@ function superShout() {
   cds.shout = 8; shoutT = .6;
   const m = pmul('shout');
   const f = forwardVec(new V3()), o = P.pos.clone(); o.y += 1;
+  let shoutHit = false;
   for (let i = 0; i < 7; i++) {
     const d = (7 + i * 9) * (.8 + m * .2), c = o.clone().addScaledVector(f, d), r = (2.5 + d * .22) * m;
     later(i * .06, () => {
@@ -1627,6 +1666,7 @@ function superShout() {
       const cash = blast(c, r, f.clone().multiplyScalar(70));
       detonateNear(c, r);
       if (cash) hitFeedback(cash, 90, true);
+      if (!shoutHit && villainInRange(c, r)) { shoutHit = true; hurtVillain(140 * m, f, 200, 'SHOUT!'); }
     });
   }
   state.shake = Math.max(state.shake, .7); sfxShout();
@@ -1639,6 +1679,7 @@ function thunderClap() {
     const c = P.pos.clone();
     spawnRing(c, UP, 4); spawnRing(c, forwardVec(new V3()), 3.2);
     const cash = blast(c, R, null); detonateNear(c, R);
+    if (villainInRange(c, R)) hurtVillain(160 * pmul('clap'), tmpV2.subVectors(V.pos, c).setY(2), 220, 'THUNDER!');
     if (P.pos.y - groundH(c.x, c.z) < 8) { crater(c.x, c.z, R * .45, 2); addCracks(c.x, c.z, R * 1.3); }
     state.shake = Math.max(state.shake, 1.3); sfxBoom(); sfxCrash(1.2);
     hitFeedback(cash + 1, 140, true);
@@ -1684,6 +1725,11 @@ function updateLaser(dt) {
   const startT = camera.position.distanceTo(P.pos);
   const hit = raycastWorld(camera.position, camDir, startT, 520);
   endV.copy(camera.position).addScaledVector(camDir, hit ? hit.t : 520);
+  let onVillain = false;
+  if (state.mode === 'showdown' && villain.visible && !V.dead) {
+    const t = tmpV.subVectors(V.pos, camera.position).dot(camDir);
+    if (t > startT && t < (hit ? hit.t : 520) && V.pos.distanceTo(tmpV2.copy(camera.position).addScaledVector(camDir, t)) < 2.6) { endV.copy(tmpV2); onVillain = true; }
+  }
   [-1, 1].forEach((s, i) => {
     heroModel.localToWorld(eyeV.set(s * .06, .935, .17));
     const len = eyeV.distanceTo(endV), b = beams[i];
@@ -1693,7 +1739,11 @@ function updateLaser(dt) {
   });
   laserDot.position.copy(endV); const ds = hit ? rand(3, 4.5) : 0; laserDot.scale.set(ds, ds, ds);
   laserTick -= dt; laserPop -= dt;
-  if (hit && laserTick <= 0) {
+  if (onVillain) {
+    V.hp -= 110 * pmul('laser') * dt; S.dealt += 110 * pmul('laser') * dt; updateBars();
+    if (laserTick <= 0) { laserTick = .05; spawnFire(endV, .4, 1.6, 1, .35, 6); }
+    if (V.hp <= 0) { S.hits++; villainDown(); }
+  } else if (hit && laserTick <= 0) {
     laserTick = .05;
     spawnFire(endV, .4, 1.6, 1, .35, 6);
     if (hit.e) laserCash += smashEntity(hit.e, new V3(endV.x - hit.e.cx, endV.y, endV.z - hit.e.cz), 1.6 * pmul('laser'), camDir.clone().multiplyScalar(-15));
@@ -1841,6 +1891,12 @@ function forwardVec(out) { const cp = Math.cos(P.pitch); return out.set(-Math.si
 const fwd = new V3(), right = new V3(), wish = new V3(), UP = new V3(0, 1, 0), steerDir = new V3(), steerTgt = new V3();
 let wasBoost = false;
 function updateFlight(dt) {
+  if (state.mode === 'showdown' && S.ko) {
+    P.vel.y -= 30 * dt; P.vel.x *= Math.exp(-dt); P.vel.z *= Math.exp(-dt);
+    P.pos.addScaledVector(P.vel, dt);
+    const gk = groundH(P.pos.x, P.pos.z) + 1.2; if (P.pos.y < gk) { P.pos.y = gk; P.vel.set(0, 0, 0); }
+    return;
+  }
   // arrow keys look too
   const ak = 1.8 * dt;
   if (keys.has('arrowleft')) P.yaw += ak; if (keys.has('arrowright')) P.yaw -= ak;
@@ -2029,6 +2085,7 @@ const SUITS = [
   { id: 'ranger', name: 'Ranger', main: 0x4f8a3a, limb: 0x5a3b22, accent: 0x2b2014, mask: 0x2b2014, lens: 0xe8ffd0, ach: 'timber' },
   { id: 'chrome', name: 'Chrome', main: 0xdfe3e8, limb: 0xb8bec6, accent: 0x8d949c, mask: 0x1b1e22, lens: 0x7fe0ff, metal: .95, rough: .18, ach: 'sonic' },
   { id: 'hazmat', name: 'Hazmat', main: 0xf2d22e, limb: 0x1b1d21, accent: 0x1b1d21, mask: 0x1b1d21, lens: 0x9cff6a, ach: 'chain' },
+  { id: 'warlord', name: 'Warlord', main: 0x15161a, limb: 0x0b0b0d, accent: 0x9e0f1a, mask: null, cape: 0x8e0c16, ach: 'nemesis' },
   { id: 'gold', name: 'Solid Gold', main: 0xffcc33, limb: 0xe0a92a, accent: 0xb07d12, mask: 0x2a1d05, lens: 0xffffff, metal: 1, rough: .25, cape: 0x7a0f18, ach: 'billion' },
 ];
 const ACHS = {
@@ -2042,6 +2099,7 @@ const ACHS = {
   timber: { name: 'Timber!', desc: 'Knock down 1,000 trees', stat: 'trees', goal: 1000 },
   sonic: { name: 'Sound Barrier', desc: 'Stay supersonic for 60 seconds straight', stat: 'boostStreak', goal: 60 },
   chain: { name: 'Chain Reaction', desc: 'Blow up 1,500 explosives', stat: 'explosions', goal: 1500 },
+  nemesis: { name: 'Nemesis', desc: 'Beat the Warlord in Showdown on Hard', stat: 'hardWins', goal: 1 },
   billion: { name: 'Billionaire Problems', desc: 'Cause $10B of damage in one Rampage round', stat: 'bestRampage', goal: 1e10 },
 };
 const SAVE_KEY = 'skybreaker-save-v1';
@@ -2060,6 +2118,7 @@ const stat = (k) => save.stats[k] || 0;
 function statAdd(k, n = 1) {
   if (state.mode !== 'rampage') return;
   save.stats[k] = stat(k) + n; if (state.run) state.run[k] = (state.run[k] || 0) + n; saveDirty = true; checkAch(); }
+function statForce(k, v) { if (v > stat(k)) { save.stats[k] = v; saveDirty = true; checkAch(); } }
 function statMax(k, v) {
   if (state.mode !== 'rampage') return; if (v > stat(k)) { save.stats[k] = v; saveDirty = true; checkAch(); } }
 function checkAch() {
@@ -2103,7 +2162,8 @@ function showScreen(name) {
   $('overlay').hidden = !name;
   $('pauseBtn').hidden = !!name || !state.mode;
   $('timer').hidden = !!name || state.mode !== 'rampage';
-  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('walletMini').textContent = fmtCash(save.wallet); }
+  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('walletMini').textContent = fmtCash(save.wallet);
+    for (const d of ['easy', 'normal', 'hard']) { const t = save.stats['best_' + d]; $('sdb-' + d).textContent = t ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : '—'; } }
   if (name === 'shop') renderShop();
   if (name === 'suits') renderSuits();
   if (name) saveNow();
@@ -2187,12 +2247,14 @@ function resetHero() {
   P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch;
   P.slamming = false; P.landT = 0; P.launchT = 0; P.dashT = 0; state.boostStreak = 0;
 }
-function startMode(mode) {
+function startMode(mode, diff) {
   resetWorld();
+  state.lastMode = mode; state.lastDiff = diff;
   state.mode = mode; state.timeLeft = RAMPAGE_TIME + 30 * powerLevel('overtime');
   buildPowerHud();
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
   $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
+  if (mode === 'showdown') startShowdown(diff || 'normal'); else endShowdownWorld();
   enterPlay();
   if (mode === 'rampage') popup('RAMPAGE!', true);
 }
@@ -2200,7 +2262,7 @@ function pauseGame() {
   if (!state.playing) return;
   state.playing = false; keys.clear();
   $('pRebuild').hidden = state.mode !== 'sandbox';
-  $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : 'Paused';
+  $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : state.mode === 'showdown' ? 'Showdown paused' : 'Paused';
   if (document.pointerLockElement) document.exitPointerLock();
   showScreen('pause');
 }
@@ -2209,6 +2271,7 @@ function endRampage() {
   if (document.pointerLockElement) document.exitPointerLock();
   statMax('bestRampage', state.damage);
   statAdd('rampages', 1);
+  $('rTitle').textContent = "Time's up";
   const r = state.run;
   $('rScore').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
   $('rBest').textContent = state.damage > r.prevBest ? 'New best!' : 'Best: $' + Math.round(stat('bestRampage')).toLocaleString('en-US');
@@ -2269,16 +2332,367 @@ $('shBack').addEventListener('click', () => showScreen(shopBack));
 $('sBack').addEventListener('click', () => showScreen(suitsBack));
 $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
-$('pQuit').addEventListener('click', () => { state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
-$('rAgain').addEventListener('click', () => startMode('rampage'));
-$('rMenu').addEventListener('click', () => { state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('pQuit').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('rAgain').addEventListener('click', () => startMode(state.lastMode || 'rampage', state.lastDiff));
+for (const d of ['easy', 'normal', 'hard']) $('sd-' + d).addEventListener('click', () => startMode('showdown', d));
+$('rMenu').addEventListener('click', () => { endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
 $('pauseBtn').addEventListener('click', pauseGame);
 applySuit(save.suit);
+
+// ---------------------------------------------------------------- showdown: the Warlord
+const DIFFS = {
+  easy: { name: 'Easy', hp: 700, dmg: .4, cd: 1.7, speed: .8, aim: 1.4, lead: 0, lvl: 1, think: 1.1, reward: 1e6 },
+  normal: { name: 'Normal', hp: 1300, dmg: .7, cd: 1.1, speed: 1, aim: 2.6, lead: .45, lvl: 3, think: .7, reward: 4e6 },
+  hard: { name: 'Hard', hp: 2200, dmg: 1.2, cd: .7, speed: 1.18, aim: 4.2, lead: .9, lvl: 5, think: .4, reward: 12e6 },
+};
+const PLAYER_HP = 1000;
+const villain = new THREE.Group(); villain.visible = false; scene.add(villain);
+const vModel = new THREE.Group(); villain.add(vModel);
+const vMat = {};
+const vBody = {};
+{
+  const std = (c, r = .5, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, envMapIntensity: .5 });
+  vMat.main = std(0x15161a, .35, .3); vMat.limb = std(0x0b0b0d, .4, .2); vMat.accent = std(0x9e0f1a, .4, .2);
+  vMat.skin = std(0xc8936e, .6); vMat.eye = new THREE.MeshBasicMaterial({ color: 0xff2a1a, toneMapped: false });
+  const cap = (r, l, mat) => { const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 8, 16), mat); m.castShadow = true; return m; };
+  const sph = (r, mat) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), mat); m.castShadow = true; return m; };
+  const torso = cap(.3, .44, vMat.main); torso.position.y = .36; torso.scale.set(1.25, 1, .82); vModel.add(torso);
+  const chest = new THREE.Mesh(new THREE.TorusGeometry(.2, .04, 8, 3), vMat.accent); chest.position.set(0, .48, .22); chest.rotation.z = Math.PI / 2; vModel.add(chest);
+  const hips = cap(.27, .12, vMat.limb); hips.position.y = .02; hips.scale.set(1.15, 1, .8); vModel.add(hips);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(.29, .04, 8, 32), vMat.accent); belt.rotation.x = Math.PI / 2; belt.position.y = .12; belt.scale.set(1.12, .8, 1); vModel.add(belt);
+  const neck = cap(.09, .08, vMat.skin); neck.position.y = .76; vModel.add(neck);
+  const head = sph(.17, vMat.skin); head.position.y = .95; head.scale.set(.95, 1.08, 1); vModel.add(head);
+  const hair = sph(.18, vMat.limb); hair.position.set(0, 1.0, -.04); hair.scale.set(1, .7, 1); vModel.add(hair);
+  for (const s of [-1, 1]) { const e = sph(.035, vMat.eye); e.position.set(s * .06, .95, .16); e.scale.set(1.4, .7, .5); vModel.add(e); }
+  const mkArm = (s) => {
+    const pivot = new THREE.Group(); pivot.position.set(s * .41, .62, 0);
+    const sh = sph(.15, vMat.accent); pivot.add(sh);
+    const up = cap(.095, .26, vMat.limb); up.position.y = -.2; pivot.add(up);
+    const fo = cap(.085, .24, vMat.limb); fo.position.y = -.47; pivot.add(fo);
+    const glove = sph(.11, vMat.accent); glove.position.y = -.66; glove.scale.set(1, 1.15, 1); pivot.add(glove);
+    vModel.add(pivot); return pivot;
+  };
+  const mkLeg = (s) => {
+    const pivot = new THREE.Group(); pivot.position.set(s * .14, -.04, 0);
+    const th = cap(.12, .34, vMat.limb); th.position.y = -.24; pivot.add(th);
+    const sh = cap(.1, .3, vMat.limb); sh.position.y = -.62; pivot.add(sh);
+    const boot = cap(.11, .18, vMat.accent); boot.position.set(0, -.84, .02); pivot.add(boot);
+    vModel.add(pivot); return pivot;
+  };
+  Object.assign(vBody, { armR: mkArm(1), armL: mkArm(-1), legR: mkLeg(1), legL: mkLeg(-1) });
+  const capeG = new THREE.PlaneGeometry(.95, 1.7, 4, 10); capeG.translate(0, -.85, 0);
+  const cape = new THREE.Mesh(capeG, new THREE.MeshStandardMaterial({ color: 0x8e0c16, roughness: .7, side: THREE.DoubleSide }));
+  cape.position.set(0, .68, -.22); cape.rotation.x = .2; cape.castShadow = true; vModel.add(cape);
+  vBody.cape = cape;
+  vModel.scale.setScalar(1.35);
+}
+const vGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, toneMapped: false }));
+vGlow.visible = false; scene.add(vGlow);
+const vBeams = [0, 1].map(() => { const core = new THREE.Mesh(beamGeo, beamMat), glow = new THREE.Mesh(beamGeo, glowMat); core.frustumCulled = glow.frustumCulled = false; core.visible = glow.visible = false; scene.add(core, glow); return { core, glow }; });
+
+const V = { pos: new V3(), vel: new V3(), hp: 1, maxHp: 1, dead: false, stun: 0, act: null, actT: 0, think: 0, cd: {}, aim: new V3(), orbit: 0, laserTick: 0, lastHitBy: 0, beamEnd: new V3() };
+const S = { hp: PLAYER_HP, lastHurt: 0, ko: false, diff: DIFFS.normal, diffId: 'normal', time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0 };
+
+function startShowdown(diffId) {
+  S.diffId = diffId; S.diff = DIFFS[diffId];
+  Object.assign(S, { hp: PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0 });
+  V.maxHp = V.hp = S.diff.hp; V.dead = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5; V.cd = { ram: 3, laser: 5, shout: 6, clap: 4, slam: 8 };
+  V.pos.set(0, 160, -120); V.vel.set(0, 0, 0); V.orbit = rand(0, 6.28);
+  villain.visible = true; villain.position.copy(V.pos); vGlow.visible = false;
+  $('bossbar').hidden = false; $('vName').textContent = 'THE WARLORD · ' + S.diff.name.toUpperCase();
+  updateBars();
+  later(.3, () => popup('THE WARLORD ARRIVES', true));
+}
+function endShowdownWorld() { villain.visible = false; vGlow.visible = false; for (const b of vBeams) b.core.visible = b.glow.visible = false; $('bossbar').hidden = true; $('vmark').hidden = true; }
+function updateBars() {
+  $('pFill').style.transform = `scaleX(${clamp(S.hp / PLAYER_HP, 0, 1)})`;
+  $('vFill').style.transform = `scaleX(${clamp(V.hp / V.maxHp, 0, 1)})`;
+}
+
+// ---- damage both ways
+function hurtVillain(amount, dir, knock, label) {
+  if (state.mode !== 'showdown' || V.dead || S.over || amount <= 0) return;
+  V.hp -= amount; S.dealt += amount; S.hits++;
+  if (dir && knock) { V.vel.addScaledVector(tmpV.copy(dir).normalize(), knock); V.stun = Math.max(V.stun, clamp(knock / 200, .2, .8)); V.act = null; vGlow.visible = false; for (const b of vBeams) b.core.visible = b.glow.visible = false; }
+  popup((label || ['POW!', 'WHAM!', 'KRAK!', 'BAM!'][Math.random() * 4 | 0]) + ' -' + Math.round(amount), true);
+  sfxCrash(.9); state.shake = Math.max(state.shake, .5);
+  spawnFire(V.pos, .6, 2.2, 3, .3, 8);
+  updateBars();
+  if (V.hp <= 0) villainDown();
+}
+function hurtPlayer(amount, dir, knock) {
+  if (state.mode !== 'showdown' || S.over || S.ko) return;
+  amount *= S.diff.dmg;
+  S.hp -= amount; S.taken += amount; S.lastHurt = S.time;
+  if (dir && knock) { P.vel.addScaledVector(tmpV.copy(dir).normalize(), knock); P.slamming = false; P.landT = 0; }
+  const h = $('hurt'); h.style.transition = 'none'; h.style.opacity = String(clamp(amount / 120, .3, .85));
+  requestAnimationFrame(() => { h.style.transition = 'opacity .6s'; h.style.opacity = '0'; });
+  state.shake = Math.max(state.shake, clamp(amount / 150, .3, 1.2));
+  updateBars();
+  if (S.hp <= 0) { S.hp = 0; S.ko = true; P.slamming = false; P.landT = 0; popup('K.O.', true); later(1.8, () => endShowdown(false)); }
+}
+function villainDown() {
+  V.dead = true; V.act = null; vGlow.visible = false;
+  for (const b of vBeams) b.core.visible = b.glow.visible = false;
+  V.vel.y = Math.max(V.vel.y, 20); popup('WARLORD DOWN!', true); sfxBoom();
+}
+function endShowdown(win) {
+  if (S.over) return;
+  S.over = true; state.playing = false; keys.clear();
+  if (document.pointerLockElement) document.exitPointerLock();
+  const t = S.time, mm = Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  $('rTitle').textContent = win ? 'Victory' : 'Defeated';
+  $('rScore').textContent = win ? 'Won in ' + mm : 'Lasted ' + mm;
+  const key = 'best_' + S.diffId, prev = save.stats[key] || 0;
+  let note = 'The Warlord · ' + S.diff.name;
+  if (win) {
+    if (!prev || t < prev) { save.stats[key] = t; note = 'New fastest win on ' + S.diff.name + '!'; }
+    else note = 'Fastest on ' + S.diff.name + ': ' + Math.floor(prev / 60) + ':' + String(Math.floor(prev % 60)).padStart(2, '0');
+    save.wallet = (save.wallet || 0) + S.diff.reward;
+    if (S.diffId === 'hard') statForce('hardWins', 1);
+    saveNow();
+  }
+  $('rBest').textContent = note; $('rBest').classList.toggle('newbest', win);
+  $('rCut').innerHTML = win ? 'Bounty <b>+' + fmtCash(S.diff.reward) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>' : 'No bounty. Go again.';
+  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], ['Warlord health left', Math.max(0, Math.round(V.hp))], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
+  const st = $('rStats'); st.textContent = '';
+  for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
+  const un = $('rUnlocks'); un.textContent = '';
+  for (const s of state.run.unlocks) { const d = document.createElement('div'); d.className = 'unlock'; const sw = document.createElement('i'); sw.style.background = swatchCss(s); d.append(sw, document.createTextNode(s.name + ' suit unlocked')); un.append(d); }
+  endShowdownWorld();
+  showScreen('results');
+}
+
+// ---- villain abilities (the same moves the player has)
+const vEye = new V3(), vDir = new V3(), vTmp = new V3();
+const vLvl = () => 1 + .25 * (S.diff.lvl - 1);
+function predicted(out, t) { return out.copy(P.pos).addScaledVector(P.vel, t * S.diff.lead); }
+function vCityHit(p, r, push) { blast(p, r, push); detonateNear(p, r); }
+function startAct(name, wind) { V.act = name; V.actT = 0; V.wind = wind; vGlow.visible = true; }
+function villainAI(dt) {
+  const d = S.diff, toP = vTmp.subVectors(P.pos, V.pos), dist = toP.length();
+  for (const k in V.cd) V.cd[k] -= dt;
+  if (V.act) { runAct(dt, dist); return; }
+  // move: orbit the player at mid range, close in fast when far away
+  V.orbit += dt * .5;
+  const want = new V3(Math.cos(V.orbit) * 38, 12 + Math.sin(V.orbit * .7) * 8, Math.sin(V.orbit) * 38).add(P.pos);
+  want.y = Math.max(want.y, groundH(want.x, want.z) + 6);
+  const to = want.sub(V.pos), tl = to.length(), maxSp = (tl > 140 ? 230 : 95) * d.speed;
+  steerVillain(dt, to.normalize().multiplyScalar(Math.min(maxSp, tl * 2.2)), 7);
+  V.think -= dt;
+  if (V.think > 0 || S.ko) return;
+  V.think = d.think * rand(.7, 1.3);
+  const nearGround = P.pos.y - groundH(P.pos.x, P.pos.z) < 30;
+  const opts = [];
+  if (dist < 22 && V.cd.clap <= 0) opts.push(['clap', 3]);
+  if (dist < 85 && V.cd.shout <= 0) opts.push(['shout', 2]);
+  if (dist < 300 && V.cd.laser <= 0) opts.push(['laser', 2]);
+  if (dist > 20 && dist < 260 && V.cd.ram <= 0) opts.push(['ram', 3]);
+  if (nearGround && dist < 180 && V.cd.slam <= 0) opts.push(['slam', 1.5]);
+  if (!opts.length) return;
+  let r = Math.random() * opts.reduce((a, o) => a + o[1], 0), pick = opts[0][0];
+  for (const o of opts) { r -= o[1]; if (r <= 0) { pick = o[0]; break; } }
+  const wind = { clap: .55, shout: .6, laser: .55, ram: .45, slam: .3 }[pick] * (S.diffId === 'hard' ? .8 : 1) * (S.diffId === 'easy' ? 1.35 : 1);
+  startAct(pick, wind);
+  V.cd[pick] = { clap: 6, shout: 7, laser: 8, ram: 3.5, slam: 9 }[pick] * d.cd;
+  predicted(V.aim, .4);
+  if (pick === 'slam') V.slamPhase = 0;
+}
+function steerVillain(dt, target, rate) {
+  V.vel.lerp(target, 1 - Math.exp(-dt * rate));
+}
+function runAct(dt, dist) {
+  V.actT += dt;
+  const winding = V.actT < V.wind, k = clamp(V.actT / V.wind, 0, 1);
+  const colors = { clap: 0xffd040, shout: 0xffffff, laser: 0xff2a1a, ram: 0xff8a30, slam: 0xffb060 };
+  vGlow.material.color.setHex(colors[V.act]); vGlow.position.copy(V.pos);
+  const gs = winding ? 2 + k * 5 : 0; vGlow.scale.set(gs, gs, gs); vGlow.visible = winding;
+  if (V.act !== 'slam' && V.act !== 'ram') V.vel.multiplyScalar(Math.exp(-dt * 4)); // plant himself to attack
+  const toP = vDir.subVectors(P.pos, V.pos);
+  if (V.act === 'clap') {
+    if (!winding) {
+      const R = 18 * vLvl();
+      spawnRing(V.pos.clone(), UP, 3.5); spawnRing(V.pos.clone(), toP.clone().normalize(), 3);
+      vCityHit(V.pos.clone(), R, null);
+      if (V.pos.y - groundH(V.pos.x, V.pos.z) < 8) { crater(V.pos.x, V.pos.z, R * .45, 2); addCracks(V.pos.x, V.pos.z, R * 1.3); }
+      if (dist < R + 2) hurtPlayer(200 * vLvl(), toP, 140);
+      sfxBoom(); sfxCrash(1); state.shake = Math.max(state.shake, clamp(1.2 - dist / 300, .2, 1.2));
+      V.act = null;
+    }
+  } else if (V.act === 'shout') {
+    predicted(V.aim, .5);
+    if (!winding) {
+      const f = vTmp.subVectors(V.aim, V.pos).normalize().clone(), o = V.pos.clone(), m = vLvl();
+      for (let i = 0; i < 7; i++) {
+        const dd = (7 + i * 9) * (.8 + m * .2), c = o.clone().addScaledVector(f, dd), r = (2.5 + dd * .22) * m;
+        later(i * .06, () => { spawnRing(c, f, r / 6); vCityHit(c, r, f.clone().multiplyScalar(70)); });
+      }
+      const ang = f.angleTo(toP), reach = (7 + 6 * 9) * (.8 + m * .2) + 8;
+      if (dist < reach && ang < .45 + 6 / Math.max(dist, 1)) hurtPlayer(170 * m, f, 160);
+      sfxShout(); V.act = null;
+    }
+  } else if (V.act === 'laser') {
+    V.aim.lerp(predicted(vTmp, .25), 1 - Math.exp(-dt * S.diff.aim));
+    villain.updateMatrixWorld(true);
+    vModel.localToWorld(vEye.set(0, .95, .2));
+    const dir = vTmp.subVectors(V.aim, vEye).normalize().clone();
+    const hit = raycastWorld(vEye, dir, 2, 420);
+    V.beamEnd.copy(vEye).addScaledVector(dir, hit ? hit.t : 420);
+    // does the beam pass through the player before it hits the city?
+    const t = toP.copy(P.pos).sub(vEye).dot(dir), segLen = hit ? hit.t : 420;
+    const onBeam = t > 0 && t < segLen + 2 && P.pos.distanceTo(vTmp.copy(vEye).addScaledVector(dir, t)) < 2.4;
+    if (onBeam) V.beamEnd.copy(vEye).addScaledVector(dir, t);
+    const firing = !winding && V.actT < V.wind + 1.5;
+    [-1, 1].forEach((s, i) => {
+      vModel.localToWorld(eyeV.set(s * .06, .95, .17));
+      const len = eyeV.distanceTo(V.beamEnd), b = vBeams[i];
+      b.core.visible = b.glow.visible = firing;
+      for (const [mm, r] of [[b.core, .05], [b.glow, .18 + Math.random() * .05]]) { mm.position.copy(eyeV).lerp(V.beamEnd, .5); mm.lookAt(V.beamEnd); mm.scale.set(r, r, len); }
+    });
+    if (winding) { vGlow.position.copy(vEye); }
+    if (firing) {
+      if (onBeam) hurtPlayer(160 * vLvl() * dt, null, 0);
+      V.laserTick -= dt;
+      if (V.laserTick <= 0 && hit && !onBeam) {
+        V.laserTick = .08; spawnFire(V.beamEnd, .4, 1.6, 1, .35, 6);
+        if (hit.e) smashEntity(hit.e, new V3(V.beamEnd.x - hit.e.cx, V.beamEnd.y, V.beamEnd.z - hit.e.cz), 1.6 * vLvl(), dir.clone().multiplyScalar(-15));
+        detonateNear(V.beamEnd, 3);
+      }
+    }
+    if (V.actT > V.wind + 1.5) { V.act = null; for (const b of vBeams) b.core.visible = b.glow.visible = false; }
+  } else if (V.act === 'ram') {
+    if (winding) { predicted(V.aim, .35); V.vel.multiplyScalar(Math.exp(-dt * 5)); }
+    else {
+      if (!V.ramDir || V.actT - dt < V.wind) { V.ramDir = vTmp.subVectors(V.aim, V.pos).normalize().clone(); spawnRing(V.pos.clone(), V.ramDir, false); sfxBoom(); }
+      V.vel.copy(V.ramDir).multiplyScalar(290 * S.diff.speed);
+      if (V.pos.distanceTo(P.pos) < 4.2) { hurtPlayer(150 * vLvl(), V.ramDir, 170); V.act = null; V.ramDir = null; V.vel.multiplyScalar(.2); }
+      else if (V.actT > V.wind + .7) { V.act = null; V.ramDir = null; }
+    }
+  } else if (V.act === 'slam') {
+    if (V.slamPhase === 0) { // climb above the target
+      const above = vTmp.copy(P.pos); above.y = Math.max(P.pos.y, groundH(P.pos.x, P.pos.z)) + 90;
+      steerVillain(dt, above.sub(V.pos).multiplyScalar(4).clampLength(0, 260), 8);
+      if (V.actT > 1.1) { V.slamPhase = 1; predicted(V.aim, .6); popup('INCOMING!', true); sfxBoom(); }
+    } else {
+      const to = vTmp.subVectors(V.aim, V.pos); to.y = 0;
+      V.vel.set(to.x * 2, -330, to.z * 2);
+      if (V.pos.y <= groundH(V.pos.x, V.pos.z) + 1.6) {
+        const R = 18 * vLvl(), p = V.pos.clone();
+        crater(p.x, p.z, R, R * .32); addCracks(p.x, p.z, R * 3.2);
+        vCityHit(new V3(p.x, groundH(p.x, p.z) + 1, p.z), R * 1.1, null);
+        spawnDust(tmpV.set(p.x, groundH(p.x, p.z) + 2, p.z), R * .45, 8, CONCRETE_COL);
+        spawnRing(tmpV.set(p.x, groundH(p.x, p.z) + 1, p.z), UP, true);
+        const dd = P.pos.distanceTo(p);
+        if (dd < R * 1.3) hurtPlayer(240 * vLvl() * (1 - dd / (R * 1.6)), tmpV2.subVectors(P.pos, p).setY(4), 150);
+        sfxCrash(1.2); sfxBoom(); state.shake = Math.max(state.shake, clamp(1.4 - dd / 300, .2, 1.4));
+        V.vel.set(0, 30, 0); V.act = null;
+      }
+    }
+  }
+}
+// villain smashes through the city like the player does
+function villainCollide() {
+  const sp = V.vel.length();
+  const arr = grid.get(cellKey(Math.floor(V.pos.x / CELL), Math.floor(V.pos.z / CELL)));
+  if (arr) for (const e of arr.slice()) {
+    if (!e.alive) continue;
+    const top = e.y0 + (e.topK + 1) * e.ch;
+    if (V.pos.y > top + 2 || V.pos.y < e.y0 - 2) continue;
+    if (Math.abs(V.pos.x - e.cx) > e.w / 2 + 2 || Math.abs(V.pos.z - e.cz) > e.d / 2 + 2) continue;
+    const l = new V3(V.pos.x - e.cx, V.pos.y, V.pos.z - e.cz);
+    if (!touching(e, l, 1.8)) continue;
+    if (sp > 16) smashEntity(e, l, sp > 150 ? 8 : 5.5, V.vel);
+  }
+  for (const x of explosives) {
+    if (!x.alive || x.armed || sp < 6) continue;
+    const T = EXP_TYPES[x.type];
+    if (Math.abs(x.x - V.pos.x) < T.cr + 2 && Math.abs(x.z - V.pos.z) < T.cr + 2 && V.pos.y < groundH(x.x, x.z) + T.h + T.cr + 2) detonate(x, 0);
+  }
+}
+const vq = new THREE.Quaternion(), vm = new THREE.Matrix4(), vy = new V3(), vz = new V3(), vx = new V3(), vfH = new V3(), vvd = new V3();
+let vAnim = 0;
+function updateVillain(dt) {
+  if (state.mode !== 'showdown' || !villain.visible) return;
+  vAnim += dt;
+  if (state.playing && !S.over) {
+    S.time += dt; S.hitCd -= dt;
+    if (!S.ko && S.time - S.lastHurt > 4) { S.hp = Math.min(PLAYER_HP, S.hp + 14 * dt); updateBars(); }
+    if (V.dead) {
+      V.vel.y -= 40 * dt; V.vel.x *= Math.exp(-dt); V.vel.z *= Math.exp(-dt);
+      vModel.rotation.x += dt * 6; vModel.rotation.z += dt * 3;
+      const steps = Math.ceil(V.vel.length() * dt / 2.5) || 1;
+      for (let s = 0; s < steps; s++) { V.pos.addScaledVector(V.vel, dt / steps); villainCollide(); }
+      if (V.pos.y <= groundH(V.pos.x, V.pos.z) + 1) {
+        const p = V.pos.clone(); crater(p.x, p.z, 26, 9); addCracks(p.x, p.z, 80);
+        vCityHit(new V3(p.x, groundH(p.x, p.z) + 1, p.z), 24, null);
+        spawnDust(tmpV.set(p.x, groundH(p.x, p.z) + 2, p.z), 10, 10, CONCRETE_COL);
+        sfxCrash(1.3); sfxBoom(); state.shake = 1.5;
+        villain.visible = false; $('vmark').hidden = true;
+        later(1.8, () => endShowdown(true));
+      }
+    } else {
+      if (V.stun > 0) { V.stun -= dt; V.vel.multiplyScalar(Math.exp(-dt * 1.4)); }
+      else villainAI(dt);
+      const steps = Math.ceil(V.vel.length() * dt / 2.5) || 1;
+      for (let s = 0; s < steps; s++) { V.pos.addScaledVector(V.vel, dt / steps); villainCollide(); }
+      const gh = groundH(V.pos.x, V.pos.z) + 1.6;
+      if (V.pos.y < gh) { V.pos.y = gh; if (V.vel.y < 0) V.vel.y = 0; }
+      const lim = 900; V.pos.x = clamp(V.pos.x, -lim, lim); V.pos.z = clamp(V.pos.z, -lim, lim); V.pos.y = Math.min(V.pos.y, 900);
+      // player punches: fly into him fast
+      const rel = vTmp.subVectors(P.vel, V.vel), relSp = rel.length();
+      if (S.hitCd <= 0 && P.pos.distanceTo(V.pos) < HERO_R + 2.2 && relSp > 30 && P.vel.length() > 25) {
+        const fm = hasPower('fists') ? 1.15 + .15 * (powerLevel('fists') - 1) : 1;
+        hurtVillain(clamp(relSp * .5, 15, 150) * fm * (P.dashT > 0 ? 1.3 : 1), P.vel, clamp(relSp * .9, 60, 260));
+        P.vel.multiplyScalar(.35); S.hitCd = .35;
+      }
+    }
+  }
+  // pose: face the player, lean into flight like the hero does
+  villain.position.copy(V.pos);
+  if (!V.dead) {
+    vfH.subVectors(P.pos, V.pos).setY(0); if (vfH.lengthSq() < 1e-4) vfH.set(0, 0, 1); vfH.normalize();
+    const sp = V.vel.length(), t = V.act && V.act !== 'ram' && V.act !== 'slam' ? 0 : clamp((sp - 10) / 45, 0, 1);
+    if (V.act === 'slam' && V.slamPhase === 1) { vy.set(0, 1, 0); vz.copy(vfH); }
+    else {
+      if (sp > 1) vvd.copy(V.vel).divideScalar(sp); else vvd.copy(vfH);
+      vy.copy(UP).lerp(vvd, t); if (vy.lengthSq() < .01) vy.copy(vvd); vy.normalize();
+      vz.copy(DOWN).addScaledVector(vy, -DOWN.dot(vy)); if (vz.lengthSq() < .02) vz.copy(vfH);
+      vz.normalize().lerp(vfH, 1 - t);
+    }
+    vz.addScaledVector(vy, -vz.dot(vy)); if (vz.lengthSq() < 1e-4) vz.set(0, 0, 1); vz.normalize();
+    vx.crossVectors(vy, vz).normalize();
+    vm.makeBasis(vx, vy, vz); vq.setFromRotationMatrix(vm); villain.quaternion.slerp(vq, 1 - Math.exp(-dt * 9));
+    vModel.rotation.set(0, 0, 0);
+    const b = vBody, bob = Math.sin(vAnim * 2), fly = t;
+    b.armR.rotation.set(lerp(.15 + bob * .05, -Math.PI, fly), 0, lerp(.2, .05, fly));
+    b.armL.rotation.set(lerp(.15 - bob * .05, .25, fly), 0, lerp(-.2, -.15, fly));
+    b.legR.rotation.set(lerp(-.1 + bob * .08, .04, fly), 0, .05); b.legL.rotation.set(lerp(.1 - bob * .08, -.04, fly), 0, -.05);
+    if (V.act === 'clap') { const c = V.actT > V.wind * .7; b.armR.rotation.set(-1.5, 0, c ? -.3 : .9); b.armL.rotation.set(-1.5, 0, c ? .3 : -.9); }
+    if (V.act === 'shout') { b.armR.rotation.set(.5, 0, .8); b.armL.rotation.set(.5, 0, -.8); }
+    if (V.act === 'slam' && V.slamPhase === 1) { b.armR.rotation.set(0, 0, 2.3); b.armL.rotation.set(0, 0, -2.3); }
+    vBody.cape.rotation.x = lerp(vBody.cape.rotation.x, (V.act === 'slam' && V.slamPhase === 1) ? 2.8 : .15 + t * .2 + Math.sin(vAnim * 9) * .05 * t, 1 - Math.exp(-dt * 6));
+  }
+  // marker so you can always find him
+  const mk = $('vmark');
+  if (villain.visible && state.playing) {
+    vTmp.copy(V.pos); vTmp.y += 3; vTmp.project(camera);
+    const behind = vTmp.z > 1;
+    let x = vTmp.x, y = vTmp.y; if (behind) { x = -x; y = -y; }
+    const off = behind || Math.abs(x) > .95 || Math.abs(y) > .9;
+    if (off) { const m = Math.max(Math.abs(x) / .92, Math.abs(y) / .86); x /= m; y /= m; }
+    mk.hidden = false; mk.classList.toggle('edge', off);
+    mk.style.transform = `translate(${(x * .5 + .5) * innerWidth - 14}px, ${(-y * .5 + .5) * innerHeight - 14}px)`;
+    mk.textContent = off ? '' : Math.round(P.pos.distanceTo(V.pos)) + 'm';
+  } else mk.hidden = true;
+}
+// player attacks that reach the villain
+function villainInRange(p, r) { return state.mode === 'showdown' && villain.visible && !V.dead && V.pos.distanceTo(p) < r + 1.8; }
 
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
 function simulate(dt) {
   if (state.playing) updateFlight(dt);
+  updateVillain(dt);
   updateMode(dt);
   updateHero(dt);
   updateFalling(dt);
@@ -2308,6 +2722,6 @@ function start() { showScreen('main'); requestAnimationFrame(frame); }
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { explosives, explode, superShout, thunderClap, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { V, S, hurtVillain, explosives, explode, superShout, thunderClap, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
