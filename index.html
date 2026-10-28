@@ -218,38 +218,51 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 #intro .skip { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12vh - 30px); font-size: 13px; font-weight: 600; letter-spacing: .08em; color: rgba(247,243,232,.75); }
 body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cut #hud-right, body.cut #pauseBtn, body.cut #touch, body.cut .vmark, body.cut #popups { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { #intro .lb, #introCard.in { animation: none; } }
-/* Smash-style VS screen before a boss fight */
-#vs { position: fixed; inset: 0; z-index: 11; overflow: hidden; background: #07080c; pointer-events: none; }
-#vs .vsp { position: absolute; inset: 0; --c1: #333; --c2: #111; background: linear-gradient(135deg, var(--c1), var(--c2)); transition: transform .34s cubic-bezier(.2,.9,.25,1.12); }
-#vs .vsp::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(100deg, rgba(255,255,255,.13) 0 3px, transparent 3px 46px); animation: vsLines .45s linear infinite; }
-@keyframes vsLines { to { background-position: 92px 0; } }
-#vs .vsl { clip-path: polygon(0 0, 57% 0, 45% 100%, 0 100%); transform: translateX(-105%); }
-#vs .vsr { clip-path: polygon(57% 0, 100% 0, 100% 100%, 45% 100%); transform: translateX(105%); }
-#vs.go .vsl, #vs.go .vsr { transform: none; }
-#vs .port { position: absolute; bottom: 0; height: 92%; width: auto; -webkit-mask-image: radial-gradient(ellipse 48% 58% at 50% 46%, #000 58%, transparent 80%); mask-image: radial-gradient(ellipse 48% 58% at 50% 46%, #000 58%, transparent 80%); filter: contrast(1.12) saturate(1.25); }
-#vs .vsl .port { left: 2%; } #vs .vsr .port { right: 2%; }
-#vs .thumbs { position: absolute; right: 3%; top: 6%; display: flex; gap: 6px; }
-#vs .thumbs img { height: min(16vh, 120px); -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 60%, transparent 78%); mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 60%, transparent 78%); }
-#vs .vsn { position: absolute; bottom: 7%; display: grid; gap: 2px; max-width: 40vw; overflow-wrap: anywhere; }
-#vs .vsl .vsn { left: 4%; text-align: left; } #vs .vsr .vsn { right: 4%; text-align: right; }
-#vs .vsn small { font: 700 clamp(13px, 1.6vw, 18px) var(--ui); letter-spacing: .22em; text-transform: uppercase; color: var(--paper); text-shadow: 2px 2px 0 #000; }
-#vs .vsn b { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 7vw, 104px); line-height: .9; letter-spacing: .03em; color: var(--paper); -webkit-text-stroke: 3px #000; text-shadow: 7px 7px 0 var(--c2); text-transform: uppercase; }
-#vs .vsn em { font: 700 clamp(13px, 1.5vw, 17px) var(--ui); font-style: normal; color: var(--yellow); text-shadow: 2px 2px 0 #000; }
-#vs .vsx { position: absolute; left: 50%; top: 46%; font-family: var(--display); font-size: clamp(100px, 20vw, 250px); line-height: 1; color: var(--yellow); -webkit-text-stroke: 5px #000; text-shadow: 10px 10px 0 var(--red), 14px 14px 0 #000; opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(4); }
-#vs.slam .vsx { animation: vsSlam .26s cubic-bezier(.3,1.6,.5,1) forwards; }
-@keyframes vsSlam { to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
+/* hero reveal before a boss fight: a hazard-stripe warning, then a full-screen splash in the hero's colours */
+#vs { --c1: #333; --c2: #111; --acc: #ffd23f; position: fixed; inset: 0; z-index: 11; overflow: hidden; background: #05060a; pointer-events: none; }
+#vs .vsbg { position: absolute; inset: 0; background: radial-gradient(circle at 68% 42%, var(--c1) 0%, var(--c2) 42%, #05060a 88%);
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); transition: clip-path .45s cubic-bezier(.7,0,.2,1); }
+#vs .vsbg::after { content: ""; position: absolute; inset: -20%; background: repeating-linear-gradient(112deg, rgba(255,255,255,.07) 0 2px, transparent 2px 70px); animation: vsStreak .6s linear infinite; }
+@keyframes vsStreak { to { transform: translateX(-75px); } }
+#vs .vsdots { position: absolute; inset: 0; background: radial-gradient(rgba(0,0,0,.4) 1.6px, transparent 1.8px) 0 0 / 13px 13px;
+  -webkit-mask-image: linear-gradient(100deg, #000 0%, transparent 55%); mask-image: linear-gradient(100deg, #000 0%, transparent 55%); opacity: 0; transition: opacity .4s .2s; }
+#vs .vsmarq { position: absolute; left: 0; top: 4%; white-space: nowrap; font-family: var(--display); font-size: clamp(120px, 24vw, 340px); line-height: 1; color: transparent;
+  -webkit-text-stroke: 2px rgba(255,255,255,.16); opacity: 0; transition: opacity .4s .2s; animation: vsMarq 9s linear infinite; }
+@keyframes vsMarq { to { transform: translateX(-50%); } }
+#vs .port { position: absolute; right: 3%; bottom: -2%; height: 100%; max-width: 62vw; object-fit: contain; object-position: bottom right; opacity: 0; transform: translateY(60px) scale(.92);
+  filter: drop-shadow(0 0 28px var(--acc)) drop-shadow(14px 14px 0 rgba(0,0,0,.45)); transition: opacity .35s .1s, transform .55s .1s cubic-bezier(.2,.9,.25,1.15); }
+#vs .thumbs { position: absolute; right: 3%; top: 5%; display: flex; gap: 10px; opacity: 0; transition: opacity .3s .5s; }
+#vs .thumbs img { height: min(17vh, 130px); filter: drop-shadow(0 0 8px rgba(0,0,0,.8)) grayscale(.25); }
+#vs .vsplate { position: absolute; left: max(5%, env(safe-area-inset-left, 0px)); bottom: 11%; max-width: min(58vw, 760px); display: grid; justify-items: start; gap: 8px;
+  opacity: 0; transform: translateX(-80px); transition: opacity .2s, transform .45s cubic-bezier(.2,.9,.25,1.2); }
+#vs .vsplate small { font: 700 clamp(12px, 1.4vw, 16px) var(--ui); letter-spacing: .3em; text-transform: uppercase; color: var(--accInk, #05060a); background: var(--acc); padding: 4px 12px 3px; transform: skew(-10deg); }
+#vs .vsplate b { font-family: var(--display); font-weight: 400; font-size: clamp(64px, 12.5vw, 176px); line-height: .86; letter-spacing: .01em; color: var(--paper); text-transform: uppercase;
+  -webkit-text-stroke: 3px #05060a; text-shadow: 8px 8px 0 var(--acc), 13px 13px 0 #05060a; transform: skew(-8deg); }
+#vs .vsplate .bar { display: block; height: 8px; width: min(48vw, 520px); background: linear-gradient(90deg, var(--acc), transparent); transform: scaleX(0); transform-origin: left; transition: transform .5s .25s cubic-bezier(.2,.9,.25,1); }
+#vs .vsplate span { font: 700 clamp(13px, 1.5vw, 18px) var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--paper); text-shadow: 2px 2px 0 #000; }
+#vs .vsplate q { font-size: clamp(17px, 2vw, 24px); font-style: italic; color: var(--paper); text-shadow: 2px 2px 0 #000; max-width: 34em; }
+#vs .vsplate em { font: 700 clamp(12px, 1.4vw, 16px) var(--ui); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: var(--paper); opacity: .85; text-shadow: 2px 2px 0 #000; }
+#vs.go .vsbg { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+#vs.go .vsdots, #vs.go .vsmarq { opacity: 1; }
+#vs.go .port { opacity: 1; transform: none; }
+#vs.go .thumbs { opacity: 1; }
+#vs.slam .vsplate { opacity: 1; transform: none; }
+#vs.slam .vsplate .bar { transform: scaleX(1); }
 #vs .vsflash { position: absolute; inset: 0; background: #fff; opacity: 0; }
 #vs.slam .vsflash { animation: vsFlash .4s ease-out; }
-@keyframes vsFlash { from { opacity: .9; } to { opacity: 0; } }
+@keyframes vsFlash { from { opacity: .85; } to { opacity: 0; } }
 #vs.slam { animation: vsShake .35s linear; }
-@keyframes vsShake { 0%, 100% { transform: none; } 20% { transform: translate(-14px, 8px); } 40% { transform: translate(12px, -10px); } 60% { transform: translate(-8px, -6px); } 80% { transform: translate(6px, 6px); } }
-#vs .vsban { position: absolute; left: 0; right: 0; top: 39%; height: 22vh; display: grid; place-items: center; background: repeating-linear-gradient(-45deg, #d62828 0 34px, #7a0d10 34px 68px); border-block: 6px solid #000;
-  font-family: var(--display); font-size: clamp(40px, 8vw, 104px); letter-spacing: .05em; color: var(--paper); -webkit-text-stroke: 3px #000; text-shadow: 6px 6px 0 #000; animation: vsBlink .32s steps(2) infinite, vsBanIn .25s ease-out; text-align: center; padding: 0 16px; }
-@keyframes vsBlink { 50% { color: var(--yellow); } }
+@keyframes vsShake { 0%, 100% { transform: none; } 20% { transform: translate(-12px, 7px); } 40% { transform: translate(10px, -8px); } 60% { transform: translate(-7px, -5px); } 80% { transform: translate(5px, 5px); } }
+#vs .vsban { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; padding-block: 3vh; display: grid; place-items: center; background: #05060a; border-block: 14px solid transparent;
+  border-image: repeating-linear-gradient(-45deg, var(--yellow) 0 18px, #05060a 18px 36px) 14; animation: vsBanIn .25s ease-out;
+  font-family: var(--display); font-size: clamp(28px, 6vw, 84px); line-height: 1; letter-spacing: .06em; color: var(--paper); text-align: center; padding-inline: 16px; text-wrap: balance; }
+#vs .vsban span { animation: vsBlink .32s steps(2) infinite; }
+@keyframes vsBlink { 50% { color: var(--red); } }
 @keyframes vsBanIn { from { transform: scaleY(0); } }
 #vs.go .vsban { display: none; }
 #vs.out { opacity: 0; transition: opacity .3s; }
-@media (prefers-reduced-motion: reduce) { #vs .vsp::before, #vs .vsban, #vs.slam, #vs.slam .vsflash { animation: none; } #vs .vsp { transition: none; } #vs.slam .vsx { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-8deg); } }
+@media (max-width: 640px) { #vs .port { height: 72%; max-width: 92vw; right: -6%; } #vs .vsplate { max-width: 90vw; bottom: 6%; } }
+@media (prefers-reduced-motion: reduce) { #vs .vsbg::after, #vs .vsmarq, #vs .vsban, #vs .vsban span, #vs.slam, #vs.slam .vsflash { animation: none; } #vs * { transition: none !important; } }
 .runpanel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 14px; align-items: center; text-align: left; padding: 14px 16px; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--red); }
 @media (max-width: 640px) { .runpanel { grid-template-columns: 1fr; } }
 .runpanel .vname { color: var(--ink); }
@@ -341,10 +354,12 @@ body.cut #rage, body.cut #style, body.cut #taunt { visibility: hidden; }
 </div>
 
 <div id="vs" hidden aria-hidden="true">
-  <div class="vsp vsl"><img class="port" id="vsLImg" alt=""><div class="vsn"><small id="vsLTag">You</small><b id="vsLName"></b></div></div>
-  <div class="vsp vsr"><img class="port" id="vsRImg" alt=""><div class="thumbs" id="vsThumbs"></div><div class="vsn"><small id="vsRTag">Hero</small><b id="vsRName"></b><em id="vsRMore"></em></div></div>
-  <div class="vsx">VS</div>
-  <div class="vsban" id="vsBan">HERO APPROACHING!</div>
+  <div class="vsbg"></div><div class="vsdots"></div>
+  <div class="vsmarq" id="vsMarq"></div>
+  <img class="port" id="vsRImg" alt="">
+  <div class="thumbs" id="vsThumbs"></div>
+  <div class="vsplate"><small id="vsRTag">Hero</small><b id="vsRName"></b><i class="bar"></i><span id="vsRPowers"></span><q id="vsRQuote"></q><em id="vsRMore"></em></div>
+  <div class="vsban"><span id="vsBan">HERO APPROACHING!</span></div>
   <div class="vsflash"></div>
 </div>
 <button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
@@ -4208,45 +4223,64 @@ function sfxSiren() {
 // his title card plays, then a shot over the hero's shoulder before control starts.
 const LAND_T = .9, SHOT_T = 3.1, GROUP_T = 1.4;
 const camFrom = new V3(), camAt = new V3(), camTmp = new V3();
-// Smash-style VS card first: a flashing warning, then you and the heroes slide in from the
-// sides with portraits rendered from the real models, and VS slams down between you.
+// Hero reveal: a hazard-stripe warning, then the hero's colours wipe across the screen, their portrait
+// rises in (rendered from the real model under studio lights, no background) and the name plate slams in.
 const VS_GO = 1.1, VS_SLAM = 1.5, VS_OUT = 3.7, VS_END = 4;
-const pcam = new THREE.PerspectiveCamera(26, 1, .3, 3000), pq = new THREE.Quaternion(), pbox = new THREE.Box3();
-function portrait(obj, model, w) {
-  obj.updateMatrixWorld(true);
-  pbox.setFromObject(model);
+const pcam = new THREE.PerspectiveCamera(22, .75, .3, 100), pbox = new THREE.Box3();
+const pScene = new THREE.Scene(), pRT = new THREE.WebGLRenderTarget(480, 640);
+pRT.texture.encoding = THREE.sRGBEncoding;
+const pKey = new THREE.DirectionalLight(0xffffff, 2.6), pRim = new THREE.DirectionalLight(0xffffff, 3.2);
+pKey.position.set(3, 4, 6); pRim.position.set(-4, 3, -5);
+pScene.add(pKey, pRim, new THREE.HemisphereLight(0xdbe8ff, 0x302820, .6));
+const pPix = new Uint8Array(480 * 640 * 4), pClear = new THREE.Color();
+function portrait(f, w) {
+  // borrow the hero's model into the studio scene in a power stance, render it, then put everything back
+  const g = f.group, parent = g.parent, pos = g.position.clone(), q = g.quaternion.clone(), vis = g.visible, prev = curFoe;
+  bindFoe(f);
+  const b = vBody, saved = [b.armR, b.armL, b.legR, b.legL].map((o) => o.rotation.clone()), capeX = b.cape.rotation.x;
+  b.armR.rotation.set(.15, 0, .5); b.armL.rotation.set(.15, 0, -.5); b.legR.rotation.set(0, 0, .14); b.legL.rotation.set(0, 0, -.14); b.cape.rotation.x = .12;
+  vModel.rotation.set(0, 0, 0);
+  pScene.add(g); g.position.set(0, 0, 0); g.quaternion.setFromAxisAngle(UP, -.35); g.visible = true; g.updateMatrixWorld(true);
+  pScene.environment = scene.environment; pRim.color.setHex(f.vd.look.accent);
+  pbox.setFromObject(f.model);
   const c = pbox.getCenter(new V3()), h = Math.max(1, pbox.max.y - pbox.min.y);
-  const fwd = new V3(0, 0, 1).applyQuaternion(obj.getWorldQuaternion(pq)); fwd.y = 0;
-  if (fwd.lengthSq() < .01) fwd.set(0, 0, 1); fwd.normalize();
-  const W = canvas.width, H = canvas.height;
-  pcam.aspect = W / H; pcam.updateProjectionMatrix();
-  pcam.position.copy(c).addScaledVector(fwd, h * 2.7); pcam.position.y += h * .12;
-  pcam.lookAt(c.x, c.y + h * .06, c.z);
-  renderer.render(scene, pcam); // drawn straight back out before the browser clears it
-  const out = document.createElement('canvas'); out.width = w; out.height = Math.round(w * 1.25);
-  const cw = Math.min(W, H * .8);
-  out.getContext('2d').drawImage(canvas, (W - cw) / 2, 0, cw, H, 0, 0, out.width, out.height);
-  return out.toDataURL('image/jpeg', .85);
+  pcam.position.set(c.x + h * .25, c.y + h * .06, c.z + h * 2.75); pcam.lookAt(c.x, c.y - h * .02, c.z); pcam.updateProjectionMatrix();
+  renderer.getClearColor(pClear); const ca = renderer.getClearAlpha();
+  renderer.setRenderTarget(pRT); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(pScene, pcam);
+  renderer.readRenderTargetPixels(pRT, 0, 0, 480, 640, pPix);
+  renderer.setRenderTarget(null); renderer.setClearColor(pClear, ca);
+  parent.add(g); g.position.copy(pos); g.quaternion.copy(q); g.visible = vis;
+  [b.armR, b.armL, b.legR, b.legL].forEach((o, k) => o.rotation.copy(saved[k])); b.cape.rotation.x = capeX;
+  bindFoe(prev);
+  const cv = document.createElement('canvas'); cv.width = 480; cv.height = 640;
+  const cx = cv.getContext('2d'), img = cx.createImageData(480, 640);
+  for (let y = 0; y < 640; y++) img.data.set(pPix.subarray((639 - y) * 1920, (640 - y) * 1920), y * 1920); // GL rows run bottom-up
+  cx.putImageData(img, 0, 0);
+  if (w === 480) return cv.toDataURL('image/png');
+  const sm = document.createElement('canvas'); sm.width = w; sm.height = Math.round(w * 4 / 3); sm.getContext('2d').drawImage(cv, 0, 0, sm.width, sm.height);
+  return sm.toDataURL('image/png');
 }
 function showVs() {
-  const h = curHero(), vs = $('vs'), main = S.foes[0].vd, n = S.foes.length;
-  const L = h.look, R = main.look;
-  vs.querySelector('.vsl').style.cssText = `--c1:${hex(L.main)};--c2:${hex(L.limb)}`;
-  vs.querySelector('.vsr').style.cssText = `--c1:${hex(R.main)};--c2:${hex(R.accent === 0xffffff ? R.limb : R.accent)}`;
-  $('vsLName').textContent = h.name.replace(/^The /, ''); $('vsLTag').textContent = 'You · supervillain';
+  const vs = $('vs'), main = S.foes[0].vd, n = S.foes.length, L = main.look;
+  const deep = (c) => { const k = new THREE.Color(c).multiplyScalar(.35); return '#' + k.getHexString(); };
+  vs.style.setProperty('--c1', hex(L.main)); vs.style.setProperty('--c2', deep(L.main));
+  const acc = new THREE.Color(L.accent === 0xffffff || L.accent === L.main ? L.eye : L.accent);
+  vs.style.setProperty('--acc', '#' + acc.getHexString());
+  vs.style.setProperty('--accInk', acc.r * .3 + acc.g * .59 + acc.b * .11 < .45 ? '#f7f3e8' : '#05060a'); // readable text on the tag pill
   $('vsRName').textContent = main.name;
-  $('vsRTag').textContent = main.mirror === save.hero ? 'Your mirror' : RUN.on ? 'Act ' + RUN.act + ' boss' : 'Hero';
-  $('vsRMore').textContent = n > 1 ? '+ ' + S.foes.slice(1).map((f) => f.vd.name).join(' + ') : '';
-  $('vsBan').textContent = RUN.on && RUN.act === 5 ? 'FINAL BOSS APPROACHING!' : n > 1 ? 'HEROES APPROACHING!' : 'HERO APPROACHING!';
+  $('vsMarq').textContent = (main.name.toUpperCase() + ' · ').repeat(8);
+  $('vsRTag').textContent = main.mirror === save.hero ? 'Your mirror' : RUN.on ? (RUN.act === 5 ? 'Final boss' : 'Act ' + RUN.act + ' boss') : 'Hero';
+  $('vsRPowers').textContent = main.tag;
+  $('vsRQuote').textContent = main.quote;
+  $('vsRMore').textContent = n > 1 ? '+ ' + S.foes.slice(1).map((f) => f.vd.name).join(', ') + (S.foes[1].vd.ret ? ' · back for more' : '') : '';
+  $('vsBan').textContent = RUN.on && RUN.act === 5 ? 'WARNING · FINAL BOSS APPROACHING' : n > 1 ? 'WARNING · HEROES APPROACHING' : 'WARNING · HERO APPROACHING';
   vs.className = ''; vs.hidden = false;
-  $('vsLImg').removeAttribute('src'); $('vsRImg').removeAttribute('src'); $('vsThumbs').textContent = '';
+  $('vsRImg').removeAttribute('src'); $('vsThumbs').textContent = '';
 }
 function vsPortraits() {
   try {
-    hero.position.copy(P.pos); hero.quaternion.identity();
-    $('vsLImg').src = portrait(hero, heroModel, 420);
     S.foes.forEach((f, i) => {
-      const src = portrait(f.group, f.model, i ? 160 : 420);
+      const src = portrait(f, i ? 120 : 480);
       if (!i) $('vsRImg').src = src; else { const im = document.createElement('img'); im.src = src; im.alt = ''; $('vsThumbs').append(im); }
     });
   } catch (e) { /* no portraits, the card still works */ }
