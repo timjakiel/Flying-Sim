@@ -404,7 +404,7 @@ body.cut #rage, body.cut #style, body.cut #taunt { visibility: hidden; }
       <button class="ghost" id="mSandbox" type="button">Sandbox<span>free play</span></button>
       <button class="ghost" id="mRampage" type="button">Rampage<span id="bestLine">No score yet</span></button>
     </div>
-    <div class="musstat" id="musStatus">Menu music: click anywhere to start</div>
+    <div class="musstat" id="musStatus">Menu music: click anywhere to start · build dev</div>
     <details class="ctl"><summary>Controls</summary>
     <div class="keys" id="keys">
       <div><span>MOUSE</span><span>Steer / look</span></div>
@@ -4357,7 +4357,8 @@ const TRACKS = { menu: { url: 'audio/menu-theme.mp3', vol: .85 }, boss: { url: '
 // older Safari only has the callback form of decodeAudioData, so use that everywhere
 const decode = (b) => new Promise((res, rej) => { const p = AC.decodeAudioData(b, res, (e) => rej(e || new Error('decode failed'))); if (p && p.catch) p.catch(() => {}); });
 function b64ToBuf(b64) { const bin = atob(b64.replace(/\s+/g, '')), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
-function trackStatus(name, text) { TRACKS[name].status = text; if (name === 'menu') $('musStatus').textContent = 'Menu music: ' + text; }
+const BUILD = 'dev'; // tools/build.py stamps the published copy
+function trackStatus(name, text) { TRACKS[name].status = text; if (name === 'menu') $('musStatus').textContent = 'Menu music: ' + text + ' · build ' + BUILD; }
 function loadTrack(name, retry = 1) {
   const T = TRACKS[name]; if (T.loading || T.buf) return; T.loading = true; trackStatus(name, 'loading…');
   // the published page carries the songs inside itself (tools/build.py), because the artifact frame
@@ -4366,7 +4367,7 @@ function loadTrack(name, retry = 1) {
   (packed ? Promise.resolve(b64ToBuf(packed.textContent)) : fetch(T.url).then((r) => r.ok ? r.arrayBuffer() : Promise.reject(new Error('HTTP ' + r.status)))).then(decode)
     .then((buf) => { T.buf = buf; T.loading = false; trackStatus(name, 'ready'); if (MUS.want === name) trackOn(name); })
     .catch((e) => {
-      T.loading = false; trackStatus(name, "couldn't load (" + ((e && (e.message || e.name)) || e) + ')' + (retry ? ', retrying' : ''));
+      T.loading = false; trackStatus(name, "couldn't load (" + ((e && (e.message || e.name)) || e) + ')' + (packed ? '' : ' · old copy of the page? Close the tab and reopen the link') + (retry ? ', retrying' : ''));
       if (retry) setTimeout(() => loadTrack(name, retry - 1), 3000);
     });
 }
