@@ -218,6 +218,38 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 #intro .skip { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12vh - 30px); font-size: 13px; font-weight: 600; letter-spacing: .08em; color: rgba(247,243,232,.75); }
 body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cut #hud-right, body.cut #pauseBtn, body.cut #touch, body.cut .vmark, body.cut #popups { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { #intro .lb, #introCard.in { animation: none; } }
+/* Smash-style VS screen before a boss fight */
+#vs { position: fixed; inset: 0; z-index: 11; overflow: hidden; background: #07080c; pointer-events: none; }
+#vs .vsp { position: absolute; inset: 0; --c1: #333; --c2: #111; background: linear-gradient(135deg, var(--c1), var(--c2)); transition: transform .34s cubic-bezier(.2,.9,.25,1.12); }
+#vs .vsp::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(100deg, rgba(255,255,255,.13) 0 3px, transparent 3px 46px); animation: vsLines .45s linear infinite; }
+@keyframes vsLines { to { background-position: 92px 0; } }
+#vs .vsl { clip-path: polygon(0 0, 57% 0, 45% 100%, 0 100%); transform: translateX(-105%); }
+#vs .vsr { clip-path: polygon(57% 0, 100% 0, 100% 100%, 45% 100%); transform: translateX(105%); }
+#vs.go .vsl, #vs.go .vsr { transform: none; }
+#vs .port { position: absolute; bottom: 0; height: 92%; width: auto; -webkit-mask-image: radial-gradient(ellipse 48% 58% at 50% 46%, #000 58%, transparent 80%); mask-image: radial-gradient(ellipse 48% 58% at 50% 46%, #000 58%, transparent 80%); filter: contrast(1.12) saturate(1.25); }
+#vs .vsl .port { left: 2%; } #vs .vsr .port { right: 2%; }
+#vs .thumbs { position: absolute; right: 3%; top: 6%; display: flex; gap: 6px; }
+#vs .thumbs img { height: min(16vh, 120px); -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 60%, transparent 78%); mask-image: radial-gradient(ellipse 50% 50% at 50% 45%, #000 60%, transparent 78%); }
+#vs .vsn { position: absolute; bottom: 7%; display: grid; gap: 2px; max-width: 40vw; overflow-wrap: anywhere; }
+#vs .vsl .vsn { left: 4%; text-align: left; } #vs .vsr .vsn { right: 4%; text-align: right; }
+#vs .vsn small { font: 700 clamp(13px, 1.6vw, 18px) var(--ui); letter-spacing: .22em; text-transform: uppercase; color: var(--paper); text-shadow: 2px 2px 0 #000; }
+#vs .vsn b { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 7vw, 104px); line-height: .9; letter-spacing: .03em; color: var(--paper); -webkit-text-stroke: 3px #000; text-shadow: 7px 7px 0 var(--c2); text-transform: uppercase; }
+#vs .vsn em { font: 700 clamp(13px, 1.5vw, 17px) var(--ui); font-style: normal; color: var(--yellow); text-shadow: 2px 2px 0 #000; }
+#vs .vsx { position: absolute; left: 50%; top: 46%; font-family: var(--display); font-size: clamp(100px, 20vw, 250px); line-height: 1; color: var(--yellow); -webkit-text-stroke: 5px #000; text-shadow: 10px 10px 0 var(--red), 14px 14px 0 #000; opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(4); }
+#vs.slam .vsx { animation: vsSlam .26s cubic-bezier(.3,1.6,.5,1) forwards; }
+@keyframes vsSlam { to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
+#vs .vsflash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+#vs.slam .vsflash { animation: vsFlash .4s ease-out; }
+@keyframes vsFlash { from { opacity: .9; } to { opacity: 0; } }
+#vs.slam { animation: vsShake .35s linear; }
+@keyframes vsShake { 0%, 100% { transform: none; } 20% { transform: translate(-14px, 8px); } 40% { transform: translate(12px, -10px); } 60% { transform: translate(-8px, -6px); } 80% { transform: translate(6px, 6px); } }
+#vs .vsban { position: absolute; left: 0; right: 0; top: 39%; height: 22vh; display: grid; place-items: center; background: repeating-linear-gradient(-45deg, #d62828 0 34px, #7a0d10 34px 68px); border-block: 6px solid #000;
+  font-family: var(--display); font-size: clamp(40px, 8vw, 104px); letter-spacing: .05em; color: var(--paper); -webkit-text-stroke: 3px #000; text-shadow: 6px 6px 0 #000; animation: vsBlink .32s steps(2) infinite, vsBanIn .25s ease-out; text-align: center; padding: 0 16px; }
+@keyframes vsBlink { 50% { color: var(--yellow); } }
+@keyframes vsBanIn { from { transform: scaleY(0); } }
+#vs.go .vsban { display: none; }
+#vs.out { opacity: 0; transition: opacity .3s; }
+@media (prefers-reduced-motion: reduce) { #vs .vsp::before, #vs .vsban, #vs.slam, #vs.slam .vsflash { animation: none; } #vs .vsp { transition: none; } #vs.slam .vsx { animation: none; opacity: 1; transform: translate(-50%, -50%) rotate(-8deg); } }
 .runpanel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 14px; align-items: center; text-align: left; padding: 14px 16px; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--red); }
 @media (max-width: 640px) { .runpanel { grid-template-columns: 1fr; } }
 .runpanel .vname { color: var(--ink); }
@@ -284,6 +316,13 @@ body.cut #obj, body.cut #objMark { visibility: hidden; }
   <div class="skip">Click, tap or press Space to skip</div>
 </div>
 
+<div id="vs" hidden aria-hidden="true">
+  <div class="vsp vsl"><img class="port" id="vsLImg" alt=""><div class="vsn"><small id="vsLTag">You</small><b id="vsLName"></b></div></div>
+  <div class="vsp vsr"><img class="port" id="vsRImg" alt=""><div class="thumbs" id="vsThumbs"></div><div class="vsn"><small id="vsRTag">Hero</small><b id="vsRName"></b><em id="vsRMore"></em></div></div>
+  <div class="vsx">VS</div>
+  <div class="vsban" id="vsBan">HERO APPROACHING!</div>
+  <div class="vsflash"></div>
+</div>
 <button id="pauseBtn" type="button" aria-label="Pause" hidden>II</button>
 <div id="toast" hidden><i id="toastSwatch"></i><div><div class="tlabel">Achievement unlocked</div><div id="toastTitle"></div><div id="toastSuit"></div></div></div>
 <div class="hud" id="powers"></div>
@@ -3022,7 +3061,7 @@ function startShowdown(diffId, list) {
   P.pos.set(0, 30, 690); P.yaw = 0; P.pitch = -.05;
 }
 function endShowdownWorld() {
-  if (state.cut) { state.cut = null; document.body.classList.remove('cut'); $('intro').hidden = true; }
+  if (state.cut) { state.cut = null; document.body.classList.remove('cut'); $('intro').hidden = true; $('vs').hidden = true; }
   for (const f of foes) { f.group.visible = false; f.glow.visible = false; f.mark.hidden = true; for (const b of f.beams) b.core.visible = b.glow.visible = false; }
   $('bossbar').hidden = true;
 }
@@ -3781,9 +3820,68 @@ function sfxSiren() {
 // his title card plays, then a shot over the hero's shoulder before control starts.
 const LAND_T = .9, SHOT_T = 3.1, GROUP_T = 1.4;
 const camFrom = new V3(), camAt = new V3(), camTmp = new V3();
+// Smash-style VS card first: a flashing warning, then you and the heroes slide in from the
+// sides with portraits rendered from the real models, and VS slams down between you.
+const VS_GO = 1.1, VS_SLAM = 1.5, VS_OUT = 3.7, VS_END = 4;
+const pcam = new THREE.PerspectiveCamera(26, 1, .3, 3000), pq = new THREE.Quaternion(), pbox = new THREE.Box3();
+function portrait(obj, model, w) {
+  obj.updateMatrixWorld(true);
+  pbox.setFromObject(model);
+  const c = pbox.getCenter(new V3()), h = Math.max(1, pbox.max.y - pbox.min.y);
+  const fwd = new V3(0, 0, 1).applyQuaternion(obj.getWorldQuaternion(pq)); fwd.y = 0;
+  if (fwd.lengthSq() < .01) fwd.set(0, 0, 1); fwd.normalize();
+  const W = canvas.width, H = canvas.height;
+  pcam.aspect = W / H; pcam.updateProjectionMatrix();
+  pcam.position.copy(c).addScaledVector(fwd, h * 2.7); pcam.position.y += h * .12;
+  pcam.lookAt(c.x, c.y + h * .06, c.z);
+  renderer.render(scene, pcam); // drawn straight back out before the browser clears it
+  const out = document.createElement('canvas'); out.width = w; out.height = Math.round(w * 1.25);
+  const cw = Math.min(W, H * .8);
+  out.getContext('2d').drawImage(canvas, (W - cw) / 2, 0, cw, H, 0, 0, out.width, out.height);
+  return out.toDataURL('image/jpeg', .85);
+}
+function showVs() {
+  const h = curHero(), vs = $('vs'), main = S.foes[0].vd, n = S.foes.length;
+  const L = h.look, R = main.look;
+  vs.querySelector('.vsl').style.cssText = `--c1:${hex(L.main)};--c2:${hex(L.limb)}`;
+  vs.querySelector('.vsr').style.cssText = `--c1:${hex(R.main)};--c2:${hex(R.accent === 0xffffff ? R.limb : R.accent)}`;
+  $('vsLName').textContent = h.name.replace(/^The /, ''); $('vsLTag').textContent = 'You · supervillain';
+  $('vsRName').textContent = main.name;
+  $('vsRTag').textContent = main.mirror === save.hero ? 'Your mirror' : RUN.on ? 'Act ' + RUN.act + ' boss' : 'Hero';
+  $('vsRMore').textContent = n > 1 ? '+ ' + S.foes.slice(1).map((f) => f.vd.name).join(' + ') : '';
+  $('vsBan').textContent = RUN.on && RUN.act === 5 ? 'FINAL BOSS APPROACHING!' : n > 1 ? 'HEROES APPROACHING!' : 'HERO APPROACHING!';
+  vs.className = ''; vs.hidden = false;
+  $('vsLImg').removeAttribute('src'); $('vsRImg').removeAttribute('src'); $('vsThumbs').textContent = '';
+}
+function vsPortraits() {
+  try {
+    hero.position.copy(P.pos); hero.quaternion.identity();
+    $('vsLImg').src = portrait(hero, heroModel, 420);
+    S.foes.forEach((f, i) => {
+      const src = portrait(f.group, f.model, i ? 160 : 420);
+      if (!i) $('vsRImg').src = src; else { const im = document.createElement('img'); im.src = src; im.alt = ''; $('vsThumbs').append(im); }
+    });
+  } catch (e) { /* no portraits, the card still works */ }
+}
+function sfxBeep(f) {
+  if (!AC) return;
+  const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = 'square'; o.frequency.value = f;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.08, t + .01); g.gain.setValueAtTime(.08, t + .14); g.gain.exponentialRampToValueAtTime(.0001, t + .2);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + .22);
+}
+function updateVs(dt) {
+  const c = state.cut, t0 = c.vs, t = c.vs += dt, vs = $('vs'), at = (k) => t0 < k && t >= k;
+  if (t0 === 0) vsPortraits(); // first frame: the foes are posed by now
+  if (at(0) || at(.36) || at(.72)) sfxBeep(at(.72) ? 1320 : 990);
+  if (at(VS_GO)) { vs.classList.add('go'); sfxWhoosh(); }
+  if (at(VS_SLAM)) { vs.classList.add('slam'); sfxBoom(); sfxCrash(1.2); }
+  if (at(VS_OUT)) vs.classList.add('out');
+  if (t >= VS_END) { c.vs = null; c.t = 0; vs.hidden = true; }
+}
 function startCutscene() {
   musPlay('intro');
-  state.playing = false; state.cut = { idx: 0, t: 0 };
+  state.playing = false; state.cut = { idx: 0, t: 0, vs: 0 };
+  showVs();
   document.body.classList.add('cut');
   $('intro').hidden = false; $('introCard').hidden = true;
   for (const f of S.foes) { bindFoe(f); V.act = 'slam'; V.slamPhase = 1; }
@@ -3809,7 +3907,9 @@ function landFoe(f, fx) {
   state.shake = 1.1; sfxBoom(); sfxCrash(1.1);
 }
 function updateCutscene(dt) {
-  const c = state.cut; c.t += dt;
+  const c = state.cut;
+  if (c.vs != null) { updateVs(dt); return; }
+  c.t += dt;
   if (c.idx < S.foes.length) {
     const f = S.foes[c.idx]; bindFoe(f);
     if (!f.landed) {
@@ -3849,7 +3949,7 @@ function skipCutscene() {
   endCutscene();
 }
 function endCutscene() {
-  musPlay('fight');
+  musPlay('fight'); $('vs').hidden = true;
   state.cut = null; document.body.classList.remove('cut');
   $('intro').hidden = true; $('introCard').hidden = true;
   for (const f of S.foes) { bindFoe(f); V.act = null; V.vel.set(0, 25, 0); }

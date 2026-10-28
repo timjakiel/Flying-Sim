@@ -27,7 +27,7 @@ Every villain flies, punch-dashes (left-click) and meteor-slams (X), plus three 
 | Permafrost | Ice Spikes | Blizzard | Ice Beam | Frostbite |
 
 ## Heroes (bosses)
-Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Attacks glow in the hero's color before they land. Every fight opens with a cut scene: the hero drops in, gets a title card and talks trash.
+Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Attacks glow in the hero's color before they land. Every fight opens Smash-style: a flashing "HERO APPROACHING!" warning, then a VS card with portraits rendered from the actual models, then each hero drops in, gets a title card and talks trash.
 
 | Hero | Says |
 | --- | --- |
