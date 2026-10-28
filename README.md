@@ -76,7 +76,7 @@ Every building breaks into chunks: punch hero-sized holes, and floors that lose 
 Cosmetic. Every achievement unlocks one (Rampage rounds count, as does crushing every hero on Hard; Sandbox never does). **Signature** keeps each villain in their own colors.
 
 ## Music
-Synthesized live: a menu theme, a tense intro under the cut scene, a 150 bpm battle score that gets more frantic when someone is low, and a fanfare or sting at the end. **N** toggles music, **M** mutes everything.
+The menu theme is a recorded track (`audio/menu-theme.mp3`, "Dramatic Villain Reveal" with choir chants, trimmed to loop); if it can't load, a synthesized menu theme plays instead. Everything else is synthesized live: a tense intro under the cut scene, a 150 bpm battle score that gets more frantic when someone is low, and a fanfare or sting at the end. **N** toggles music, **M** mutes everything, on the menus too.
 
 ## Performance
 **Graphics** on the main menu cycles Auto / Low / Medium / High (applies on the next page load). Auto picks Low on integrated graphics. Untouched buildings are merged into 64 batches, render resolution adapts to frame time, and the top-right shows FPS.
