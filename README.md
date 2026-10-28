@@ -84,7 +84,7 @@ Synthesized live: a menu theme, a tense intro under the cut scene, a 150 bpm bat
 ## Controls
 | Key | Action |
 | --- | --- |
-| Mouse | Steer / look (click to lock the mouse). The reticle in the middle is where powers land; it turns red over an enemy |
+| Mouse | Steer / look (click to lock the mouse). The dot in the middle is where powers land; it turns red over an enemy |
 | W A S D | Fly |
 | Space / E | Rise |
 | Q / C | Descend |

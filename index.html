@@ -278,12 +278,10 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
 #objMark.edge { background: var(--yellow); box-shadow: 0 0 0 4px rgba(255,210,63,.35); }
 body:has(#bossbar:not([hidden])) #timer { top: calc(18px + env(safe-area-inset-top, 0px) + var(--bossH, 30px)); }
 body.cut #obj, body.cut #objMark { visibility: hidden; }
-/* reticle: powers fire where the screen centre points; it turns red over an enemy */
+/* reticle: a dot where powers fire; it turns red over an enemy */
 #reticle { position: fixed; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; z-index: 4; pointer-events: none; transition: transform .12s; }
-#reticle::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(247,243,232,.85); box-shadow: 0 0 0 1px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4); }
-#reticle i { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 1px #000; }
-#reticle.hot { transform: scale(.8); }
-#reticle.hot::before { border-color: var(--red); border-width: 3px; }
+#reticle i { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 1.5px #000; }
+#reticle.hot { transform: scale(1.4); }
 #reticle.hot i { background: var(--red); }
 body.cut #reticle { visibility: hidden; }
 #radar { right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 150px; height: 150px; }
