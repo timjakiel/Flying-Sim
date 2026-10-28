@@ -3591,13 +3591,17 @@ const UNIT = {
   cop: { name: 'Cop', hp: 1, loot: 500, range: 130, rate: 1.5, dmg: 5, acc: .5, kind: 'foot', col: 0x1d3b7a },
   swat: { name: 'SWAT', hp: 1, loot: 1200, range: 170, rate: .9, dmg: 7, acc: .55, kind: 'foot', col: 0x17191d },
   car: { name: 'Cop car', hp: 1, loot: 2500, range: 120, rate: 1.1, dmg: 5, acc: .45, kind: 'road', speed: 34, stop: 45 },
-  heli: { name: 'Gunship', hp: 3, loot: 9000, range: 240, rate: .22, dmg: 3, acc: .35, kind: 'air', rocket: 4.5 },
+  heli: { name: 'Gunship', hp: 3, loot: 9000, range: 240, rate: .22, dmg: 3, acc: .35, kind: 'air', rocket: 4.5, chopper: true, big: true },
+  blackhawk: { name: 'Black Hawk', hp: 5, loot: 16000, range: 260, rate: .14, dmg: 3, acc: .4, kind: 'air', rocket: 3.2, chopper: true, big: true },
+  apache: { name: 'Apache', hp: 7, loot: 26000, range: 300, rate: .1, dmg: 3, acc: .45, kind: 'air', rocket: 4.5, salvo: 4, chopper: true, big: true },
+  fighter: { name: 'Fighter jet', hp: 4, loot: 40000, range: 0, rate: 99, dmg: 5, acc: .35, kind: 'air', plane: true, speed: 170, missile: 5, big: true },
+  artillery: { name: 'Artillery', hp: 4, loot: 15000, range: 400, rate: 4.2, dmg: 0, acc: 1, kind: 'foot', roof: true, artillery: true, big: true },
   drone: { name: 'Drone', hp: 1, loot: 1500, range: 150, rate: 1.2, dmg: 6, acc: .5, kind: 'air', fast: true },
-  tank: { name: 'Tank', hp: 4, loot: 18000, range: 280, rate: 3.6, dmg: 0, acc: 1, kind: 'road', speed: 15, stop: 110, shell: true },
+  tank: { name: 'Tank', hp: 4, loot: 18000, range: 280, rate: 3.6, dmg: 0, acc: 1, kind: 'road', speed: 15, stop: 110, shell: true, big: true },
   shield: { name: 'Riot shield', hp: 2, loot: 2500, range: 120, rate: 1.3, dmg: 6, acc: .5, kind: 'foot', shield: true },
-  sniper: { name: 'Sniper', hp: 1, loot: 3000, range: 420, rate: 5, dmg: 75, acc: 1, kind: 'foot', sniper: true },
+  sniper: { name: 'Sniper', hp: 1, loot: 3000, range: 420, rate: 5, dmg: 75, acc: 1, kind: 'foot', sniper: true, roof: true },
   netter: { name: 'Net gunner', hp: 1, loot: 2500, range: 140, rate: 5.5, dmg: 0, acc: 1, kind: 'foot', net: true },
-  mech: { name: 'Mech', hp: 9, loot: 30000, range: 0, rate: 99, dmg: 0, acc: 0, kind: 'walker', speed: 12 },
+  mech: { name: 'Mech', hp: 9, loot: 30000, range: 0, rate: 99, dmg: 0, acc: 0, kind: 'walker', speed: 12, big: true },
   jet: { name: 'Jetpack trooper', hp: 1, loot: 2000, range: 120, rate: .8, dmg: 6, acc: .5, kind: 'air', fast: true, jet: true },
 };
 const WANT = [ // how many of each are on the board at each heat level
@@ -3630,7 +3634,11 @@ const tagMat = (col) => new THREE.SpriteMaterial({ map: tagTexture(col), sizeAtt
 const TAG_MAT = tagMat('#ff3b30'), TAG_BIG = tagMat('#ff9a1a');
 function buildUnitMesh(type) {
   const g = new THREE.Group();
-  if (UNIT[type].kind === 'foot') {
+  if (type === 'artillery') { // a rooftop howitzer: base, shield plate and a long barrel
+    g.add(part(UG.box, UM.olive, 3.2, 1, 3.2, 0, .5, 0), part(UG.box, UM.olive, 2.6, 1.6, .25, 0, 1.6, .9));
+    const bar = new THREE.Group(); bar.position.set(0, 1.6, 0); bar.rotation.x = -.45; bar.add(part(UG.cyl, UM.gun, .28, 6, .28, 0, 0, 3)); bar.children[0].rotation.x = Math.PI / 2; g.add(bar);
+    g.userData.barrel = bar;
+  } else if (UNIT[type].kind === 'foot') {
     const body = type === 'cop' ? UM.cop : type === 'sniper' ? UM.olive : UM.swat;
     g.add(part(UG.body, body, 1, 1, 1, 0, 1.05, 0), part(UG.head, type === 'cop' ? UM.skin : UM.black, 1, 1, 1, 0, 1.85, 0));
     if (type === 'sniper') g.add(part(UG.box, UM.gun, .08, .08, 1.5, .25, 1.4, .5));
@@ -3654,6 +3662,19 @@ function buildUnitMesh(type) {
     g.add(part(UG.body, UM.black, 3, 2.6, 4.2, 0, 0, 0), part(UG.box, UM.glass, 1.6, 1, 1.4, 0, .4, 2.6), part(UG.box, UM.black, .5, .5, 7, 0, .2, -5.5), part(UG.box, UM.black, .2, 1.6, 1, 0, 1, -8.8));
     const rot = part(UG.rotor, UM.gun, 15, 1, 1, 0, 2.3, 0), rot2 = part(UG.rotor, UM.gun, 15, 1, 1, 0, 2.3, 0); rot2.rotation.y = Math.PI / 2;
     const hub = new THREE.Group(); hub.add(rot, rot2); g.add(hub); g.userData.rotor = hub;
+  } else if (type === 'blackhawk') { // bigger transport chopper with door gunners
+    const dark = UM.olive;
+    g.add(part(UG.body, dark, 3.6, 3, 5.6, 0, 0, 0), part(UG.box, UM.glass, 2, 1.1, 1.4, 0, .5, 3.4), part(UG.box, dark, .7, .7, 9, 0, .4, -7), part(UG.box, dark, .25, 2.2, 1.4, 0, 1.4, -11.2),
+      part(UG.box, UM.gun, .15, .15, 1.6, 2.1, 0, .6), part(UG.box, UM.gun, .15, .15, 1.6, -2.1, 0, .6), part(UG.box, UM.gun, 3.2, .2, .2, 0, -1.9, 0));
+    const hub = new THREE.Group(); for (let k = 0; k < 4; k++) { const b = part(UG.rotor, UM.gun, 19, 1, 1, 0, 2.6, 0); b.rotation.y = k * Math.PI / 4; hub.add(b); } g.add(hub); g.userData.rotor = hub;
+  } else if (type === 'apache') { // slim attack chopper with stub wings and rocket pods
+    g.add(part(UG.body, UM.black, 2, 2.4, 6, 0, 0, 0), part(UG.box, UM.glass, 1.1, 1.1, 2.4, 0, .8, 2.2), part(UG.box, UM.black, .5, .6, 8, 0, .3, -6.5), part(UG.box, UM.black, .2, 2, 1.2, 0, 1.2, -10.2),
+      part(UG.box, UM.black, 5.2, .25, 1, 0, -.2, .3), part(UG.cyl, UM.gun, .35, 1.8, .35, 2.5, -.6, .3), part(UG.cyl, UM.gun, .35, 1.8, .35, -2.5, -.6, .3), part(UG.box, UM.gun, .15, .15, 1.4, 0, -1.2, 3));
+    g.children[5].rotation.x = g.children[6].rotation.x = Math.PI / 2;
+    const hub = new THREE.Group(); for (let k = 0; k < 4; k++) { const b = part(UG.rotor, UM.gun, 16, 1, 1, 0, 2.2, 0); b.rotation.y = k * Math.PI / 4; hub.add(b); } g.add(hub); g.userData.rotor = hub;
+  } else if (type === 'fighter') { // a delta-wing jet, nose along +z
+    g.add(part(UG.cyl, UM.white, .9, 13, .9, 0, 0, 0), part(UG.box, UM.white, 9, .2, 4, 0, -.1, -2.5), part(UG.box, UM.white, .2, 2.6, 2.4, 0, 1.3, -5), part(UG.box, UM.glass, .8, .6, 2.2, 0, .7, 3), part(UG.box, UM.red, .6, .6, .6, 0, 0, -6.8));
+    g.children[0].rotation.x = Math.PI / 2;
   } else if (type === 'drone') {
     g.add(part(UG.box, UM.black, 1.1, .3, 1.1, 0, 0, 0), part(UG.head, UM.red, 1, 1, 1, 0, -.15, .5));
     for (const [x, z] of [[-.7, -.7], [.7, -.7], [-.7, .7], [.7, .7]]) g.add(part(UG.cyl, UM.gun, .32, .04, .32, x, .2, z));
@@ -3663,9 +3684,9 @@ function buildUnitMesh(type) {
     tur.add(part(UG.box, UM.olive, 2.6, 1.1, 3, 0, 0, 0), part(UG.cyl, UM.gun, .18, 4.5, .18, 0, .1, 3.4));
     tur.children[1].rotation.x = Math.PI / 2; g.add(tur); g.userData.turret = tur;
   }
-  const big = type === 'heli' || type === 'tank' || type === 'mech', tag = new THREE.Sprite(big ? TAG_BIG : TAG_MAT);
+  const big = !!UNIT[type].big, tag = new THREE.Sprite(big ? TAG_BIG : TAG_MAT);
   const sc = big ? .065 : .045, gs = g.scale.x;
-  tag.scale.set(sc / gs, sc / gs, 1); tag.position.y = ({ car: 3.4, heli: 5, drone: 1.6, tank: 4.6, mech: 9, jet: 1.5 })[type] ?? 2.7;
+  tag.scale.set(sc / gs, sc / gs, 1); tag.position.y = ({ car: 3.4, heli: 5, blackhawk: 6, apache: 5, fighter: 4, artillery: 4.5, drone: 1.6, tank: 4.6, mech: 9, jet: 1.5 })[type] ?? 2.7;
   tag.renderOrder = 10; g.add(tag); g.userData.tag = tag;
   scene.add(g); return g;
 }
@@ -3675,15 +3696,15 @@ const roadAt = (i) => -HALF + i * PERIOD; // road centre lines are every 80 m
 // aircraft lift off its roof, mechs walk out of it, and foot soldiers deploy closer to you
 function spawnUnit(type, src) {
   const T = UNIT[type], u = { type, T, hp: T.hp, cd: rand(1, 2.5) * Math.min(T.rate, 3) + .5, pos: new V3(), vel: new V3(), alive: true, iFrame: 0, rocketCd: rand(2, 4), face: 0 };
-  const ang = rand(0, Math.PI * 2), d = T.sniper ? rand(160, 260) : src ? rand(80, 150) : rand(130, 210);
+  const ang = rand(0, Math.PI * 2), d = T.roof ? rand(160, 280) : src ? rand(80, 150) : rand(130, 210);
   if (T.kind === 'foot') { // on a rooftop near you, or on the street
     let best = null;
     for (let k = 0; k < 12 && !best; k++) {
       const a = ang + k * .5, x = clamp(P.pos.x + Math.cos(a) * d, -HALF + 20, HALF - 20), z = clamp(P.pos.z + Math.sin(a) * d, -HALF + 20, HALF - 20);
       const arr = grid.get(cellKey(Math.floor(x / CELL), Math.floor(z / CELL)));
       const e = arr && arr.find((q) => q.alive && !q.parent && q.kind === 'box' && q.style !== STONE_STYLE && (q.topK + 1) * q.ch + q.y0 < 160);
-      if (e && (Math.random() < .7 || T.sniper)) { u.roof = e; best = new V3(e.cx + rand(-.3, .3) * e.w, e.y0 + (e.topK + 1) * e.ch, e.cz + rand(-.3, .3) * e.d); }
-      else if (k > 6 && !T.sniper) { const rx = roadAt(Math.round((x + HALF) / PERIOD)); best = new V3(rx + rand(-5, 5), 0, z); best.y = groundH(best.x, best.z); }
+      if (e && (Math.random() < .7 || T.roof)) { u.roof = e; best = new V3(e.cx + rand(-.3, .3) * e.w, e.y0 + (e.topK + 1) * e.ch, e.cz + rand(-.3, .3) * e.d); }
+      else if (k > 6 && !T.roof) { const rx = roadAt(Math.round((x + HALF) / PERIOD)); best = new V3(rx + rand(-5, 5), 0, z); best.y = groundH(best.x, best.z); }
     }
     if (!best) return null;
     u.pos.copy(best); u.face = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
@@ -3704,7 +3725,10 @@ function spawnUnit(type, src) {
     u.lane = 4 * u.dir;
     roadPos(u);
   } else {
-    if (src) u.pos.set(src.x + rand(-6, 6), src.top + 6, src.z + rand(-6, 6));
+    if (T.plane) { // fighters come in fast from well outside the fight
+      u.pos.set(P.pos.x + Math.cos(ang) * 650, clamp(P.pos.y + rand(40, 100), 120, CEIL - 20), P.pos.z + Math.sin(ang) * 650);
+      u.vel.subVectors(P.pos, u.pos).normalize().multiplyScalar(T.speed); u.pass = 'in'; u.gunT = 0; u.rocketCd = rand(1, 3);
+    } else if (src) u.pos.set(src.x + rand(-6, 6), src.top + 6, src.z + rand(-6, 6));
     else u.pos.set(P.pos.x + Math.cos(ang) * d, clamp(P.pos.y + rand(20, 60), 70, CEIL - 20), P.pos.z + Math.sin(ang) * d);
     u.orbit = ang; u.orbitR = T.jet ? rand(16, 28) : T.fast ? rand(30, 55) : rand(80, 110);
   }
@@ -3721,7 +3745,7 @@ function killUnit(u, push) {
   if (!u.alive) return;
   u.alive = false; if (u.mesh.userData.tag) u.mesh.userData.tag.visible = false; if (u.laser) { scene.remove(u.laser); u.laser = null; }
   comboKill();
-  const pay = Math.round(u.T.loot * lootMult()), big = u.type === 'heli' || u.type === 'tank' || u.type === 'mech';
+  const pay = Math.round(u.T.loot * lootMult()), big = !!u.T.big;
   H.kills++; H.loot += pay; H.pts += u.T.hp; lootTag('+$' + pay.toLocaleString('en-US') + ' · ' + u.T.name.toUpperCase());
   addRage(big ? 8 : 3);
   const p = u.pos.clone(); p.y += 1;
@@ -3731,12 +3755,12 @@ function killUnit(u, push) {
     if (P.pos.distanceTo(p) < 8) hurtPlayer(20, tmpV2.subVectors(P.pos, p), 40);
   });
   if (push === 'fall') { u.falling = true; u.vel.set(rand(-4, 4), 2, rand(-4, 4)); u.spin = rand(4, 8); return; } // drops with the rubble
-  if (u.T.kind === 'foot' || u.T.jet) { spawnDust(p, 1.5, 1, CONCRETE_COL); scene.remove(u.mesh); return; }
-  if (u.type === 'heli') { u.falling = true; u.vel.set(rand(-8, 8), 0, rand(-8, 8)); spawnFire(p, 2, 4, 6, .8, 8); sfxBoom(); return; } // crashes, then explodes
+  if ((u.T.kind === 'foot' && !u.T.artillery) || u.T.jet) { spawnDust(p, 1.5, 1, CONCRETE_COL); scene.remove(u.mesh); return; }
+  if (u.T.chopper || u.T.plane) { u.falling = true; if (u.T.plane) u.vel.multiplyScalar(.7); else u.vel.set(rand(-8, 8), 0, rand(-8, 8)); spawnFire(p, 2, 4, 6, .8, 8); sfxBoom(); return; } // crashes, then explodes
   unitBoom(u, p);
 }
 function unitBoom(u, p) {
-  const big = u.type === 'tank' || u.type === 'heli' || u.type === 'mech';
+  const big = !!u.T.big;
   spawnFire(p, big ? 2.5 : 1.2, big ? 9 : 5, big ? 14 : 7, .9, big ? 18 : 10); spawnDust(p, big ? 6 : 3, 3, SMOKE_COL);
   for (let q = 0; q < (big ? 22 : 10); q++) { tmpV3.set(rand(-1, 1), rand(.3, 1.3), rand(-1, 1)).normalize().multiplyScalar(rand(8, 22)); pools[0].spawn(p, tmpV3, rand(.3, .9), u.type === 'tank' ? new THREE.Color(0x4f5a3a) : new THREE.Color(0x222428)); }
   boomLight.color.setHex(0xff9a40); boomLight.position.copy(p); boomLight.intensity = big ? 7 : 4;
@@ -3754,7 +3778,7 @@ function hitUnit(u, strong, push) {
 function unitsInBlast(p, r, vel) { if (!H.on) return; for (const u of units) if (u.alive && u.pos.distanceTo(p) < r + 2.5) hitUnit(u, r > 10, vel); }
 function unitsOnRay(o, dir, maxT) { // nearest henchman on a ray, for beams
   let best = null, bt = maxT;
-  for (const u of units) { if (!u.alive) continue; const c = tmpV.copy(u.pos); c.y += u.T.kind === 'foot' ? 1.4 : 1; const t = c.sub(o).dot(dir); if (t < 0 || t > bt) continue; if (tmpV2.copy(o).addScaledVector(dir, t).distanceTo(tmpV.copy(u.pos).setY(u.pos.y + 1)) < (u.type === 'heli' || u.type === 'tank' ? 4 : u.type === 'mech' ? 5 : 2.2)) { best = u; bt = t; } }
+  for (const u of units) { if (!u.alive) continue; const c = tmpV.copy(u.pos); c.y += u.T.kind === 'foot' ? 1.4 : 1; const t = c.sub(o).dot(dir); if (t < 0 || t > bt) continue; if (tmpV2.copy(o).addScaledVector(dir, t).distanceTo(tmpV.copy(u.pos).setY(u.pos.y + 1)) < (u.T.plane || u.type === 'blackhawk' ? 6 : u.T.big ? 4.5 : 2.2)) { best = u; bt = t; } }
   return best ? { u: best, t: bt } : null;
 }
 // ---- enemy fire
@@ -3770,21 +3794,24 @@ function updateTracers(dt) {
   if (ch) trGeo.attributes.position.needsUpdate = true;
 }
 const eproj = [];
-function fireShell(from, to, rocket) {
+function fireShell(from, to, rocket, opts) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, color: rocket ? 0xffd080 : 0xffa060, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
   s.scale.setScalar(rocket ? 2 : 2.6); s.position.copy(from); scene.add(s);
   const v = tmpV.subVectors(to, from).normalize().multiplyScalar(rocket ? 120 : 150).clone();
-  eproj.push({ s, pos: from.clone(), vel: v, life: 4, rocket });
+  eproj.push(Object.assign({ s, pos: from.clone(), vel: v, life: 4, rocket }, opts));
+  if (opts && opts.vel) eproj[eproj.length - 1].vel = opts.vel.clone();
   sfxBoom();
 }
 function updateEproj(dt) {
   for (let i = eproj.length - 1; i >= 0; i--) {
     const e = eproj[i]; e.life -= dt;
-    if (!e.rocket) e.vel.y -= 6 * dt;
+    if (!e.rocket) e.vel.y -= (e.grav || 6) * dt;
+    if (e.homing && e.life > .8) { const sp = e.vel.length(); e.vel.lerp(tmpV.subVectors(P.pos, e.pos).normalize().multiplyScalar(sp), 1 - Math.exp(-dt * 1.3)).setLength(sp); }
     e.pos.addScaledVector(e.vel, dt); e.s.position.copy(e.pos);
     if (Math.random() < .6) spawnDust(e.pos, .6, 1, SMOKE_COL);
-    let hit = e.pos.y < groundH(e.pos.x, e.pos.z) + .5 || P.pos.distanceTo(e.pos) < 3;
-    if (!hit) { const arr = grid.get(cellKey(Math.floor(e.pos.x / CELL), Math.floor(e.pos.z / CELL))); if (arr) for (const q of arr) if (q.alive && pointInEntity(q, e.pos)) { hit = true; break; } }
+    let hit = e.pos.y < groundH(e.pos.x, e.pos.z) + .5 || P.pos.distanceTo(e.pos) < (e.fling ? 6 : 3);
+    e.age = (e.age || 0) + dt; // a fresh shell can't blow up on the roof it was fired from
+    if (!hit && e.age > .35) { const arr = grid.get(cellKey(Math.floor(e.pos.x / CELL), Math.floor(e.pos.z / CELL))); if (arr) for (const q of arr) if (q.alive && pointInEntity(q, e.pos)) { hit = true; break; } }
     if (hit || e.life <= 0) {
       scene.remove(e.s); e.s.material.dispose(); eproj.splice(i, 1);
       if (!hit) continue;
@@ -3794,7 +3821,9 @@ function updateEproj(dt) {
       blast(e.pos.clone(), R * .6, null);
       if (e.pos.y - groundH(e.pos.x, e.pos.z) < 2) crater(e.pos.x, e.pos.z, R * .4, .8);
       const d = P.pos.distanceTo(e.pos);
-      if (d < R + 1.5) hurtPlayer((e.rocket ? 45 : 70) * (1 - d / (R * 1.6)), tmpV2.subVectors(P.pos, e.pos), 60);
+      if (e.fling && d < R + 4) { // artillery: the blast throws you
+        hurtPlayer(65, tmpV2.subVectors(P.pos, e.pos).setY(4), 200); S.stunT = Math.max(S.stunT, 1); startTumble(P, 1); popup('SHELLED!', true);
+      } else if (d < R + 1.5) hurtPlayer((e.rocket ? 45 : 70) * (1 - d / (R * 1.6)), tmpV2.subVectors(P.pos, e.pos), 60);
       sfxCrash(.7); state.shake = Math.max(state.shake, clamp(.8 - d / 300, .1, .8));
     }
   }
@@ -3842,11 +3871,11 @@ function updateHeat(dt) {
     const far = u.pos.distanceTo(P.pos);
     if (u.falling) { // a downed gunship spins in; a henchman whose floor gave way tumbles down
       u.vel.y -= 30 * dt; u.pos.addScaledVector(u.vel, dt); u.mesh.position.copy(u.pos);
-      if (u.type === 'heli') { u.mesh.rotation.y += dt * 6; if (Math.random() < .5) spawnFire(u.pos, 1, 3, 1, .5, 4); }
+      if (u.T.chopper || u.T.plane) { if (u.T.chopper) u.mesh.rotation.y += dt * 6; else u.mesh.rotation.z += dt * 3; if (Math.random() < .5) spawnFire(u.pos, 1, 3, 1, .5, 4); }
       else { u.mesh.rotation.x += dt * u.spin; u.mesh.rotation.z += dt * u.spin * .6; }
       if (u.pos.y <= groundH(u.pos.x, u.pos.z) + 1) {
         u.falling = false;
-        if (u.type === 'heli') unitBoom(u, u.pos.clone()); else { spawnDust(u.pos, 1.5, 2, CONCRETE_COL); scene.remove(u.mesh); }
+        if (u.T.chopper || u.T.plane) { unitBoom(u, u.pos.clone()); crater(u.pos.x, u.pos.z, 6, 1.5); } else { spawnDust(u.pos, 1.5, 2, CONCRETE_COL); scene.remove(u.mesh); }
       }
       continue;
     }
@@ -3863,7 +3892,9 @@ function updateHeat(dt) {
       u.face = T.shield ? u.face + clamp(wrapAng(want - u.face), -1.3 * dt, 1.3 * dt) : want; // riot shields turn slowly
       u.mesh.rotation.y = u.face;
       // flatten them if you fly through
-      if (far < 4.5 && P.vel.length() > 10) { if (T.shield && shieldBlocks(u)) { if (u.iFrame <= 0) shieldBlock(u); } else { killUnit(u); continue; } }
+      if (T.artillery) { // a gun emplacement: takes a few hits, and lobs shells that fling you
+        if (far < 6 && P.vel.length() > 10) { hitUnit(u, P.vel.length() > 120); P.vel.multiplyScalar(.6); }
+      } else if (far < 4.5 && P.vel.length() > 10) { if (T.shield && shieldBlocks(u)) { if (u.iFrame <= 0) shieldBlock(u); } else { killUnit(u); continue; } }
       if (T.sniper) { u.cd -= dt; u.mesh.position.copy(u.pos); sniperUpdate(u, far, dt); continue; }
     } else if (T.kind === 'walker') {
       mechUpdate(u, far, dt); u.mesh.position.copy(u.pos); continue;
@@ -3884,14 +3915,16 @@ function updateHeat(dt) {
       if (u.type === 'car') { const l = u.mesh.userData.lights, on = (performance.now() / 180 | 0) % 2; l[0].visible = !!on; l[1].visible = !on; }
       if (u.type === 'tank') { const tur = u.mesh.userData.turret; tur.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z) - u.mesh.rotation.y; }
       if (far < 3.5 + (u.type === 'tank' ? 3 : 1) && P.vel.length() > 10) { hitUnit(u, P.vel.length() > 120); P.vel.multiplyScalar(.7); }
+    } else if (T.plane) {
+      fighterUpdate(u, far, dt); u.mesh.position.copy(u.pos); continue;
     } else { // air: orbit you
       u.orbit += dt * (T.jet ? 1.6 : T.fast ? 1.1 : .35);
       pt.set(P.pos.x + Math.cos(u.orbit) * u.orbitR, T.jet ? P.pos.y + 3 : clamp(P.pos.y + (T.fast ? 6 : 28), 40, CEIL - 10), P.pos.z + Math.sin(u.orbit) * u.orbitR);
       u.vel.lerp(pt.sub(u.pos).multiplyScalar(T.fast ? 2 : .9).clampLength(0, T.jet ? 110 : T.fast ? 80 : 60), 1 - Math.exp(-dt * 2));
       u.pos.addScaledVector(u.vel, dt);
       u.mesh.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
-      if (u.type === 'heli') { u.mesh.userData.rotor.rotation.y += dt * 25; u.mesh.rotation.z = clamp(-u.vel.x * .01, -.3, .3); }
-      if (far < (u.type === 'heli' ? 7 : 3.5) && P.vel.length() > 10) hitUnit(u, P.vel.length() > 120);
+      if (T.chopper) { u.mesh.userData.rotor.rotation.y += dt * 25; u.mesh.rotation.z = clamp(-u.vel.x * .01, -.3, .3); }
+      if (far < (T.chopper ? 7 : 3.5) && P.vel.length() > 10) hitUnit(u, P.vel.length() > 120);
     }
     u.mesh.position.copy(u.pos);
     // fire
@@ -3900,11 +3933,20 @@ function updateHeat(dt) {
     if (u.cd <= 0 && far < T.range) {
       u.cd = T.rate * rand(.8, 1.25);
       const from = tmpV3.copy(u.pos); from.y += T.kind === 'foot' ? 1.7 : T.kind === 'air' ? -.5 : 1.6;
-      if (T.shell) fireShell(from.clone(), predicted(new V3(), far / 150).add(new V3(rand(-4, 4), 0, rand(-4, 4))), false);
+      if (T.artillery) { // lob it: aim above you so gravity brings it down on you
+        const t = clamp(far / 70, 3, 5), G = 50, aim = predicted(new V3(), t + .3); // apex ~G·t²/8 above: clears the towers
+        from.copy(u.pos).add(tmpV2.set(0, 2.5, 0));
+        const v = aim.clone().sub(from).divideScalar(t); v.y += .5 * G * t; // a high ballistic arc over the rooftops
+        fireShell(from.clone(), aim, false, { fling: true, grav: G, vel: v, life: t + 1.5 }); spawnFire(from, .5, 3, 3, .3, 8); sfxBoom();
+        spawnRing(aim.clone(), UP, 1.4, 0xff3020); // where it'll come down
+      } else if (T.shell) fireShell(from.clone(), predicted(new V3(), far / 150).add(new V3(rand(-4, 4), 0, rand(-4, 4))), false);
       else if (T.net) fireNet(from.clone());
       else shoot(u, from.clone());
     }
-    if (T.rocket && (u.rocketCd -= dt) <= 0 && far < T.range) { u.rocketCd = T.rocket * rand(.8, 1.3); fireShell(u.pos.clone().setY(u.pos.y - 1), predicted(new V3(), far / 120), true); }
+    if (T.rocket && (u.rocketCd -= dt) <= 0 && far < T.range) {
+      u.rocketCd = T.rocket * rand(.8, 1.3);
+      for (let k = 0; k < (T.salvo || 1); k++) later(k * .16, () => { if (u.alive) fireShell(u.pos.clone().setY(u.pos.y - 1).add(new V3(rand(-2, 2), 0, rand(-2, 2))), predicted(new V3(), far / 120).add(new V3(rand(-5, 5), 0, rand(-5, 5))), true); });
+    }
   }
   updateTracers(dt); updateEproj(dt); updateNets(dt); updateOrbs(dt);
   // HUD
@@ -4008,6 +4050,27 @@ function mechUpdate(u, far, dt) {
   if (far < 6.5 && P.vel.length() > 10) { hitUnit(u, P.vel.length() > 120); P.vel.multiplyScalar(.6); }
 }
 
+// fighter jets: strafing runs. Dive at you with guns and homing missiles, overshoot, swing round, repeat
+const fDir = new V3(), fTo = new V3();
+function fighterUpdate(u, far, dt) {
+  const T = u.T;
+  fTo.subVectors(P.pos, u.pos).divideScalar(far || 1);
+  if (u.pass === 'in' && far < 70) u.pass = 'out';
+  if (u.pass === 'out' && (far > 420 || Math.abs(u.pos.x) > FENCE || Math.abs(u.pos.z) > FENCE)) u.pass = 'in';
+  fDir.copy(u.vel).normalize();
+  if (u.pass === 'in') fDir.lerp(fTo, 1 - Math.exp(-dt * 1.6)).normalize();
+  if (u.pos.y < 50) fDir.y = Math.max(fDir.y, .35); else if (u.pos.y > CEIL - 15) fDir.y = Math.min(fDir.y, -.2);
+  fDir.normalize(); u.vel.copy(fDir).multiplyScalar(T.speed);
+  u.pos.addScaledVector(u.vel, dt);
+  u.mesh.position.copy(u.pos); u.mesh.lookAt(tmpV.copy(u.pos).add(u.vel)); u.mesh.rotateZ(clamp(fDir.x * fTo.z - fDir.z * fTo.x, -1, 1) * 1.2); // bank into the turn
+  if (u.pass === 'in' && !S.ko) {
+    if (fDir.dot(fTo) > .97 && far < 320 && (u.gunT -= dt) <= 0) { u.gunT = .1; shoot(u, u.pos.clone()); }
+    if ((u.rocketCd -= dt) <= 0 && far > 90 && far < 450) { u.rocketCd = T.missile * rand(.8, 1.2); fireShell(u.pos.clone(), P.pos.clone(), true, { homing: true }); popup('MISSILE!', false); }
+  }
+  if (far < 90 && !u.boomed) { u.boomed = true; sfxWhoosh(); sfxBoom(); state.shake = Math.max(state.shake, .4); } // sonic boom on the pass
+  if (far > 200) u.boomed = false;
+  if (far < 8 && P.vel.length() > 10) hitUnit(u, P.vel.length() > 120);
+}
 // ---- style meter: chain kills inside the window to climb from D to SSS and multiply the loot
 const RANKS = ['D', 'C', 'B', 'A', 'S', 'SS', 'SSS'], RANK_AT = [1, 4, 8, 14, 22, 32, 45], COMBO_WINDOW = 3.5;
 const K = { n: 0, t: 0, rank: -1, best: -1 };
@@ -4565,19 +4628,24 @@ function showUpgrade() {
 // Each round marks a precinct, an armory and a helipad tower (as the round number allows). They keep
 // sending henchmen, faster the longer they stand, until you level them. The round ends when they're
 // all down and the last henchman is dead. Partway through, the act's hero drops in for one cheap shot.
-const PLURAL = { cop: 'cops', car: 'cop cars', swat: 'SWAT', heli: 'gunships', drone: 'drones', tank: 'tanks', shield: 'riot shields', sniper: 'snipers', netter: 'net gunners', mech: 'mechs', jet: 'jetpack troopers' };
+const PLURAL = { blackhawk: 'Black Hawks', apache: 'Apaches', fighter: 'fighter jets', artillery: 'artillery', cop: 'cops', car: 'cop cars', swat: 'SWAT', heli: 'gunships', drone: 'drones', tank: 'tanks', shield: 'riot shields', sniper: 'snipers', netter: 'net gunners', mech: 'mechs', jet: 'jetpack troopers' };
 const SPAWNERS = {
   precinct: { name: 'Precinct', col: 0x3b82ff, from: 1, units: (g) => [['cop', 3], ['car', 2], g >= 6 && ['sniper', 1]] },
-  armory: { name: 'Armory', col: 0x9bd04a, from: 3, units: (g, mod) => [['swat', 3], g >= 5 && ['shield', 2], g >= 10 && ['netter', 1.5], (g >= 11 || mod === 'tanks') && ['tank', mod === 'tanks' ? 5 : 1], g >= 15 && ['mech', .8]] },
-  helipad: { name: 'Helipad', col: 0xff9a1a, from: 4, units: (g, mod) => [['heli', mod === 'air' ? 2 : 1], (g >= 7 || mod === 'air') && ['drone', mod === 'air' ? 4 : 3], g >= 11 && ['jet', 2]] },
+  armory: { name: 'Armory', col: 0x9bd04a, from: 3, units: (g, mod) => [['swat', 3], g >= 5 && ['shield', 2], g >= 8 && ['artillery', 1], g >= 10 && ['netter', 1.5], (g >= 11 || mod === 'tanks') && ['tank', mod === 'tanks' ? 5 : 1 + g / 10], g >= 15 && ['mech', .8]] },
+  helipad: { name: 'Helipad', col: 0xff9a1a, from: 4, units: (g, mod) => [['heli', (g >= 15 ? .4 : g >= 10 ? .8 : 1) * (mod === 'air' ? 2 : 1)], g >= 10 && ['blackhawk', mod === 'air' ? 2 : 1], g >= 15 && ['apache', mod === 'air' ? 2 : 1.2], g >= 17 && ['fighter', 1], (g >= 7 || mod === 'air') && ['drone', mod === 'air' ? 4 : 3], g >= 11 && ['jet', 2]] },
 };
-const unitCaps = (g, mod) => ({ heli: 1 + Math.floor(g / 6) + (mod === 'air' ? 3 : 0), tank: Math.floor(g / 6) + (mod === 'tanks' ? 4 : 0), mech: g >= 19 ? 2 : 1, sniper: g >= 15 ? 3 : 2, netter: 2 });
+const unitCaps = (g, mod) => ({ heli: 1 + Math.floor(g / 6) + (mod === 'air' ? 3 : 0), blackhawk: 1 + Math.floor((g - 10) / 5) + (mod === 'air' ? 2 : 0), apache: 1 + Math.floor((g - 15) / 4) + (mod === 'air' ? 2 : 0),
+  fighter: g >= 21 ? 2 : 1, artillery: g >= 18 ? 3 : 2, tank: Math.floor(g / 5) + (mod === 'tanks' ? 4 : 0), mech: g >= 19 ? 2 : 1, sniper: g >= 15 ? 3 : 2, netter: 2 });
 const ELITES = { // first round each one shows up, and how to deal with it
   shield: [5, 'Riot shields block punches from the front. Hit them from behind or above.'],
   sniper: [6, 'Snipers on the rooftops: a red laser means a big shot is coming. Move fast or get behind a building.'],
+  artillery: [8, 'Rooftop artillery lobs shells that send you flying. Keep moving and take the guns out.'],
   netter: [10, 'Net gunners pin you down. Mash keys to break free.'],
+  blackhawk: [10, 'Black Hawks: bigger choppers with door gunners and rockets.'],
   jet: [11, 'Jetpack troopers chase you through the air.'],
   mech: [15, 'Mechs walk straight through buildings and punch back hard.'],
+  apache: [15, 'Apaches: attack choppers with chain guns and four-rocket salvos.'],
+  fighter: [17, 'Fighter jets: strafing runs with guns and homing missiles. Outrun the missiles at full boost.'],
 };
 const MODS = {
   gas: { name: 'Gas Leak', desc: 'Every henchman blows up when they go down. Chain them.' },
@@ -4903,6 +4971,6 @@ addEventListener('pointerdown', firstGesture, true); addEventListener('keydown',
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { TRACKS, RUN, startRun, runWaves, runFight, runFightEnd, showUpgrade, bossFor, powerLevel, K, RAGE, ultimate, startCameo, MODS, SPAWNERS, nets, orbs, UNIT, mashNet, dropOrb, H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { eproj, TRACKS, RUN, startRun, runWaves, runFight, runFightEnd, showUpgrade, bossFor, powerLevel, K, RAGE, ultimate, startCameo, MODS, SPAWNERS, nets, orbs, UNIT, mashNet, dropOrb, H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
