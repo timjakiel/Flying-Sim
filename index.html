@@ -3173,7 +3173,7 @@ function hurtVillain(amount, dir, knock, label) {
 function hurtPlayer(amount, dir, knock) {
   if (!(state.mode === 'showdown' || H.on) || S.over || S.ko || state.cut) return;
   if (state.mode === 'showdown') amount *= S.diff.dmg;
-  else if (RUN.on) amount *= RUN_HENCH[RUN.diff];
+  else if (RUN.on) amount *= RUN_HENCH[RUN.diff] * henchScale(); // henchmen hit harder every round
   S.hp -= amount; S.taken += amount; S.lastHurt = S.time; S.lastHurtReal = performance.now() / 1000;
   if (dir && knock) { P.vel.addScaledVector(tmpV.copy(dir).normalize(), knock); P.slamming = false; P.landT = 0; }
   const h = $('hurt'); h.style.transition = 'none'; h.style.opacity = String(clamp(amount / 120, .3, .85));
@@ -3833,7 +3833,8 @@ function shoot(u, from) {
   const T = u.T, dist = from.distanceTo(P.pos), dir = tmpV.subVectors(P.pos, from).normalize().clone();
   const hit = raycastWorld(from, dir, 3, dist - 2);
   if (hit) { tracer(from, tmpV2.copy(from).addScaledVector(dir, hit.t)); return; } // a building is in the way
-  const sp = P.vel.length(), chance = clamp(T.acc - sp / 500 - dist / 900, .08, .75);
+  // speed still helps, but not enough to make you untouchable; in a run they get sharper every round
+  const sp = P.vel.length(), chance = clamp(T.acc + (RUN.w ? .006 * gRound() : 0) - sp / 900 - dist / 1100, .12, .85);
   if (Math.random() < chance) { tracer(from, P.pos); hurtPlayer(T.dmg, null, 0); }
   else tracer(from, tmpV2.copy(P.pos).add(new V3(rand(-4, 4), rand(-3, 3), rand(-4, 4))));
   gunT -= 1; if (gunT <= 0) { gunT = 3; sfxGun(); }
@@ -4538,7 +4539,8 @@ function musUpdate(dt) {
 // Bosses are four random heroes, then the hero who mirrors your powers. Beaten heroes come back
 // weaker for every later boss fight, two at a time. After every boss (every five rounds) you
 // upgrade your powers. Health and loot carry through; get knocked out and it's over.
-const RUN_HENCH = { easy: .6, normal: 1, hard: 1.35 };        // henchman damage by difficulty
+const RUN_HENCH = { easy: .7, normal: 1, hard: 1.35 };        // henchman damage by difficulty
+const henchScale = () => 2 + .03 * (gRound() - 1);           // and by round: x2 in round 1, about x2.7 by round 24
 const BOSS_PAY = 200000, UPGRADE_PTS = 3;
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const runHaul = () => Math.round(H.loot);
@@ -4666,7 +4668,7 @@ const roundTypes = (g, mod) => spawnersFor(g, mod).flatMap((k) => SPAWNERS[k].un
 function rollMod(g) { return g >= 2 && Math.random() < .75 ? Object.keys(MODS)[Math.random() * 5 | 0] : null; }
 function roundBlurb(g, mod) {
   const sp = spawnersFor(g, mod).map((k) => SPAWNERS[k].name.toLowerCase());
-  let t = 'Level the ' + (sp.length > 1 ? sp.slice(0, -1).join(', ') + ' and ' + sp[sp.length - 1] : sp[0]) + '. Until you do, they keep sending ' + roundTypes(g, mod).map((u) => PLURAL[u]).join(', ') + '.';
+  let t = 'Level the ' + (sp.length > 1 ? sp.slice(0, -1).join(', ') + ' and ' + sp[sp.length - 1] : sp[0]) + '. Until you do, they keep sending ' + roundTypes(g, mod).map((u) => PLURAL[u]).join(', ') + '. Level them all and the rest retreat.';
   for (const [k, [at, how]] of Object.entries(ELITES)) if (at === g) t += ' NEW: ' + how;
   return t;
 }
@@ -4732,7 +4734,7 @@ function updateWaves(dt) {
   w.t += dt;
   const g = gRound(), alive = units.filter((u) => u.alive), caps = unitCaps(g, w.mod), have = {};
   for (const u of alive) have[u.type] = (have[u.type] || 0) + 1;
-  const dens = (1 + g * .03) * (w.mod === 'double' ? 2 : 1);
+  const dens = (1.5 + g * .02) * (w.mod === 'double' ? 2 : 1); // busy from the first round
   for (const s of w.spawners) {
     if (!s.alive) continue;
     s.t += dt;
@@ -4751,14 +4753,13 @@ function updateWaves(dt) {
   if (!w.cameo && w.t > w.cameoAt && !S.ko) { w.cameo = true; startCameo(); }
   updateCameo(dt);
   const standing = w.spawners.filter((s) => s.alive);
-  if (!standing.length && !alive.length && !cameo) { roundDone(); return; }
+  if (!standing.length && !cameo) { roundDone(true); return; } // every spawner down: whoever's left runs for it
   const el = $('obj');
   el.querySelector('b').textContent = 'ROUND ' + g + (w.mod ? ' · ' + MODS[w.mod].name.toUpperCase() : '');
-  el.querySelector('span').textContent = w.spawners.map((s) => SPAWNERS[s.k].name + (s.alive ? '' : ' ✓')).join(' · ') + ' · ' + alive.length + ' hostiles';
+  el.querySelector('span').textContent = w.spawners.map((s) => SPAWNERS[s.k].name + (s.alive ? '' : ' ✓')).join(' · ') + ' · ' + alive.length + ' hostiles on you';
   // point at the nearest spawner still standing, then at the stragglers
   let best = null, bd = 1e9;
   for (const s of standing) { const d = s.pos.distanceTo(P.pos); if (d < bd) { bd = d; best = s.pos; } }
-  if (!best && alive.length <= 4) for (const u of alive) { const d = u.pos.distanceTo(P.pos); if (d < bd) { bd = d; best = u.pos; } }
   const mk = $('objMark');
   if (!best) { mk.hidden = true; return; }
   vTmp.copy(best); vTmp.y += 4; vTmp.project(camera);
@@ -4776,9 +4777,10 @@ function spawnerDown(s) {
   popup(S0.name.toUpperCase() + ' DOWN!', true); lootTag('+$' + pay.toLocaleString('en-US') + ' · ' + S0.name.toUpperCase());
   sfxBoom(); sfxUnlock();
 }
-function roundDone() {
+function roundDone(retreat) {
   const w = RUN.w; w.done = true; S.over = true;
-  popup('ROUND CLEAR!', true); sfxUnlock();
+  popup(retreat && units.some((u) => u.alive) ? 'ROUND CLEAR! THE REST RETREAT' : 'ROUND CLEAR!', true); sfxUnlock();
+  for (const u of units) if (u.alive) { u.alive = false; spawnDust(u.pos, 1.5, 1, SMOKE_COL); scene.remove(u.mesh); if (u.laser) scene.remove(u.laser); } // they scatter
   later(1.8, () => {
     state.playing = false; keys.clear(); if (document.pointerLockElement) document.exitPointerLock();
     RUN.hp = Math.min(PLAYER_HP, S.hp + PLAYER_HP * .15); RUN.rounds++; RUN.w = null;
