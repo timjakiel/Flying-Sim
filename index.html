@@ -1,4 +1,4 @@
-<title>Skybreaker</title>
+<title>Cape Crusher</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Barlow+Condensed:wght@500;600;700&display=swap">
@@ -237,7 +237,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
 <div id="intro" hidden>
   <div class="lb top"></div><div class="lb bot"></div>
   <div id="introCard" hidden>
-    <div id="introNum">Villain</div>
+    <div id="introNum">Hero</div>
     <div id="introName">The Warlord</div>
     <div id="introTag"></div>
     <div id="introQuote"></div>
@@ -266,23 +266,22 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
 
 <div id="overlay">
   <div class="card wide" id="scr-main">
-    <h1>Skybreaker</h1>
-    <p class="tag" id="tagline">Five supervillains are tearing the city apart. Pick a hero, pick a villain, take them down.</p>
+    <h1>Cape Crusher</h1>
+    <p class="tag" id="tagline">You're a supervillain taking Skyline City. Five heroes stand in your way. Crush them.</p>
     <div class="fight">
       <div class="vlist" id="vList"></div>
       <div class="vpanel">
-        <div class="vsel"><span class="label">Fight · tap villains to add or remove them</span><div class="vname" id="vSelName">The Warlord</div><div class="sdesc" id="vSelTag"></div></div>
+        <div class="vsel"><span class="label">Practice · tap heroes to add or remove them</span><div class="vname" id="vSelName">The Warlord</div><div class="sdesc" id="vSelTag"></div></div>
         <div class="diffs">
           <button type="button" id="sd-easy">EASY<small id="sdb-easy">—</small></button>
           <button type="button" id="sd-normal">NORMAL<small id="sdb-normal">—</small></button>
           <button type="button" id="sd-hard">HARD<small id="sdb-hard">—</small></button>
         </div>
-        <div class="sdesc">Win to collect a bounty and spend it on power upgrades.</div>
+        <div class="sdesc">Fight any heroes you like. Full runs are on the way.</div>
       </div>
     </div>
     <div class="row">
-      <button class="ghost" id="openHeroes" type="button">Hero<span id="heroMini">Skybreaker</span></button>
-      <button class="ghost" id="openShop" type="button">Power shop<span id="walletMini">$0</span></button>
+      <button class="ghost" id="openHeroes" type="button">Villain<span id="heroMini">The Warlord</span></button>
       <button class="ghost" id="openSuits" type="button">Suits &amp; achievements<span id="suitCount">1/12</span></button>
       <button class="ghost" id="gfxBtn" type="button">Graphics<span id="gfxMini">Auto</span></button>
     </div>
@@ -306,7 +305,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
       <div><span>R</span><span>Back to the sky</span></div>
       <div><span>P / ESC</span><span>Pause</span></div>
       <div><span>N / M</span><span>Music / all sound on-off</span></div>
-      <div class="foot">* Your hero's powers. Bought and upgraded in the power shop; Sandbox has them all at max.</div>
+      <div class="foot">* Your villain's powers. Sandbox has them all at max level.</div>
     </div>
     </details>
   </div>
@@ -320,22 +319,15 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
   </div>
   <div class="card wide" id="scr-suits" hidden>
     <h2>Suits</h2>
-    <p class="tag">Every achievement unlocks a suit. Rampage rounds count, and so does beating every villain on Hard. Sandbox never does.</p>
+    <p class="tag">Every achievement unlocks a suit. Rampage rounds count, and so does beating every hero on Hard. Sandbox never does.</p>
     <div class="suits" id="suitList"></div>
     <button class="ghost" id="sBack" type="button">Back</button>
   </div>
   <div class="card wide" id="scr-heroes" hidden>
-    <h2>Heroes</h2>
-    <p class="tag">Everyone flies, punches and meteor-slams. Each hero has three powers of their own. In Rampage you buy them in the power shop; Sandbox and Showdown give you all of them.</p>
+    <h2>Villains</h2>
+    <p class="tag">Every villain flies, punches and meteor-slams, plus three powers of their own. Each one has a mirror: the hero with the same powers, waiting at the end of a run.</p>
     <div class="heroes" id="heroList"></div>
     <button class="ghost" id="hBack" type="button">Back</button>
-  </div>
-  <div class="card wide" id="scr-shop" hidden>
-    <h2>Power shop</h2>
-    <p class="tag">Each Rampage round pays you 0.4% of the damage plus a $50K appearance fee. Powers you already own can be upgraded to hit harder. Sandbox has every power at max level.</p>
-    <div class="wallet" id="walletLine">Wallet: $0</div>
-    <div class="suits shoplist" id="shopList"></div>
-    <button class="ghost" id="shBack" type="button">Back</button>
   </div>
   <div class="card" id="scr-results" hidden>
     <h2 id="rTitle">Time's up</h2>
@@ -344,12 +336,9 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
     <div class="rstats" id="rStats"></div>
     <div class="cut" id="rCut"></div>
     <div id="rUnlocks"></div>
-    <button class="btn" id="rNext" type="button" hidden>NEXT VILLAIN</button>
+    <button class="btn" id="rNext" type="button" hidden>NEXT HERO</button>
     <button class="btn" id="rAgain" type="button">GO AGAIN</button>
-    <div class="row">
-      <button class="ghost" id="rShop" type="button">Power shop</button>
-      <button class="ghost" id="rSuits" type="button">Suits &amp; achievements</button>
-    </div>
+    <button class="ghost" id="rSuits" type="button">Suits &amp; achievements</button>
     <button class="ghost" id="rMenu" type="button">Main menu</button>
   </div>
 </div>
@@ -1820,17 +1809,18 @@ function touchExplosives() {
 // ---------------------------------------------------------------- heroes + powers
 // Five heroes. Everyone shares flight, punch-dash and Meteor Slam; each hero has three abilities of
 // their own, picked with the mouse wheel (or 1/2/3) and fired with right-click (or V).
+// The five playable supervillains. Internal ids are kept from the hero days so the power code stays put.
 const HEROES = [
-  { id: 'sky', name: 'Skybreaker', blurb: 'Super strength, a sonic voice and laser eyes.', abilities: ['shout', 'clap', 'laser'],
-    look: { main: 0xffb300, limb: 0x1546c8, accent: 0x0c2160, mask: 0x0f1114, lens: 0xe9f3ff } },
-  { id: 'blaze', name: 'Blaze', blurb: 'A walking inferno. Throws fireballs, breathes flame, goes nova.', abilities: ['fireball', 'nova', 'flame'], aura: 0xff7a20,
-    look: { main: 0xff5a12, limb: 0x2a0e06, accent: 0xffc23a, mask: 0x2a0e06, lens: 0xfff2b0, emissive: 0xff4000 } },
-  { id: 'mind', name: 'Mindstorm', blurb: 'Telekinesis. Rips the city apart without touching it.', abilities: ['push', 'hurl', 'lift'], aura: 0xb070ff,
-    look: { main: 0x6a2bd8, limb: 0x1b1030, accent: 0xd6c2ff, mask: 0x1b1030, lens: 0xe6d6ff, emissive: 0x3a1080 } },
-  { id: 'volt', name: 'Volt', blurb: 'Pure lightning. Bolts, storms and an EMP that fries everything nearby.', abilities: ['bolt', 'emp', 'storm'], aura: 0x7fd8ff,
-    look: { main: 0x1fb6ff, limb: 0x0d1a2b, accent: 0xfff36a, mask: 0x0d1a2b, lens: 0xffffff, emissive: 0x0a5a9a } },
-  { id: 'frost', name: 'Frostbite', blurb: 'Ice. Freezes, spikes and shatters whatever is in the way.', abilities: ['spikes', 'blizzard', 'icebeam'], aura: 0xd8f4ff,
-    look: { main: 0xbfe8ff, limb: 0x2a4a6e, accent: 0xffffff, mask: 0x2a4a6e, lens: 0x9ff3ff, metal: .3, rough: .2 } },
+  { id: 'sky', name: 'The Warlord', blurb: 'Brute strength, a voice that levels blocks and laser eyes.', abilities: ['shout', 'clap', 'laser'],
+    look: { main: 0x15161a, limb: 0x0b0b0d, accent: 0x9e0f1a, mask: 0x0b0b0d, lens: 0xff2a1a, glow: true, cape: 0x8e0c16 } },
+  { id: 'blaze', name: 'Scorch', blurb: 'A walking inferno. Fireballs, flamethrowers and a supernova.', abilities: ['fireball', 'nova', 'flame'], aura: 0xff7a20,
+    look: { main: 0x2a0b05, limb: 0x120403, accent: 0xff5a12, mask: 0x120403, lens: 0xffb030, glow: true, cape: 0xc22a08, emissive: 0x6a1800 } },
+  { id: 'mind', name: 'Psyche', blurb: 'Telekinesis. Rips the city apart without lifting a finger.', abilities: ['push', 'hurl', 'lift'], aura: 0xc040ff,
+    look: { main: 0x1c0a2e, limb: 0x0c0614, accent: 0xd040ff, mask: 0x0c0614, lens: 0xf080ff, glow: true, cape: 0x5a0f8a } },
+  { id: 'volt', name: 'Overload', blurb: 'Raw lightning. Bolts, storms and an EMP that fries everything nearby.', abilities: ['bolt', 'emp', 'storm'], aura: 0xfff36a,
+    look: { main: 0x14161c, limb: 0x0a0b0e, accent: 0xffe23a, mask: 0x0a0b0e, lens: 0xfff6a0, glow: true, cape: 0x2a3a10 } },
+  { id: 'frost', name: 'Permafrost', blurb: 'Ice. Freezes, impales and shatters whatever gets in the way.', abilities: ['spikes', 'blizzard', 'icebeam'], aura: 0xd8f4ff,
+    look: { main: 0xe8f6ff, limb: 0x1c3550, accent: 0x7fd0ff, mask: 0x1c3550, lens: 0x9ff3ff, glow: true, cape: 0x2a5a8a, metal: .3, rough: .2 } },
 ];
 // level 1 is the purchase; each level after that is a much bigger bill
 const POWERS = [
@@ -1854,11 +1844,10 @@ const POWERS = [
   { id: 'icebeam', hero: 'frost', name: 'Ice Beam', kind: 'beam', price: 20e6, max: 5, cost: 2.2, desc: 'Hold to freeze and shatter whatever you aim at.', up: 'Wider beam' },
 ];
 const PW = Object.fromEntries(POWERS.map((p) => [p.id, p]));
-const powerLevel = (id) => state.mode === 'sandbox' ? PW[id].max
-  : state.mode === 'showdown' && id !== 'overtime' ? Math.max(1, save.levels[id] || 0) : (save.levels[id] || 0);
+// every villain power starts at level 1 each run (in-run boosts come later); Sandbox gets everything maxed
+const powerLevel = (id) => state.mode === 'sandbox' ? PW[id].max : (id === 'overtime' || id === 'fists' ? 0 : 1);
 const hasPower = (id) => powerLevel(id) > 0;
 const pmul = (id) => 1 + .25 * (powerLevel(id) - 1); // damage/radius multiplier for the level
-const nextCost = (pw) => Math.round(pw.price * Math.pow(pw.cost, save.levels[pw.id] || 0) / 1e5) * 1e5;
 const cds = {};
 let castT = 0, castKind = '', selIdx = 0, abilityHeld = false;
 const curHero = () => HEROES.find((h) => h.id === save.hero) || HEROES[0];
@@ -2551,11 +2540,11 @@ const ACHS = {
   combo: { name: 'Combo Breaker', desc: 'Hit a ×150 combo', stat: 'maxCombo', goal: 150 },
   juggler: { name: 'Car Juggler', desc: 'Send 500 cars flying', stat: 'cars', goal: 500 },
   rookie: { name: 'Rampage Veteran', desc: 'Finish 30 Rampage rounds', stat: 'rampages', goal: 30 },
-  meteor: { name: 'Superhero Landing', desc: 'Land 200 meteor slams (X while airborne)', stat: 'slams', goal: 200 },
+  meteor: { name: 'Supervillain Landing', desc: 'Land 200 meteor slams (X while airborne)', stat: 'slams', goal: 200 },
   timber: { name: 'Timber!', desc: 'Knock down 1,000 trees', stat: 'trees', goal: 1000 },
   sonic: { name: 'Sound Barrier', desc: 'Stay supersonic for 60 seconds straight', stat: 'boostStreak', goal: 60 },
   chain: { name: 'Chain Reaction', desc: 'Blow up 1,500 explosives', stat: 'explosions', goal: 1500 },
-  nemesis: { name: 'Nemesis', desc: 'Beat all five villains on Hard', stat: 'hardWins', goal: 5 },
+  nemesis: { name: 'Nemesis', desc: 'Crush all five heroes on Hard', stat: 'hardWins', goal: 5 },
   billion: { name: 'Billionaire Problems', desc: 'Cause $10B of damage in one Rampage round', stat: 'bestRampage', goal: 1e10 },
 };
 const SAVE_KEY = 'skybreaker-save-v1';
@@ -2612,7 +2601,7 @@ function applySuit(id) {
   for (const m of [heroMat.main, heroMat.limb, heroMat.accent]) { m.metalness = s.metal || 0; m.roughness = s.rough || .45; m.envMapIntensity = s.metal ? 1.1 : .45; }
   heroMat.main.emissive.setHex(s.emissive || 0); heroMat.main.emissiveIntensity = s.emissive ? .35 : 0;
   heroMask.visible = s.mask != null;
-  if (s.mask != null) { heroMat.mask.color.setHex(s.mask); heroMat.lens.color.setHex(s.lens || 0xffffff); }
+  if (s.mask != null) { heroMat.mask.color.setHex(s.mask); heroMat.lens.color.setHex(s.lens || 0xffffff); heroMat.lens.emissive.setHex(s.glow ? s.lens : 0); heroMat.lens.emissiveIntensity = s.glow ? 1.4 : 0; }
   heroCape.visible = !!s.cape; if (s.cape) heroCape.material.color.setHex(s.cape);
 }
 
@@ -2626,7 +2615,7 @@ function renderVillains() {
   const list = $('vList'); list.textContent = '';
   for (const v of VILLAINS) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'vcard' + (save.villains.includes(v.id) ? ' on' : ''); b.setAttribute('aria-pressed', save.villains.includes(v.id));
-    const sw = document.createElement('i'); sw.className = 'swatch'; sw.style.background = `linear-gradient(90deg, ${hex(v.look.cape)} 0 25%, ${hex(v.look.main)} 25% 75%, ${hex(v.look.cape)} 75%)`; sw.style.boxShadow = `inset 0 0 0 3px ${hex(v.look.accent)}`;
+    const sw = document.createElement('i'); sw.className = 'swatch'; sw.style.background = `linear-gradient(90deg, ${hex(v.look.cape ?? v.look.limb)} 0 25%, ${hex(v.look.main)} 25% 75%, ${hex(v.look.cape ?? v.look.limb)} 75%)`; sw.style.boxShadow = `inset 0 0 0 3px ${hex(v.look.accent)}`;
     const nm = document.createElement('span'); nm.className = 'vn'; nm.textContent = v.name;
     const wins = document.createElement('span'); wins.className = 'wins';
     for (const d of ['easy', 'normal', 'hard']) { const w = document.createElement('em'); w.textContent = d[0].toUpperCase(); const won = beaten(v.id, d); if (won) w.className = 'won'; w.title = DIFFS[d].name + (won ? ' beaten' : ' not beaten yet'); wins.append(w); }
@@ -2641,7 +2630,7 @@ function renderVillains() {
   }
   const sel = selectedVillains(), n = sel.length;
   $('vSelName').textContent = n === 1 ? sel[0].name : n + ' v 1';
-  $('vSelTag').textContent = n === 1 ? sel[0].tag + '. Mirror of ' + HEROES.find((h) => h.id === sel[0].mirror).name + '.' : sel.map((v) => v.name).join(' + ') + ' at once. Bounty ×' + n + ' plus 25%.';
+  $('vSelTag').textContent = n === 1 ? sel[0].tag + (sel[0].mirror === save.hero ? '. Your mirror.' : '. Mirror of ' + HEROES.find((h) => h.id === sel[0].mirror).name + '.') : sel.map((v) => v.name).join(' + ') + ' at once.';
   for (const d of ['easy', 'normal', 'hard']) { const t = save.stats['best_' + fightKey() + '_' + d]; $('sdb-' + d).textContent = t ? 'best ' + fmtTime(t) : '—'; }
 }
 function renderHeroes() {
@@ -2652,24 +2641,23 @@ function renderHeroes() {
     const sw = document.createElement('i'); sw.className = 'swatch'; sw.style.background = swatchCss(h.look); nm.append(sw, document.createTextNode(h.name));
     const ds = document.createElement('div'); ds.className = 'sdesc'; ds.textContent = h.blurb;
     const ul = document.createElement('ul');
-    h.abilities.forEach((id, i) => { const li = document.createElement('li'); const lvl = save.levels[id] || 0; li.textContent = (i + 1) + '. ' + PW[id].name + ': ' + PW[id].desc + (lvl ? ' (owned, level ' + lvl + ')' : ''); ul.append(li); });
+    h.abilities.forEach((id, i) => { const li = document.createElement('li'); li.textContent = (i + 1) + '. ' + PW[id].name + ': ' + PW[id].desc; ul.append(li); });
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'equip';
-    btn.textContent = save.hero === h.id ? 'SELECTED' : 'PLAY AS ' + h.name.toUpperCase(); btn.disabled = save.hero === h.id;
+    btn.textContent = save.hero === h.id ? 'SELECTED' : 'PLAY AS ' + h.name.toUpperCase().replace(/^THE /, ''); btn.disabled = save.hero === h.id;
     btn.addEventListener('click', () => { save.hero = h.id; selIdx = 0; applySuit(save.suit); saveNow(); sfxTick(); renderHeroes(); });
     card.append(nm, ds, ul, btn); list.append(card);
   }
 }
 function showScreen(name) {
-  if (['main', 'heroes', 'shop', 'suits'].includes(name) && !state.mode && AC) musPlay('menu');
-  for (const s of ['main', 'pause', 'suits', 'shop', 'results', 'heroes']) $('scr-' + s).hidden = s !== name;
+  if (['main', 'heroes', 'suits'].includes(name) && !state.mode && AC) musPlay('menu');
+  for (const s of ['main', 'pause', 'suits', 'results', 'heroes']) $('scr-' + s).hidden = s !== name;
   if (name === 'heroes') renderHeroes();
   $('overlay').hidden = !name;
   $('pauseBtn').hidden = !!name || !state.mode;
   $('timer').hidden = !!name || state.mode !== 'rampage';
   $('help').hidden = !!name || isTouch; $('powers').hidden = !!name || isTouch;
-  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('walletMini').textContent = fmtCash(save.wallet); $('heroMini').textContent = curHero().name;
+  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('heroMini').textContent = curHero().name;
     renderVillains(); }
-  if (name === 'shop') renderShop();
   if (name === 'suits') renderSuits();
   if (name) saveNow();
   const first = name && document.querySelector('#scr-' + name + ' button'); if (first) first.focus({ preventScroll: true });
@@ -2684,7 +2672,7 @@ function renderSuits() {
     const body = document.createElement('div'); body.className = 'sbody';
     const nm = document.createElement('div'); nm.className = 'sname'; nm.textContent = s.name;
     const ds = document.createElement('div'); ds.className = 'sdesc';
-    ds.textContent = a ? a.name + ': ' + a.desc : s.sig ? 'Each hero in their own colors.' : 'The original Skybreaker look on any hero.';
+    ds.textContent = a ? a.name + ': ' + a.desc : s.sig ? 'Each villain in their own colors.' : "Skybreaker's colors, worn as a trophy.";
     body.append(nm, ds);
     if (a && !open) {
       const v = Math.min(stat(a.stat), a.goal), bar = document.createElement('div'); bar.className = 'bar';
@@ -2702,36 +2690,6 @@ function renderSuits() {
 }
 const fmtCash = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : '$' + Math.round(n / 1e3) + 'K';
 let shopBack = 'main';
-function renderShop() {
-  $('walletLine').textContent = 'Wallet: ' + fmtCash(save.wallet);
-  const list = $('shopList'); list.textContent = '';
-  const groups = [['Every hero', POWERS.filter((p) => !p.hero)], ...HEROES.map((h) => [h.name, h.abilities.map((id) => PW[id])])];
-  for (const [title, items] of groups) {
-  const hd = document.createElement('div'); hd.className = 'shophead'; hd.textContent = title; list.append(hd);
-  for (const pw of items) {
-    const lvl = save.levels[pw.id] || 0, maxed = lvl >= pw.max, cost = nextCost(pw), afford = save.wallet >= cost;
-    const card = document.createElement('div'); card.className = 'suit' + (lvl ? ' on' : afford ? '' : ' locked');
-    const k = document.createElement('div'); k.className = 'pkey'; k.textContent = pw.hero ? String(HEROES.find((h) => h.id === pw.hero).abilities.indexOf(pw.id) + 1) : pw.id === 'slam' ? 'X' : '+';
-    const body = document.createElement('div'); body.className = 'sbody';
-    const nm = document.createElement('div'); nm.className = 'sname'; nm.textContent = pw.name;
-    const ds = document.createElement('div'); ds.className = 'sdesc';
-    ds.textContent = pw.desc + (pw.kind === 'beam' ? ' Hold to use.' : pw.cd ? ' Cooldown ' + pw.cd + ' s.' : '') + (lvl && !maxed ? ' Next level: ' + pw.up + '.' : '');
-    const pips = document.createElement('div'); pips.className = 'pips';
-    for (let i = 1; i <= pw.max; i++) { const d = document.createElement('i'); if (i <= lvl) d.className = 'on'; pips.append(d); }
-    const lv = document.createElement('span'); lv.textContent = lvl ? 'Level ' + lvl + ' of ' + pw.max : 'Not owned'; pips.append(lv);
-    body.append(nm, ds, pips);
-    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'equip';
-    btn.textContent = maxed ? 'MAXED' : (lvl ? 'UPGRADE ' : 'BUY ') + fmtCash(cost);
-    btn.disabled = maxed || !afford;
-    if (!maxed && !afford) btn.title = 'Need ' + fmtCash(cost - save.wallet) + ' more';
-    btn.addEventListener('click', () => {
-      if (maxed || save.wallet < cost) return;
-      save.wallet -= cost; save.levels[pw.id] = lvl + 1; saveNow(); sfxUnlock(); renderShop();
-    });
-    card.append(k, body, btn); list.append(card);
-  }
-  }
-}
 function buildPowerHud() { refreshChips(); }
 function refreshChips() {
   const el = $('powers'); el.textContent = '';
@@ -2779,7 +2737,7 @@ function pauseGame() {
   $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off');
   state.playing = false; keys.clear();
   $('pRebuild').hidden = state.mode !== 'sandbox';
-  $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : state.mode === 'showdown' ? 'Showdown paused' : 'Paused';
+  $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : state.mode === 'showdown' ? 'Fight paused' : 'Paused';
   if (document.pointerLockElement) document.exitPointerLock();
   showScreen('pause');
 }
@@ -2793,9 +2751,7 @@ function endRampage() {
   $('rScore').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
   $('rBest').textContent = state.damage > r.prevBest ? 'New best!' : 'Best: $' + Math.round(stat('bestRampage')).toLocaleString('en-US');
   $('rBest').classList.toggle('newbest', state.damage > r.prevBest);
-  const cut = Math.round(state.damage * .004 + 50000);
-  save.wallet = (save.wallet || 0) + cut; saveNow();
-  $('rCut').innerHTML = 'Your cut <b>+' + fmtCash(cut) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>';
+  $('rCut').textContent = '';
   const rows = [['Buildings wrecked', state.wrecked], ['Buildings flattened', r.leveled || 0], ['Explosions', r.explosions || 0], ['Cars thrown', r.cars || 0], ['Trees down', r.trees || 0], ['Best combo', '×' + r.maxCombo]];
   const st = $('rStats'); st.textContent = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
@@ -2849,9 +2805,6 @@ $('openHeroes').addEventListener('click', () => { heroesBack = 'main'; showScree
 $('hBack').addEventListener('click', () => showScreen(heroesBack));
 $('pSuits').addEventListener('click', () => { suitsBack = 'pause'; showScreen('suits'); });
 $('rSuits').addEventListener('click', () => { suitsBack = 'results'; showScreen('suits'); });
-$('openShop').addEventListener('click', () => { shopBack = 'main'; showScreen('shop'); });
-$('rShop').addEventListener('click', () => { shopBack = 'results'; showScreen('shop'); });
-$('shBack').addEventListener('click', () => showScreen(shopBack));
 $('sBack').addEventListener('click', () => showScreen(suitsBack));
 $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
@@ -2900,8 +2853,10 @@ function buildFoe() {
   const belt = new THREE.Mesh(new THREE.TorusGeometry(.29, .04, 8, 32), vMat.accent); belt.rotation.x = Math.PI / 2; belt.position.y = .12; belt.scale.set(1.12, .8, 1); vModel.add(belt);
   const neck = cap(.09, .08, vMat.skin); neck.position.y = .76; vModel.add(neck);
   const head = sph(.17, vMat.skin); head.position.y = .95; head.scale.set(.95, 1.08, 1); vModel.add(head);
-  const hair = sph(.18, vMat.limb); hair.position.set(0, 1.0, -.04); hair.scale.set(1, .7, 1); vModel.add(hair);
-  for (const s of [-1, 1]) { const e = sph(.035, vMat.eye); e.position.set(s * .06, .95, .16); e.scale.set(1.4, .7, .5); vModel.add(e); }
+  const hair = sph(.18, vMat.limb); hair.position.set(0, 1.0, -.04); hair.scale.set(1, .7, 1); vModel.add(hair); body.hair = hair;
+  vMat.mask = std(0x0f1114, .3, .2); vMat.hair = std(0x15110e, .7);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(.178, .178, .09, 32, 1, true), vMat.mask); band.position.y = .95; vModel.add(band); body.band = band;
+  for (const s of [-1, 1]) { const e = sph(.035, vMat.eye); e.position.set(s * .06, .95, .18); e.scale.set(1.4, .7, .5); vModel.add(e); }
   const mkArm = (s) => {
     const pivot = new THREE.Group(); pivot.position.set(s * .41, .62, 0);
     const sh = sph(.15, vMat.accent); pivot.add(sh);
@@ -2959,7 +2914,7 @@ function startShowdown(diffId) {
     f.land = new V3(lx, groundH(lx, 560) + 1.6, 560); f.from = new V3(lx + rand(-12, 12), 190, 525); f.landed = false;
     V.pos.copy(f.from); V.vel.set(0, 0, 0); V.orbit = i / list.length * Math.PI * 2;
     villain.visible = true; villain.position.copy(V.pos);
-    f.mark.style.borderColor = hex(vd.look.accent); f.mark.style.background = hex(vd.look.cape);
+    f.mark.style.borderColor = hex(vd.look.accent); f.mark.style.background = hex(vd.look.cape ?? vd.look.limb);
     const row = document.createElement('div'); row.className = 'bar2 vil';
     const nm = document.createElement('span'); nm.textContent = vd.name.toUpperCase() + (i === 0 ? ' · ' + S.diff.name.toUpperCase() : '');
     const tr = document.createElement('div'); tr.className = 'track'; const fill = document.createElement('i'); fill.style.background = hex(vd.look.accent); tr.append(fill);
@@ -3016,7 +2971,6 @@ function endShowdown(win) {
   const t = S.time, mm = Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
   $('rTitle').textContent = win ? 'Victory' : 'Defeated';
   const names = S.foes.map((f) => f.vd.name), solo = S.foes.length === 1, vid = fightKey(), next = solo ? VILLAINS[VILLAINS.indexOf(S.foes[0].vd) + 1] : null;
-  const reward = S.diff.reward * S.foes.length * (solo ? 1 : 1.25);
   $('rNext').hidden = !(win && next); if (next) $('rNext').textContent = 'NEXT: ' + next.name.toUpperCase();
   $('rScore').textContent = win ? 'Won in ' + mm : 'Lasted ' + mm;
   const key = 'best_' + vid + '_' + S.diffId, prev = save.stats[key] || 0;
@@ -3024,14 +2978,13 @@ function endShowdown(win) {
   if (win) {
     if (!prev || t < prev) { save.stats[key] = t; note = 'New fastest win on ' + S.diff.name + '!'; }
     else note = 'Fastest on ' + S.diff.name + ': ' + Math.floor(prev / 60) + ':' + String(Math.floor(prev % 60)).padStart(2, '0');
-    save.wallet = (save.wallet || 0) + reward;
     for (const f of S.foes) save.stats['win_' + f.vd.id + '_' + S.diffId] = 1;
     statForce('hardWins', VILLAINS.filter((v) => beaten(v.id, 'hard')).length);
     saveNow();
   }
   $('rBest').textContent = note; $('rBest').classList.toggle('newbest', win);
-  $('rCut').innerHTML = win ? 'Bounty <b>+' + fmtCash(reward) + '</b> · Wallet <b>' + fmtCash(save.wallet) + '</b>' : 'No bounty. Go again.';
-  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], ['Villains defeated', S.foes.filter((f) => f.V.dead).length + ' / ' + S.foes.length], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
+  $('rCut').textContent = win ? S.foes[0].vd.down && S.foes.length === 1 ? S.foes[0].vd.name + ': “' + S.foes[0].vd.down + '”' : '' : '';
+  const rows = [['Damage dealt', Math.round(S.dealt)], ['Hits landed', S.hits], ['Damage taken', Math.round(S.taken)], ['Heroes crushed', S.foes.filter((f) => f.V.dead).length + ' / ' + S.foes.length], ['Buildings wrecked', state.wrecked], ['City damage', fmtMoney(state.damage)]];
   const st = $('rStats'); st.textContent = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
   const un = $('rUnlocks'); un.textContent = '';
@@ -3047,17 +3000,23 @@ function predicted(out, t) { return out.copy(P.pos).addScaledVector(P.vel, t * S
 function vCityHit(p, r, push) { blast(p, r, push); detonateNear(p, r); }
 function startAct(name, wind) { V.act = name; V.actT = 0; V.wind = wind; vGlow.visible = true; }
 // Five villains, each the dark mirror of a hero. Everyone also rams and meteor-slams.
+// The five heroes you fight. Each one mirrors a villain's powers; `mirror` is that villain's id.
 const VILLAINS = [
-  { id: 'warlord', quote: "This city is mine. You're just in the way.", name: 'The Warlord', mirror: 'sky', tag: 'Strength · sonic shout · laser eyes', moves: ['ram', 'laser', 'shout', 'clap', 'slam'],
-    look: { main: 0x15161a, limb: 0x0b0b0d, accent: 0x9e0f1a, cape: 0x8e0c16, eye: 0xff2a1a } },
-  { id: 'scorch', quote: "Let's see how long you last in the fire.", name: 'Scorch', mirror: 'blaze', tag: 'Fireballs · supernova · flamethrower', moves: ['ram', 'fireball', 'nova', 'flame', 'slam'], aura: 0xff7a20,
-    look: { main: 0x2a0b05, limb: 0x120403, accent: 0xff5a12, cape: 0xc22a08, eye: 0xffb030, emissive: 0x6a1800 } },
-  { id: 'psyche', quote: "I don't need to touch you to break you.", name: 'Psyche', mirror: 'mind', tag: 'Force waves · thrown boulders · gravity well', moves: ['ram', 'hurl', 'push', 'lift', 'slam'], aura: 0xc040ff,
-    look: { main: 0x1c0a2e, limb: 0x0c0614, accent: 0xd040ff, cape: 0x5a0f8a, eye: 0xf080ff } },
-  { id: 'overload', quote: "Hope you're grounded, hero.", name: 'Overload', mirror: 'volt', tag: 'Lightning bolts · EMP · thunderstorm', moves: ['ram', 'bolt', 'emp', 'storm', 'slam'], aura: 0xfff36a,
-    look: { main: 0x14161c, limb: 0x0a0b0e, accent: 0xffe23a, cape: 0x2a3a10, eye: 0xfff6a0 } },
-  { id: 'permafrost', quote: "Everything stops eventually. You first.", name: 'Permafrost', mirror: 'frost', tag: 'Ice spikes · blizzard · ice beam', moves: ['ram', 'spikes', 'blizzard', 'icebeam', 'slam'], aura: 0xd8f4ff,
-    look: { main: 0xe8f6ff, limb: 0x1c3550, accent: 0x7fd0ff, cape: 0x2a5a8a, eye: 0x9ff3ff, metal: .3 } },
+  { id: 'warlord', name: 'Skybreaker', mirror: 'sky', tag: 'Strength · sonic shout · laser eyes', moves: ['ram', 'laser', 'shout', 'clap', 'slam'],
+    quote: 'Pick on someone your own size.', back: "I'm not done with you.", p2: 'Okay. No more holding back.', down: "This... isn't... over...",
+    look: { main: 0xffb300, limb: 0x1546c8, accent: 0x0c2160, mask: 0x0f1114, eye: 0xe9f3ff, cape: null } },
+  { id: 'scorch', name: 'Blaze', mirror: 'blaze', tag: 'Fireballs · supernova · flamethrower', moves: ['ram', 'fireball', 'nova', 'flame', 'slam'], aura: 0xff7a20,
+    quote: 'You burn this city, I burn you.', back: 'Round two. Hotter this time.', p2: "You want fire? HERE'S FIRE.", down: 'Burned... out...',
+    look: { main: 0xff5a12, limb: 0x2a0e06, accent: 0xffc23a, mask: 0x2a0e06, eye: 0xfff2b0, cape: null, emissive: 0x7a2000 } },
+  { id: 'psyche', name: 'Mindstorm', mirror: 'mind', tag: 'Force waves · thrown boulders · gravity well', moves: ['ram', 'hurl', 'push', 'lift', 'slam'], aura: 0xb070ff,
+    quote: "I can hear what you're planning. It's stupid.", back: "You didn't think I'd stay down?", p2: 'Get out of MY CITY.', down: "Can't... focus...",
+    look: { main: 0x6a2bd8, limb: 0x1b1030, accent: 0xd6c2ff, mask: 0x1b1030, eye: 0xe6d6ff, cape: 0x4a1fa0 } },
+  { id: 'overload', name: 'Volt', mirror: 'volt', tag: 'Lightning bolts · EMP · thunderstorm', moves: ['ram', 'bolt', 'emp', 'storm', 'slam'], aura: 0x7fd8ff,
+    quote: 'Power down. Now.', back: 'Recharged and pissed off.', p2: 'Full voltage, baby.', down: 'Out... of... juice...',
+    look: { main: 0x1fb6ff, limb: 0x0d1a2b, accent: 0xfff36a, mask: 0x0d1a2b, eye: 0xffffff, cape: null, emissive: 0x0a4a80 } },
+  { id: 'permafrost', name: 'Frostbite', mirror: 'frost', tag: 'Ice spikes · blizzard · ice beam', moves: ['ram', 'spikes', 'blizzard', 'icebeam', 'slam'], aura: 0xd8f4ff,
+    quote: 'Chill out. Permanently.', back: 'Back for seconds? Cold.', p2: "Let's put you on ice. For good.", down: 'Cold... so cold...',
+    look: { main: 0xbfe8ff, limb: 0x2a4a6e, accent: 0xffffff, mask: 0x2a4a6e, eye: 0x9ff3ff, cape: 0xd8f4ff, metal: .3 } },
 ];
 // low = the player is near the street
 const MOVES = {
@@ -3084,7 +3043,10 @@ function applyVillainLook(vd) {
   const L = vd.look;
   vMat.main.color.setHex(L.main); vMat.limb.color.setHex(L.limb); vMat.accent.color.setHex(L.accent); vMat.eye.color.setHex(L.eye);
   vMat.main.emissive.setHex(L.emissive || 0); vMat.main.emissiveIntensity = L.emissive ? .6 : 0;
-  vMat.main.metalness = L.metal ?? .3; vBody.cape.material.color.setHex(L.cape);
+  vMat.main.metalness = L.metal ?? .3;
+  vBody.cape.visible = !!L.cape; if (L.cape) vBody.cape.material.color.setHex(L.cape);
+  vBody.band.visible = L.mask != null; if (L.mask != null) vMat.mask.color.setHex(L.mask);
+  vBody.hair.material = vMat.hair;
 }
 function villainAI(dt) {
   const d = S.diff, toP = vTmp.subVectors(P.pos, V.pos), dist = toP.length();
@@ -3402,9 +3364,9 @@ function startCutscene() {
 function showTitle(vd, i, n) {
   const c = $('introCard');
   c.style.setProperty('--acc', hex(vd.look.accent));
-  $('introNum').textContent = n > 1 ? 'Villain ' + (i + 1) + ' of ' + n : 'Villain';
+  $('introNum').textContent = (n > 1 ? 'Hero ' + (i + 1) + ' of ' + n : 'Hero') + (vd.mirror === save.hero ? ' · your mirror' : '');
   $('introName').textContent = vd.name;
-  $('introTag').textContent = 'Mirror of ' + HEROES.find((h) => h.id === vd.mirror).name + ' · ' + vd.tag;
+  $('introTag').textContent = vd.tag;
   $('introQuote').textContent = '“' + vd.quote + '”';
   c.hidden = false; c.classList.remove('in'); void c.offsetWidth; c.classList.add('in');
 }
