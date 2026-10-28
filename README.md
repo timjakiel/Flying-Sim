@@ -40,7 +40,13 @@ Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Att
 ## The run
 Pick your villain and a difficulty on the main menu. A run is 24 rounds in five acts: three wave rounds before the first boss, then four wave rounds before each of the others.
 
-- **Wave rounds:** no wanted stars. Each round throws waves of henchmen at you (2 waves early, up to 4 late) and you clear every last one. The waves grow every round and new units join as you go: cops and cop cars from round 1, SWAT from 3, gunships from 4, drones from 7, tanks from 11. Every henchman has a red diamond over it that shows through buildings (orange for gunships and tanks), and a radar in the corner shows everything around you with your heading up. Stragglers that fall far behind get sent back in closer, and the last few get a distance marker.
+- **Wave rounds:** no wanted stars. Each round marks spawner buildings with colored light beams: a **precinct** (cops, cop cars, snipers), an **armory** (SWAT, riot shields, net gunners, tanks, mechs; from round 3) and a **helipad** tower (gunships, drones, jetpack troopers; from round 4). They keep sending henchmen, faster the longer they stand, until you level them. The round ends when they're all down and the last henchman is dead. Each one you level pays a bonus.
+- **Elites** unlock as the run goes: riot shields (round 5) block anything flying into their front, so hit them from behind or above. Snipers (6) paint you with a red laser before a heavy shot, so move fast or get behind a building. Net gunners (10) pin you until you mash keys. Jetpack troopers (11) chase you through the air. Mechs (15) walk straight through buildings and super-punch you.
+- **Round modifiers** (most rounds from round 2, shown before you start): Gas Leak (every henchman explodes when they go down), Blackout (night), Tank Parade, Air Raid, Double or Nothing (twice the henchmen, twice the loot).
+- **Boss cameo:** partway through every wave round, the act's hero dives in, lands one guaranteed super punch that sends you tumbling through the buildings, talks trash and leaves.
+- **Style meter:** chain kills within 3.5 s to climb D, C, B, A, S, SS, SSS. Each rank adds 25% to henchman loot.
+- **Health orbs:** gunships, tanks and mechs always drop one, elites often, regular henchmen sometimes. They drift to you when you're close.
+- **Rage:** fills from kills, leveled spawners and hits on heroes. When it's full, **G** unleashes your villain's ultimate: Sonic Boom, Meltdown, Mass Hurl, Skyfall or Absolute Zero. Rage carries over between rounds.
 - **Bosses:** four random heroes, then your mirror in Act 5. Every hero you beat comes back for each later boss fight at 60% health with one power fewer. Only two attack at once; the rest circle and tag in when one drops.
 - **Power Up, every 5 rounds:** after each boss you get 3 points to level Strength (punches), your three powers, or Meteor Slam. Each level is +25% damage and size, max 5.
 - The city and your position carry over the whole run: every round picks up where the last one ended, with all the damage still there, and bosses drop in on the streets ahead of you. Only a new run rebuilds the city.
@@ -93,6 +99,7 @@ Two recorded tracks load from `audio/` (fetched and decoded, because the artifac
 | X | Launch / meteor slam |
 | Mouse wheel / 1 2 3 | Pick a power |
 | Right-click / V | Use the power (hold for beams; 5 s of straight firing overheats a beam for 5 s, and it cools while you're not firing) |
+| G | Rage ultimate, when the bar is full |
 | R | Back to the sky |
 | P / Esc | Pause |
 | N | Music on/off |
