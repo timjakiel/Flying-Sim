@@ -303,8 +303,6 @@ body.cut #reticle { visibility: hidden; }
 #taunt.in { animation: cardIn .4s cubic-bezier(.2,.9,.3,1) both; }
 body.cut #rage, body.cut #style, body.cut #taunt { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { #rage.ready, #style.up b, #taunt.in { animation: none; } }
-#radar { right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: 150px; height: 150px; }
-@media (pointer: coarse) { #radar { bottom: auto; top: calc(150px + env(safe-area-inset-top, 0px)); width: 110px; height: 110px; } }
 @media (prefers-reduced-motion: reduce) { .pop, #toast.show { animation-duration: .01s; } #timer.hurry { animation: none; } }
 </style>
 
@@ -354,7 +352,6 @@ body.cut #rage, body.cut #style, body.cut #taunt { visibility: hidden; }
 <div class="hud" id="style" hidden><b>D</b><span></span><em><i></i></em></div>
 <div class="hud" id="taunt" hidden><b></b><span></span></div>
 <div id="reticle" hidden><i></i></div>
-<canvas class="hud" id="radar" width="150" height="150" hidden></canvas>
 <div class="hud" id="help"><b>Mouse</b> steer · <b>W/S</b> fly · <b>Shift</b> boost · <b>Click</b> punch-dash · <b>Space/Q</b> up/down · <b>X</b> launch/slam · <b>Wheel</b> pick power · <b>Right-click</b> use · <b>G</b> rage · <b>P</b> pause</div>
 <div id="popups"></div>
 
@@ -4103,34 +4100,6 @@ function updateRage() {
   if (isTouch) $('tRage').hidden = !(ready && rageOn() && state.playing);
 }
 
-// ---- radar: henchmen and heroes around you, your heading up
-const radar = $('radar'), rctx = radar.getContext('2d'), RADAR_R = 450, rFwd = new V3();
-let radarT = 0;
-function updateRadar(dt) {
-  const show = state.playing && !state.cut && (H.on || state.mode === 'showdown');
-  radar.hidden = !show; if (!show || (radarT -= dt) > 0) return;
-  radarT = 1 / 20;
-  const W = radar.width, c = W / 2, k = (c - 8) / RADAR_R;
-  camera.getWorldDirection(rFwd); const ang = Math.atan2(rFwd.x, rFwd.z), cs = Math.cos(ang), sn = Math.sin(ang);
-  rctx.clearRect(0, 0, W, W);
-  rctx.fillStyle = 'rgba(9,18,34,.72)'; rctx.beginPath(); rctx.arc(c, c, c - 2, 0, 7); rctx.fill();
-  rctx.strokeStyle = 'rgba(247,243,232,.25)'; rctx.lineWidth = 2; rctx.beginPath(); rctx.arc(c, c, (c - 8) / 2, 0, 7); rctx.stroke();
-  rctx.beginPath(); rctx.arc(c, c, c - 3, 0, 7); rctx.stroke();
-  const dot = (p, col, r, shape) => {
-    const dx = p.x - P.pos.x, dz = p.z - P.pos.z;
-    let x = -(dx * cs - dz * sn) * k, y = -(dx * sn + dz * cs) * k; // forward is up
-    const l = Math.hypot(x, y), edge = l > c - 8; if (edge) { x *= (c - 8) / l; y *= (c - 8) / l; }
-    rctx.fillStyle = col; rctx.globalAlpha = edge ? .6 : 1; rctx.beginPath();
-    if (shape === 'sq') { rctx.rect(c + x - r, c + y - r, r * 2, r * 2); rctx.strokeStyle = '#000'; rctx.lineWidth = 2; rctx.stroke(); }
-    else if (shape === 'tri') { rctx.moveTo(c + x, c + y - r * 1.3); rctx.lineTo(c + x + r, c + y + r); rctx.lineTo(c + x - r, c + y + r); }
-    else rctx.arc(c + x, c + y, r, 0, 7);
-    rctx.fill(); rctx.globalAlpha = 1;
-  };
-  for (const u of units) if (u.alive) dot(u.pos, u.T.kind === 'air' ? '#ff9a1a' : '#ff3b30', u.type === 'tank' || u.type === 'heli' ? 4.5 : 3, u.T.kind === 'air' ? 'tri' : 'dot');
-  if (state.mode === 'showdown') for (const f of S.foes) if (f.group.visible && !f.V.dead) dot(f.V.pos, hex(f.vd.look.accent), 6.5, 'dot');
-  if (RUN.w) for (const s of RUN.w.spawners) if (s.alive) dot(s.pos, SPAWNERS[s.k].css, 7, 'sq');
-  rctx.fillStyle = '#ffd23f'; rctx.beginPath(); rctx.moveTo(c, c - 7); rctx.lineTo(c + 5, c + 5); rctx.lineTo(c - 5, c + 5); rctx.fill();
-}
 // ---- sounds
 function sfxGun() {
   if (!AC) return;
@@ -4593,7 +4562,7 @@ const ELITES = { // first round each one shows up, and how to deal with it
 };
 const MODS = {
   gas: { name: 'Gas Leak', desc: 'Every henchman blows up when they go down. Chain them.' },
-  blackout: { name: 'Blackout', desc: 'The power is out. Follow the tags and the radar.' },
+  blackout: { name: 'Blackout', desc: 'The power is out. Follow the tags.' },
   tanks: { name: 'Tank Parade', desc: 'The armory rolls out tanks. Lots of tanks.' },
   air: { name: 'Air Raid', desc: 'Gunships and drones pour off the helipad.' },
   double: { name: 'Double or Nothing', desc: 'Twice the henchmen, twice the loot.' },
@@ -4879,7 +4848,6 @@ function simulate(dt) {
   updateCars(dt);
   updateCamera(dt);
   updateHud(dt);
-  updateRadar(dt);
   updateCombo(dt);
   updateRage();
   rebuildDirty();
