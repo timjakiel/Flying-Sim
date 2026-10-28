@@ -4033,36 +4033,38 @@ const THEME = [
   [[0, 72, 6], [6, 74, 2], [8, 76, 4], [12, 79, 4]],
   [[0, 81, 8], [8, 79, 4], [12, 76, 4]],
 ];
-// recorded tracks, streamed from audio/ next to the page: the menu theme, and the boss theme from the
-// moment a hero shows up to the end of the fight. If a file can't play, the synth version carries on.
+// recorded tracks published next to the page in audio/: the menu theme, and the boss theme from the
+// moment a hero shows up to the end of the fight. The artifact frame only allows fetch() for these, so
+// they're fetched and decoded (mono, to keep the memory down). Until a track is ready, or if it can't
+// load, the synth version plays.
 const TRACKS = { menu: { url: 'audio/menu-theme.mp3', vol: .85 }, boss: { url: 'audio/boss-theme.mp3', vol: .7 } };
-function trackNode(name) {
-  const T = TRACKS[name];
-  if (!T.el) {
-    T.el = new Audio(T.url); T.el.loop = true; T.el.preload = 'auto';
-    T.gain = AC.createGain(); T.gain.gain.value = 0;
-    try { AC.createMediaElementSource(T.el).connect(T.gain); T.gain.connect(master); } catch (e) { T.bad = true; }
-    T.el.addEventListener('error', () => trackFailed(name));
-  }
-  return T.bad ? null : T;
+function loadTrack(name) {
+  const T = TRACKS[name]; if (T.loading) return; T.loading = true;
+  fetch(T.url).then((r) => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then((b) => AC.decodeAudioData(b))
+    .then((buf) => { T.buf = buf; if (MUS.want === name) trackOn(name); }).catch(() => { T.bad = true; });
 }
-function trackFailed(name) { TRACKS[name].bad = true; if (MUS.cur === name) { MUS.cur = null; MUS.file = false; } }
 function trackOn(name) {
+  MUS.want = name;
   if (MUS.cur === name) return true;
-  trackOff(.3);
-  const T = trackNode(name); if (!T) return false;
-  T.el.currentTime = 0;
-  const p = T.el.play(); if (p && p.catch) p.catch(() => trackFailed(name));
+  const T = TRACKS[name]; loadTrack(name);
+  stopTrack(.3);
+  if (!T.buf) return false; // synth until it's decoded
+  if (!T.gain) { T.gain = AC.createGain(); T.gain.gain.value = 0; T.gain.connect(master); }
+  const src = AC.createBufferSource(); src.buffer = T.buf; src.loop = true; src.connect(T.gain); src.start(); T.src = src;
   MUS.cur = name; MUS.file = true;
+  T.gain.gain.cancelScheduledValues(AC.currentTime);
+  T.gain.gain.setTargetAtTime(MUS.on ? T.vol * Math.min(1, MUS.v ?? 1) : 0, AC.currentTime, .08);
   return true;
 }
-function trackOff(fade = .4) {
+function stopTrack(fade = .4) {
   const name = MUS.cur; MUS.cur = null; MUS.file = false; if (!name) return;
-  const T = TRACKS[name]; T.gain.gain.setTargetAtTime(0, AC.currentTime, fade / 3);
-  setTimeout(() => { if (MUS.cur !== name) T.el.pause(); }, fade * 1000 + 150);
+  const T = TRACKS[name], src = T.src; T.src = null;
+  T.gain.gain.setTargetAtTime(0, AC.currentTime, fade / 3); src.stop(AC.currentTime + fade + .1);
 }
+function trackOff(fade = .4) { MUS.want = null; stopTrack(fade); }
 function musInit() {
   if (!AC || MUS.out) return;
+  loadTrack('menu'); loadTrack('boss');
   MUS.out = AC.createGain(); MUS.out.gain.value = 0;
   const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
   MUS.out.connect(comp); comp.connect(master);
@@ -4166,6 +4168,7 @@ function musTick() {
   while (MUS.nextT < AC.currentTime + .6) { musStep(MUS.nextT); MUS.nextT += dur; MUS.step++; }
 }
 function musVol(v, ramp = .4) {
+  MUS.v = v;
   if (MUS.out) MUS.out.gain.setTargetAtTime(MUS.on ? v : 0, AC.currentTime, ramp);
   if (MUS.cur) { const T = TRACKS[MUS.cur]; T.gain.gain.setTargetAtTime(MUS.on ? T.vol * Math.min(1, v) : 0, AC.currentTime, ramp); }
 }
