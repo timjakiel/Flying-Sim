@@ -218,6 +218,34 @@ h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(
 #intro .skip { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12vh - 30px); font-size: 13px; font-weight: 600; letter-spacing: .08em; color: rgba(247,243,232,.75); }
 body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cut #hud-right, body.cut #pauseBtn, body.cut #touch, body.cut .vmark, body.cut #popups { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { #intro .lb, #introCard.in { animation: none; } }
+.runpanel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 14px; align-items: center; text-align: left; padding: 14px 16px; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--red); }
+@media (max-width: 640px) { .runpanel { grid-template-columns: 1fr; } }
+.runpanel .vname { color: var(--ink); }
+.runpanel .diffs { margin-top: 0; }
+.runpanel .diffs button { font-size: 22px; }
+#run-hard { background: var(--red); color: var(--paper); }
+.route { display: grid; gap: 12px; }
+#routePath { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+#routePath i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink); background: rgba(247,243,232,.2); }
+#routePath i.boss { border-radius: 3px; width: 16px; margin-right: 8px; background: rgba(214,40,40,.4); }
+#routePath i.done { background: var(--yellow); }
+#routePath i.now { background: var(--paper); box-shadow: 0 0 0 3px var(--red); }
+#routeBoss { font-size: 16px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #ff8a7a; }
+#routeNote { font-size: 18px; font-style: italic; }
+.rhp { height: 12px; background: rgba(9,18,34,.7); border: 2px solid var(--ink); border-radius: 3px; overflow: hidden; max-width: 420px; width: 100%; justify-self: center; }
+.rhp i { display: block; height: 100%; background: var(--yellow); transform-origin: left; }
+#routeStat, #marketStat { font-size: 16px; font-weight: 700; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+#routeBody { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.mode.stop.boss { background: var(--red); color: var(--paper); box-shadow: 5px 5px 0 var(--ink); }
+.mode.stop.hideout, .mode.stop.market { background: #cfe0ff; }
+#obj { top: calc(18px + env(safe-area-inset-top, 0px) + var(--bossH, 30px)); left: 50%; transform: translateX(-50%); display: grid; gap: 2px; text-align: center; padding: 6px 14px; background: var(--glass); border-left: 5px solid var(--yellow); border-radius: 4px; }
+#obj b { font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: .06em; color: var(--yellow); }
+#obj span { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#obj.hurry span { color: var(--red); }
+#objMark { background: rgba(255,210,63,.9); color: var(--ink); }
+#objMark.edge { background: var(--yellow); box-shadow: 0 0 0 4px rgba(255,210,63,.35); }
+body:has(#bossbar:not([hidden])) #timer { top: calc(18px + env(safe-area-inset-top, 0px) + var(--bossH, 30px)); }
+body.cut #obj, body.cut #objMark { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .pop, #toast.show { animation-duration: .01s; } #timer.hurry { animation: none; } }
 </style>
 
@@ -237,6 +265,8 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
   <div id="fps"></div>
 </div>
 <div class="hud" id="timer" hidden>2:00</div>
+<div class="hud" id="obj" hidden><b>HEIST</b><span></span></div>
+<div class="vmark" id="objMark" hidden></div>
 <div class="hud" id="bossbar" hidden>
   <div class="bar2"><span>YOU</span><div class="track"><i id="pFill"></i></div></div>
 </div>
@@ -274,7 +304,15 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
 <div id="overlay">
   <div class="card wide" id="scr-main">
     <h1>Cape Crusher</h1>
-    <p class="tag" id="tagline">You're a supervillain taking Skyline City. Five heroes stand in your way. Crush them.</p>
+    <p class="tag" id="tagline">You're a supervillain taking Skyline City. Five heroes stand in your way. Crush them, then crush your mirror.</p>
+    <div class="runpanel">
+      <div><span class="label">Start a run · five acts, five heroes</span><div class="vname" id="runVillain">The Warlord</div><div class="sdesc" id="runRec"></div></div>
+      <div class="diffs">
+        <button type="button" id="run-easy">EASY<small id="rnb-easy">—</small></button>
+        <button type="button" id="run-normal">NORMAL<small id="rnb-normal">—</small></button>
+        <button type="button" id="run-hard">HARD<small id="rnb-hard">—</small></button>
+      </div>
+    </div>
     <div class="fight">
       <div class="vlist" id="vList"></div>
       <div class="vpanel">
@@ -284,7 +322,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
           <button type="button" id="sd-normal">NORMAL<small id="sdb-normal">—</small></button>
           <button type="button" id="sd-hard">HARD<small id="sdb-hard">—</small></button>
         </div>
-        <div class="sdesc">Fight any heroes you like. Full runs are on the way.</div>
+        <div class="sdesc">Fight any heroes you like. Nothing on the line.</div>
       </div>
     </div>
     <div class="row">
@@ -326,7 +364,7 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
   </div>
   <div class="card wide" id="scr-suits" hidden>
     <h2>Suits</h2>
-    <p class="tag">Every achievement unlocks a suit. Rampage rounds count, and so does beating every hero on Hard. Sandbox never does.</p>
+    <p class="tag">Every achievement unlocks a suit. Rampage rounds and runs count, and so does beating every hero on Hard. Sandbox never does.</p>
     <div class="suits" id="suitList"></div>
     <button class="ghost" id="sBack" type="button">Back</button>
   </div>
@@ -335,6 +373,24 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
     <p class="tag">Every villain flies, punches and meteor-slams, plus three powers of their own. Each one has a mirror: the hero with the same powers, waiting at the end of a run.</p>
     <div class="heroes" id="heroList"></div>
     <button class="ghost" id="hBack" type="button">Back</button>
+  </div>
+  <div class="card wide route" id="scr-route" hidden>
+    <h2 id="routeAct">Act 1 of 5</h2>
+    <div id="routePath"></div>
+    <div id="routeBoss"></div>
+    <div class="rhp"><i id="routeHp"></i></div>
+    <div id="routeStat"></div>
+    <div id="routeNote"></div>
+    <div class="label" id="routeHead">Pick your next move</div>
+    <div id="routeBody"></div>
+    <button class="ghost" id="routeQuit" type="button">Abandon run</button>
+  </div>
+  <div class="card wide" id="scr-market" hidden>
+    <h2>Black Market</h2>
+    <p class="tag">No questions asked. Cash only.</p>
+    <div id="marketStat"></div>
+    <div class="suits shoplist" id="marketList"></div>
+    <button class="btn" id="marketLeave" type="button">BACK TO WORK</button>
   </div>
   <div class="card" id="scr-results" hidden>
     <h2 id="rTitle">Time's up</h2>
@@ -2337,7 +2393,7 @@ const CEIL = 320, FENCE = 1000;
 const fwd = new V3(), right = new V3(), wish = new V3(), UP = new V3(0, 1, 0), steerDir = new V3(), steerTgt = new V3();
 let wasBoost = false;
 function updateFlight(dt) {
-  if ((state.mode === 'showdown' || state.mode === 'rampage') && S.ko) {
+  if ((state.mode === 'showdown' || state.mode === 'rampage' || state.mode === 'stop') && S.ko) {
     P.vel.y -= 30 * dt; P.vel.x *= Math.exp(-dt); P.vel.z *= Math.exp(-dt);
     P.pos.addScaledVector(P.vel, dt);
     const gk = groundH(P.pos.x, P.pos.z) + 1.2; if (P.pos.y < gk) { P.pos.y = gk; P.vel.set(0, 0, 0); }
@@ -2517,8 +2573,8 @@ let hudT = 0, hudT2 = 3;
 function updateHud(dt) {
   state.comboT -= dt; if (state.comboT <= 0) { state.combo = 0; state.comboCash = 0; }
   hudT -= dt; if (hudT > 0) return; hudT = .1;
-  $('damage').textContent = '$' + Math.round(H.on ? H.loot : state.damage).toLocaleString('en-US');
-  $('wrecked').textContent = H.on ? H.kills + (H.kills === 1 ? ' henchman down' : ' henchmen down') + ' · ' + fmtMoney(state.damage) + ' damage' : state.wrecked + (state.wrecked === 1 ? ' building wrecked' : ' buildings wrecked');
+  $('damage').textContent = '$' + Math.round(H.on || RUN.on ? H.loot : state.damage).toLocaleString('en-US');
+  $('wrecked').textContent = H.on || RUN.on ? H.kills + (H.kills === 1 ? ' henchman down' : ' henchmen down') + ' · ' + fmtMoney(state.damage) + ' damage' : state.wrecked + (state.wrecked === 1 ? ' building wrecked' : ' buildings wrecked');
   $('speed').innerHTML = Math.round(P.vel.length() * 3.6).toLocaleString('en-US') + '<small>KM/H</small>';
   $('alt').textContent = 'ALT ' + Math.round(P.pos.y) + ' m';
   $('boostTag').classList.toggle('on', P.boosting);
@@ -2578,11 +2634,11 @@ function saveNow() { saveDirty = false; try { localStorage.setItem(SAVE_KEY, JSO
 const stat = (k) => save.stats[k] || 0;
 // achievements and their progress only count in Rampage, never Sandbox
 function statAdd(k, n = 1) {
-  if (state.mode !== 'rampage') return;
+  if (state.mode !== 'rampage' && !RUN.on) return;
   save.stats[k] = stat(k) + n; if (state.run) state.run[k] = (state.run[k] || 0) + n; saveDirty = true; checkAch(); }
 function statForce(k, v) { if (v > stat(k)) { save.stats[k] = v; saveDirty = true; checkAch(); } }
 function statMax(k, v) {
-  if (state.mode !== 'rampage') return; if (v > stat(k)) { save.stats[k] = v; saveDirty = true; checkAch(); } }
+  if (state.mode !== 'rampage' && !RUN.on) return; if (v > stat(k)) { save.stats[k] = v; saveDirty = true; checkAch(); } }
 function checkAch() {
   for (const s of SUITS) {
     if (!s.ach || save.unlocked.includes(s.id)) continue;
@@ -2662,14 +2718,15 @@ function renderHeroes() {
 }
 function showScreen(name) {
   if (['main', 'heroes', 'suits'].includes(name) && !state.mode && AC) musPlay('menu');
-  for (const s of ['main', 'pause', 'suits', 'results', 'heroes']) $('scr-' + s).hidden = s !== name;
+  for (const s of ['main', 'pause', 'suits', 'results', 'heroes', 'route', 'market']) $('scr-' + s).hidden = s !== name;
   if (name === 'heroes') renderHeroes();
   $('overlay').hidden = !name;
   $('pauseBtn').hidden = !!name || !state.mode;
   $('timer').hidden = !!name || state.mode !== 'rampage';
+  $('obj').hidden = !!name || state.mode !== 'stop'; if (name) $('objMark').hidden = true;
   $('help').hidden = !!name || isTouch; $('powers').hidden = !!name || isTouch;
   if (name === 'main') { $('bestLine').textContent = save.stats.bestLoot ? 'Best haul: ' + fmtMoney(save.stats.bestLoot) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('heroMini').textContent = curHero().name;
-    renderVillains(); }
+    renderVillains(); renderRunPanel(); }
   if (name === 'suits') renderSuits();
   if (name) saveNow();
   const first = name && document.querySelector('#scr-' + name + ' button'); if (first) first.focus({ preventScroll: true });
@@ -2731,19 +2788,20 @@ function resetHero() {
   P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch;
   P.slamming = false; P.landT = 0; P.launchT = 0; P.dashT = 0; state.boostStreak = 0;
 }
-function startMode(mode, diff) {
+function startMode(mode, diff, list) {
   resetWorld();
-  state.lastMode = mode; state.lastDiff = diff;
+  if (!RUN.on) { state.lastMode = mode; state.lastDiff = diff; }
   state.mode = mode; state.timeLeft = RAMPAGE_TIME + 30 * powerLevel('overtime');
   buildPowerHud();
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
-  $('dmgLabel').textContent = mode === 'rampage' ? 'Loot' : 'Collateral damage';
-  if (mode === 'showdown') startShowdown(diff || 'normal'); else { endShowdownWorld(); musStop(); }
+  $('dmgLabel').textContent = mode === 'rampage' || RUN.on ? 'Loot' : 'Collateral damage';
+  if (mode === 'showdown') startShowdown(diff || 'normal', list); else { endShowdownWorld(); musStop(); }
   if (mode === 'showdown') { showScreen(null); initAudio(); requestLock(); startCutscene(); }
   else enterPlay();
-  if (mode === 'rampage') {
-    popup('RAMPAGE!', true); startHeat();
-    Object.assign(S, { hp: PLAYER_HP, ko: false, over: false, taken: 0, lastHurt: 0, lastHurtReal: 0, stunT: 0, slowT: 0 }); S.foes = [];
+  if (mode === 'rampage' || mode === 'stop') {
+    if (mode === 'rampage') popup('RAMPAGE!', true);
+    startHeat(mode === 'stop');
+    Object.assign(S, { hp: mode === 'stop' ? RUN.hp : PLAYER_HP, ko: false, over: false, taken: 0, lastHurt: 0, lastHurtReal: 0, stunT: 0, slowT: 0 }); S.foes = [];
     $('bossbar').querySelectorAll('.vil').forEach((e) => e.remove()); $('bossbar').hidden = false; updateBars();
   } else stopHeat();
 }
@@ -2753,7 +2811,7 @@ function pauseGame() {
   $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off');
   state.playing = false; keys.clear();
   $('pRebuild').hidden = state.mode !== 'sandbox';
-  $('pauseTitle').textContent = state.mode === 'rampage' ? 'Rampage paused' : state.mode === 'showdown' ? 'Fight paused' : 'Paused';
+  $('pauseTitle').textContent = RUN.on ? 'Run paused' : state.mode === 'rampage' ? 'Rampage paused' : state.mode === 'showdown' ? 'Fight paused' : 'Paused';
   if (document.pointerLockElement) document.exitPointerLock();
   showScreen('pause');
 }
@@ -2827,8 +2885,8 @@ $('rSuits').addEventListener('click', () => { suitsBack = 'results'; showScreen(
 $('sBack').addEventListener('click', () => showScreen(suitsBack));
 $('pResume').addEventListener('click', enterPlay);
 $('pRebuild').addEventListener('click', () => { resetWorld(); enterPlay(); });
-$('pQuit').addEventListener('click', () => { musStop(); endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
-$('rAgain').addEventListener('click', () => startMode(state.lastMode || 'rampage', state.lastDiff));
+$('pQuit').addEventListener('click', () => { if (RUN.on) runCleanup(); musStop(); endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
+$('rAgain').addEventListener('click', () => state.lastMode === 'run' ? startRun(state.lastDiff) : startMode(state.lastMode || 'rampage', state.lastDiff));
 $('rNext').addEventListener('click', () => { const n = VILLAINS[VILLAINS.indexOf(selectedVillains()[0]) + 1]; if (n) { save.villains = [n.id]; save.villain = n.id; startMode('showdown', state.lastDiff); } });
 for (const d of ['easy', 'normal', 'hard']) $('sd-' + d).addEventListener('click', () => startMode('showdown', d));
 $('rMenu').addEventListener('click', () => { musStop(); endShowdownWorld(); state.mode = null; state.run = null; $('timer').hidden = true; showScreen('main'); });
@@ -2917,17 +2975,17 @@ function foesInRange(p, r, fn) {
 }
 
 const selectedVillains = () => VILLAINS.filter((v) => save.villains.includes(v.id));
-function startShowdown(diffId) {
+function startShowdown(diffId, list) {
   S.diffId = diffId; S.diff = DIFFS[diffId];
-  Object.assign(S, { hp: PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0, stunT: 0, slowT: 0 });
-  const list = selectedVillains(); S.foes = foes.slice(0, list.length);
+  Object.assign(S, { hp: RUN.on ? RUN.hp : PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0, stunT: 0, slowT: 0 });
+  list = list || selectedVillains(); S.foes = foes.slice(0, list.length);
   for (const f of foes) { f.group.visible = false; f.glow.visible = false; f.mark.hidden = true; for (const b of f.beams) b.core.visible = b.glow.visible = false; }
   const bar = $('bossbar'); bar.querySelectorAll('.vil').forEach((e) => e.remove());
   list.forEach((vd, i) => {
     const f = foes[i]; f.vd = vd; bindFoe(f);
-    V.maxHp = V.hp = S.diff.hp; V.dead = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5 + i * 1.3; V.kit = vd.moves;
+    V.maxHp = V.hp = S.diff.hp * (vd.ret ? .6 : vd.side ? .45 : 1); V.dead = false; f.benched = false; V.stun = 0; V.act = null; V.actT = 0; V.think = 2.5 + i * 1.3; V.kit = vd.moves;
     V.cd = {}; for (const id of vd.moves) V.cd[id] = rand(2, 6) + i; V.cd.slam = 8 + i * 2;
-    applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0);
+    applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0); vModel.scale.setScalar(vd.side ? .95 : 1.35);
     const a = -Math.PI / 2 + (i - (list.length - 1) / 2) * .7;
     const lx = [0, -80, 80, -160, 160][i];
     f.land = new V3(lx, groundH(lx, 560) + 1.6, 560); f.from = new V3(lx + rand(-12, 12), 190, 525); f.landed = false;
@@ -2935,7 +2993,7 @@ function startShowdown(diffId) {
     villain.visible = true; villain.position.copy(V.pos);
     f.mark.style.borderColor = hex(vd.look.accent); f.mark.style.background = hex(vd.look.cape ?? vd.look.limb);
     const row = document.createElement('div'); row.className = 'bar2 vil';
-    const nm = document.createElement('span'); nm.textContent = vd.name.toUpperCase() + (i === 0 ? ' · ' + S.diff.name.toUpperCase() : '');
+    const nm = document.createElement('span'); nm.textContent = vd.name.toUpperCase() + (vd.ret ? ' · BACK' : '') + (i === 0 ? ' · ' + S.diff.name.toUpperCase() : '');
     const tr = document.createElement('div'); tr.className = 'track'; const fill = document.createElement('i'); fill.style.background = hex(vd.look.accent); tr.append(fill);
     row.append(nm, tr); bar.append(row); f.fill = fill;
   });
@@ -2969,13 +3027,15 @@ function hurtVillain(amount, dir, knock, label) {
 function hurtPlayer(amount, dir, knock) {
   if (!(state.mode === 'showdown' || H.on) || S.over || S.ko || state.cut) return;
   if (state.mode === 'showdown') amount *= S.diff.dmg;
+  else if (RUN.on) amount *= RUN_HENCH[RUN.diff];
+  if (RUN.on) amount *= RUN.armor;
   S.hp -= amount; S.taken += amount; S.lastHurt = S.time; S.lastHurtReal = performance.now() / 1000;
   if (dir && knock) { P.vel.addScaledVector(tmpV.copy(dir).normalize(), knock); P.slamming = false; P.landT = 0; }
   const h = $('hurt'); h.style.transition = 'none'; h.style.opacity = String(clamp(amount / 120, .3, .85));
   requestAnimationFrame(() => { h.style.transition = 'opacity .6s'; h.style.opacity = '0'; });
   state.shake = Math.max(state.shake, clamp(amount / 150, .3, 1.2));
   updateBars();
-  if (S.hp <= 0) { S.hp = 0; S.ko = true; P.slamming = false; P.landT = 0; popup(state.mode === 'rampage' ? 'BUSTED!' : 'K.O.', true); later(1.8, () => state.mode === 'rampage' ? endRampage(true) : endShowdown(false)); }
+  if (S.hp <= 0) { S.hp = 0; S.ko = true; P.slamming = false; P.landT = 0; popup(state.mode === 'showdown' ? 'K.O.' : 'BUSTED!', true); later(1.8, () => state.mode === 'rampage' ? endRampage(true) : state.mode === 'stop' ? runOver('Busted by the cops.') : endShowdown(false)); }
 }
 function villainDown() {
   V.dead = true; V.act = null; vGlow.visible = false;
@@ -2984,6 +3044,7 @@ function villainDown() {
 }
 function endShowdown(win) {
   if (S.over) return;
+  if (RUN.on) { runFightEnd(win); return; }
   musSting(win);
   S.over = true; state.playing = false; keys.clear();
   if (document.pointerLockElement) document.exitPointerLock();
@@ -3073,13 +3134,13 @@ function villainAI(dt) {
   if (V.act) { runAct(dt, dist); return; }
   // move: orbit the player at mid range, close in fast when far away
   V.orbit += dt * .5;
-  const ring = V.kit.includes('flame') || V.kit.includes('spikes') ? 28 : 38;
+  const ring = curFoe.benched ? 120 : V.kit.includes('flame') || V.kit.includes('spikes') ? 28 : 38;
   const want = new V3(Math.cos(V.orbit) * ring, 12 + Math.sin(V.orbit * .7) * 8, Math.sin(V.orbit) * ring).add(P.pos);
   want.y = Math.max(want.y, groundH(want.x, want.z) + 6);
   const to = want.sub(V.pos), tl = to.length(), maxSp = (tl > 140 ? 230 : 95) * d.speed;
   steerVillain(dt, to.normalize().multiplyScalar(Math.min(maxSp, tl * 2.2)), 7);
   V.think -= dt;
-  if (V.think > 0 || S.ko) return;
+  if (V.think > 0 || S.ko || curFoe.benched) return;
   V.think = d.think * rand(.7, 1.3);
   const low = P.pos.y - groundH(P.pos.x, P.pos.z) < 30;
   const opts = V.kit.filter((id) => (V.cd[id] || 0) <= 0 && MOVES[id].ok(dist, low)).map((id) => [id, MOVES[id].w]);
@@ -3286,7 +3347,12 @@ function updateVillain(dt) {
   vAnim += dt;
   if (state.playing && !S.over) {
     S.time += dt; S.hitCd -= dt;
-    if (!S.ko && S.time - S.lastHurt > 4) { S.hp = Math.min(PLAYER_HP, S.hp + 14 * dt); updateBars(); }
+    if (!RUN.on && !S.ko && S.time - S.lastHurt > 4) { S.hp = Math.min(PLAYER_HP, S.hp + 14 * dt); updateBars(); }
+    // in a run only two heroes attack at once; the rest circle wide and tag in when one drops
+    if (RUN.on) {
+      const active = S.foes.filter((f) => f.group.visible && !f.V.dead).slice(0, 2);
+      for (const f of S.foes) { const b = !active.includes(f); if (f.benched && !b && !f.V.dead) popup(f.vd.name.toUpperCase() + ' TAGS IN!', true); f.benched = b; }
+    }
     S.stunT = Math.max(0, S.stunT - dt); S.slowT = Math.max(0, S.slowT - dt);
     $('hurt').classList.toggle('frozen', S.slowT > 0);
   }
@@ -3379,6 +3445,7 @@ const UNIT = {
   car: { name: 'Cop car', hp: 1, loot: 2500, range: 120, rate: 1.1, dmg: 5, acc: .45, kind: 'road', speed: 26, stop: 55 },
   heli: { name: 'Gunship', hp: 3, loot: 9000, range: 240, rate: .22, dmg: 3, acc: .35, kind: 'air', rocket: 4.5 },
   drone: { name: 'Drone', hp: 1, loot: 1500, range: 150, rate: 1.2, dmg: 6, acc: .5, kind: 'air', fast: true },
+  truck: { name: 'Armored truck', hp: 6, loot: 40000, range: 0, rate: 99, dmg: 0, acc: 0, kind: 'road', speed: 17, stop: 0, truck: true },
   tank: { name: 'Tank', hp: 4, loot: 18000, range: 280, rate: 3.6, dmg: 0, acc: 1, kind: 'road', speed: 11, stop: 110, shell: true },
 };
 const WANT = [ // how many of each are on the board at each heat level
@@ -3415,6 +3482,9 @@ function buildUnitMesh(type) {
   } else if (type === 'drone') {
     g.add(part(UG.box, UM.black, 1.1, .3, 1.1, 0, 0, 0), part(UG.head, UM.red, 1, 1, 1, 0, -.15, .5));
     for (const [x, z] of [[-.7, -.7], [.7, -.7], [-.7, .7], [.7, .7]]) g.add(part(UG.cyl, UM.gun, .32, .04, .32, x, .2, z));
+  } else if (type === 'truck') {
+    g.add(part(UG.box, UM.gun, 2.7, 2.6, 5, 0, 1.9, -1), part(UG.box, UM.white, 2.5, 1.9, 2, 0, 1.55, 2.6), part(UG.box, UM.glass, 2.2, .8, .1, 0, 2.05, 3.62), part(UG.box, UM.black, 2.8, .7, 7.4, 0, .45, 0));
+    const l = part(UG.box, UM.red, .4, .2, .2, -.9, 3.25, -3.3), r = part(UG.box, UM.red, .4, .2, .2, .9, 3.25, -3.3); g.add(l, r);
   } else if (type === 'tank') {
     g.add(part(UG.box, UM.olive, 4, 1.4, 7, 0, .9, 0), part(UG.box, UM.gun, 4.4, .7, 7.2, 0, .35, 0));
     const tur = new THREE.Group(); tur.position.y = 2;
@@ -3577,7 +3647,7 @@ function updateHeat(dt) {
       if (u.pos.y <= groundH(u.pos.x, u.pos.z) + 1) { u.falling = false; unitBoom(u, u.pos.clone()); }
       continue;
     }
-    if (far > 520 && lvl < 3) { scene.remove(u.mesh); units.splice(i, 1); continue; } // left behind
+    if (far > 520 && lvl < 3 && !T.truck) { scene.remove(u.mesh); units.splice(i, 1); continue; } // left behind
     if (T.kind === 'foot') {
       if (u.roof && (!u.roof.alive || u.roof.y0 + (u.roof.topK + 1) * u.roof.ch < u.pos.y - 2)) { killUnit(u); continue; } // the roof came down
       u.mesh.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
@@ -3586,7 +3656,10 @@ function updateHeat(dt) {
     } else if (T.kind === 'road') {
       const along = u.axis === 'x' ? P.pos.x : P.pos.z, across = u.axis === 'x' ? P.pos.z : P.pos.x;
       const flat = Math.hypot(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
-      if (flat > T.stop) {
+      if (T.truck) { // the convoy just drives for the edge of town
+        u.t += u.dir * T.speed * dt;
+        if (Math.abs(u.t) > HALF + 30) { u.alive = false; u.escaped = true; scene.remove(u.mesh); units.splice(i, 1); lootTag('A TRUCK GOT AWAY'); continue; }
+      } else if (flat > T.stop) {
         const step = T.speed * dt; u.t += u.dir * step;
         // at an intersection, turn toward you if that's the shorter way
         const near = roadAt(Math.round((u.t + HALF) / PERIOD));
@@ -3599,7 +3672,7 @@ function updateHeat(dt) {
       u.mesh.rotation.y = u.axis === 'x' ? (u.dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (u.dir > 0 ? 0 : Math.PI);
       if (u.type === 'car') { const l = u.mesh.userData.lights, on = (performance.now() / 180 | 0) % 2; l[0].visible = !!on; l[1].visible = !on; }
       if (u.type === 'tank') { const tur = u.mesh.userData.turret; tur.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z) - u.mesh.rotation.y; }
-      if (far < 3.5 + (u.type === 'tank' ? 3 : 1) && P.vel.length() > 10) { hitUnit(u, P.vel.length() > 120); P.vel.multiplyScalar(.7); }
+      if (far < 3.5 + (u.type === 'tank' || u.type === 'truck' ? 3 : 1) && P.vel.length() > 10) { hitUnit(u, P.vel.length() > 120); P.vel.multiplyScalar(.7); }
     } else { // air: orbit you
       u.orbit += dt * (T.fast ? 1.1 : .35);
       pt.set(P.pos.x + Math.cos(u.orbit) * u.orbitR, clamp(P.pos.y + (T.fast ? 6 : 28), 40, CEIL - 10), P.pos.z + Math.sin(u.orbit) * u.orbitR);
@@ -3630,9 +3703,10 @@ function lootTag(text) {
   const box = $('lootTags'); if (box.children.length > 4) box.firstChild.remove();
   const el = document.createElement('div'); el.className = 'ltag'; el.textContent = text; box.append(el); setTimeout(() => el.remove(), 1600);
 }
-function startHeat() {
+function startHeat(keep) {
   clearUnits();
-  Object.assign(H, { on: true, pts: 0, lvl: 0, calm: 0, loot: 0, kills: 0, maxLvl: 0, spawnT: 2, lastDmg: state.damage, lootAcc: 0, lootPop: 0 });
+  if (!keep) Object.assign(H, { loot: 0, kills: 0, maxLvl: 0 });
+  Object.assign(H, { on: true, pts: 0, lvl: 0, calm: 0, spawnT: 2, lastDmg: state.damage, lootAcc: 0, lootPop: 0 });
   heatLevelShown = -1; $('heat').hidden = false;
 }
 function stopHeat() { H.on = false; clearUnits(); $('heat').hidden = true; trPos.fill(0); trGeo.attributes.position.needsUpdate = true; }
@@ -3667,7 +3741,7 @@ function startCutscene() {
 function showTitle(vd, i, n) {
   const c = $('introCard');
   c.style.setProperty('--acc', hex(vd.look.accent));
-  $('introNum').textContent = (n > 1 ? 'Hero ' + (i + 1) + ' of ' + n : 'Hero') + (vd.mirror === save.hero ? ' · your mirror' : '');
+  $('introNum').textContent = (RUN.on && RUN.kind === 'boss' && i === 0 ? 'Act ' + RUN.act + ' · ' : '') + (vd.ret ? 'Back for more' : vd.side ? 'Sidekick' : n > 1 ? 'Hero ' + (i + 1) + ' of ' + n : 'Hero') + (vd.mirror === save.hero && !vd.side ? ' · your mirror' : '');
   $('introName').textContent = vd.name;
   $('introTag').textContent = vd.tag;
   $('introQuote').textContent = '“' + vd.quote + '”';
@@ -3692,7 +3766,7 @@ function updateCutscene(dt) {
       V.pos.lerpVectors(f.from, f.land, k * k); V.vel.set(0, -260, 0); V.act = 'slam'; V.slamPhase = 1;
       if (k >= 1) { landFoe(f, true); showTitle(f.vd, c.idx, S.foes.length); }
     } else V.vel.set(0, 0, 0);
-    if (c.t > SHOT_T) { $('introCard').hidden = true; c.idx++; c.t = 0; }
+    if (c.t > (f.vd.ret ? 2.2 : SHOT_T)) { $('introCard').hidden = true; c.idx++; c.t = 0; }
   } else if (c.t > GROUP_T) { endCutscene(); return; }
   bindFoe(S.foes[Math.min(c.idx, S.foes.length - 1)]);
 }
@@ -3884,12 +3958,306 @@ function musUpdate(dt) {
   if (MUS.mode === 'fight') MUS.hype = S.hp < PLAYER_HP * .35 || S.foes.some((f) => !f.V.dead && f.V.hp < f.V.maxHp * .3);
 }
 
+// ---------------------------------------------------------------- the run
+// Five acts. Each act: pick one of two stops, twice, then the boss. Bosses are four random heroes,
+// then the hero who mirrors your powers. Beaten heroes come back weaker for every later boss
+// fight, two at a time. Health and loot carry through the whole run; get knocked out and it's over.
+const RUN = { on: false, diff: 'normal', act: 1, step: 0, order: [], beaten: [], opts: [], hp: PLAYER_HP, time: 0, armor: 1, plates: 0, spent: 0, kind: null, obj: null, lastDmg: 0, note: '', stops: 0, bosses: 0 };
+const RUN_HENCH = { easy: .6, normal: 1, hard: 1.35 };        // henchman damage by difficulty
+const STOP_PAY = { heist: 150000, hostage: 120000, sidekick: 80000 };
+const BOSS_PAY = 200000;
+const SIDEKICKS = {
+  sky: ['Skylark', 'Boss says I can handle you myself.'], blaze: ['Ember', "I'm hotter than he is anyway."], mind: ['Echo', 'I heard you coming a mile away.'],
+  volt: ['Spark', 'Zap first, questions later!'], frost: ['Flurry', 'Snow day! For you, anyway.'],
+};
+const STOPS = {
+  heist: { name: 'Heist', desc: 'Level the marked tower before the cops lock it down.', pay: 'Big payout' },
+  ambush: { name: 'Ambush', desc: 'An armored convoy is moving cash across town. Wreck the trucks before they get out.', pay: '$40K a truck' },
+  hostage: { name: 'Hostage', desc: 'Hold the square for 40 seconds while the city throws everything at you.', pay: 'Big payout' },
+  sidekick: { name: 'Sidekick', desc: '', pay: 'Payout' },
+  hideout: { name: 'Hideout', desc: 'Lay low and patch up. Heals 40% of your health.', pay: 'No fight' },
+  market: { name: 'Black Market', desc: 'Spend your loot on patch-ups and armor plating.', pay: 'Shop' },
+};
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const runHaul = () => Math.round(H.loot + RUN.spent);
+const actPay = (n) => Math.round(n * (1 + .25 * (RUN.act - 1)));
+function returning(vd) { return Object.assign({}, vd, { ret: true, quote: vd.back, moves: vd.moves.filter((m, i) => i !== 3) }); }
+function sidekickOf(vd) {
+  const [name, quote] = SIDEKICKS[vd.mirror];
+  return Object.assign({}, vd, { side: true, name, quote, tag: vd.name + "'s sidekick", moves: ['ram', vd.moves[1], vd.moves[2], 'slam'],
+    look: Object.assign({}, vd.look, { main: vd.look.accent, accent: vd.look.main }) });
+}
+function rollStops() {
+  const fights = shuffle(['heist', 'ambush', 'hostage', 'sidekick']), rests = shuffle(['hideout', 'market']);
+  const pair = Math.random() < .35 ? [fights[0], rests[0]] : [fights[0], fights[1]];
+  return shuffle(pair).map((type) => ({ type, side: type === 'sidekick' ? sidekickOf(VILLAINS[Math.random() * VILLAINS.length | 0]) : null }));
+}
+const bossFor = (act) => [RUN.order[act - 1], ...RUN.beaten.map(returning)];
+
+function startRun(diff) {
+  const mirror = VILLAINS.find((v) => v.mirror === save.hero);
+  Object.assign(RUN, { on: true, diff, act: 1, step: 0, beaten: [], hp: PLAYER_HP, time: 0, armor: 1, plates: 0, spent: 0, kind: null, obj: null, note: '', stops: 0, bosses: 0, kills: 0 });
+  RUN.order = shuffle(VILLAINS.filter((v) => v !== mirror)).concat(mirror);
+  RUN.opts = rollStops();
+  state.lastMode = 'run'; state.lastDiff = diff;
+  H.loot = 0; H.kills = 0; H.maxLvl = 0;
+  save.stats.runs = (save.stats.runs || 0) + 1; saveNow();
+  initAudio();
+  showRoute();
+}
+function runCleanup() {
+  RUN.on = false; RUN.obj = null; clearObjective(); stopHeat();
+  $('obj').hidden = true; $('objMark').hidden = true;
+}
+
+// ---- the route screen between fights
+function showRoute(delay) {
+  state.mode = null; state.playing = false;
+  const el = $('routeBody'); el.textContent = '';
+  const dots = $('routePath'); dots.textContent = '';
+  for (let a = 1; a <= 5; a++) for (let s = 0; s < 3; s++) {
+    const d = document.createElement('i'); d.className = (s === 2 ? 'boss' : '') + (a < RUN.act || (a === RUN.act && s < RUN.step) ? ' done' : a === RUN.act && s === RUN.step ? ' now' : '');
+    dots.append(d);
+  }
+  $('routeAct').textContent = 'Act ' + RUN.act + ' of 5';
+  const boss = bossFor(RUN.act);
+  $('routeBoss').textContent = 'Boss: ' + boss.map((v) => v.name).join(' + ') + (RUN.act === 5 ? ' · your mirror and everyone you beat' : '');
+  $('routeNote').textContent = RUN.note; $('routeNote').hidden = !RUN.note;
+  $('routeHp').style.transform = `scaleX(${RUN.hp / PLAYER_HP})`;
+  $('routeStat').textContent = 'Health ' + Math.round(RUN.hp) + ' / ' + PLAYER_HP + ' · Loot ' + fmtMoney(Math.round(H.loot)) + ' · ' + fmtTime(RUN.time) + (RUN.plates ? ' · Armor ×' + RUN.plates : '');
+  if (RUN.step < 2) {
+    $('routeHead').textContent = 'Pick your next move';
+    for (const o of RUN.opts) {
+      const S0 = STOPS[o.type], b = document.createElement('button'); b.type = 'button'; b.className = 'mode stop ' + o.type;
+      const n = document.createElement('div'); n.className = 'mname'; n.textContent = o.side ? 'Sidekick: ' + o.side.name : S0.name;
+      const ds = document.createElement('div'); ds.className = 'mdesc'; ds.textContent = o.side ? o.side.tag + ' wants to prove a point. Make an example of them.' : S0.desc;
+      const p = document.createElement('div'); p.className = 'mbest'; p.textContent = S0.pay;
+      b.append(n, ds, p); b.addEventListener('click', () => pickStop(o)); el.append(b);
+    }
+  } else {
+    $('routeHead').textContent = boss.length > 1 ? 'Boss fight · ' + boss.length + ' v 1, two at a time' : 'Boss fight';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mode stop boss';
+    const n = document.createElement('div'); n.className = 'mname'; n.textContent = 'Fight ' + boss[0].name;
+    const ds = document.createElement('div'); ds.className = 'mdesc'; ds.textContent = boss[0].tag + (boss.length > 1 ? '. ' + boss.slice(1).map((v) => v.name).join(', ') + ' come back for more, weaker but pissed.' : '.');
+    b.append(n, ds); b.addEventListener('click', () => runFight('boss', boss)); el.append(b);
+  }
+  showScreen('route');
+  setTimeout(() => { if (RUN.on && !state.mode && MUS.mode !== 'menu') musPlay('menu'); }, delay ?? 0);
+}
+function pickStop(o) {
+  sfxTick();
+  if (o.type === 'hideout') { RUN.hp = Math.min(PLAYER_HP, RUN.hp + PLAYER_HP * .4); runAdvance('You lay low and patch up. +40% health.'); return; }
+  if (o.type === 'market') { showMarket(); return; }
+  if (o.type === 'sidekick') { runFight('sidekick', [o.side]); return; }
+  runStop(o.type);
+}
+function runAdvance(note, delay) {
+  RUN.step++; RUN.stops++; RUN.note = note;
+  if (RUN.step < 2) RUN.opts = rollStops();
+  showRoute(delay);
+}
+
+// ---- black market (placeholder until schemes)
+const MARKET = [
+  { id: 'doc', name: 'Street doc', desc: 'Heal 30% of your health.', cost: 60000, ok: () => RUN.hp < PLAYER_HP, buy: () => { RUN.hp = Math.min(PLAYER_HP, RUN.hp + PLAYER_HP * .3); } },
+  { id: 'patch', name: 'Full patch-up', desc: 'Back to full health.', cost: 150000, ok: () => RUN.hp < PLAYER_HP, buy: () => { RUN.hp = PLAYER_HP; } },
+  { id: 'armor', name: 'Armor plating', desc: 'Take 15% less damage for the rest of the run. Stacks twice.', cost: 120000, ok: () => RUN.plates < 2, buy: () => { RUN.plates++; RUN.armor = 1 - .15 * RUN.plates; } },
+];
+function showMarket() {
+  const el = $('marketList'); el.textContent = '';
+  $('marketStat').textContent = 'Health ' + Math.round(RUN.hp) + ' / ' + PLAYER_HP + ' · Loot ' + fmtMoney(Math.round(H.loot));
+  for (const m of MARKET) {
+    const card = document.createElement('div'); card.className = 'suit';
+    const k = document.createElement('div'); k.className = 'pkey'; k.textContent = '$';
+    const body = document.createElement('div'); body.className = 'sbody';
+    const nm = document.createElement('div'); nm.className = 'sname'; nm.textContent = m.name;
+    const ds = document.createElement('div'); ds.className = 'sdesc'; ds.textContent = m.desc;
+    body.append(nm, ds);
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'equip';
+    const can = m.ok() && H.loot >= m.cost;
+    btn.textContent = !m.ok() ? 'MAXED' : fmtMoney(m.cost); btn.disabled = !can;
+    btn.addEventListener('click', () => { if (!(m.ok() && H.loot >= m.cost)) return; H.loot -= m.cost; RUN.spent += m.cost; m.buy(); sfxUnlock(); showMarket(); });
+    card.append(k, body, btn); el.append(card);
+  }
+  showScreen('market');
+}
+
+// ---- stops: heist, ambush, hostage
+const objMat = new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: .22, depthWrite: false, toneMapped: false, fog: false });
+const beacon = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1, 16, 1, true), objMat); beacon.visible = false; scene.add(beacon);
+const zoneRing = new THREE.Mesh(new THREE.RingGeometry(27, 30, 48), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: .7, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
+zoneRing.rotation.x = -Math.PI / 2; zoneRing.visible = false; scene.add(zoneRing);
+function clearObjective() { beacon.visible = false; zoneRing.visible = false; }
+function setBeacon(x, y0, z, r, h) { beacon.scale.set(r / 3, h, r / 3); beacon.position.set(x, y0 + h / 2, z); beacon.visible = true; }
+function chunksLeft(e) {
+  let n = !e.alive ? 0 : !e.mask ? e.layer * e.ny : e.mask.reduce((a, b) => a + b, 0);
+  for (const c of e.children) n += chunksLeft(c);
+  return n;
+}
+function runStop(type) {
+  RUN.kind = type;
+  startMode('stop');
+  const o = RUN.obj = { type, t: null, done: false, tick: 0 };
+  if (type === 'heist') {
+    const c = entities.filter((e) => !e.parent && e.kind === 'box' && e.style !== STONE_STYLE && e.h >= 70 && Math.hypot(e.cx - P.pos.x, e.cz - P.pos.z) > 300 && Math.hypot(e.cx - P.pos.x, e.cz - P.pos.z) < 900);
+    const e = o.ent = c[Math.random() * c.length | 0] || entities.find((q) => !q.parent && q.kind === 'box');
+    o.total = chunksLeft(e); o.left = 1; o.t = 80;
+    let top = e.y0 + e.h; for (const ch of e.children) top = Math.max(top, ch.y0 + ch.h);
+    o.mark = new V3(e.cx, top + 6, e.cz); setBeacon(e.cx, top, e.cz, Math.max(e.w, e.d) * .35, 260);
+    o.minHeat = 1; popup('HEIST!', true);
+  } else if (type === 'ambush') {
+    const zr = roadAt(4 + (Math.random() * 9 | 0)), dir = Math.random() < .5 ? 1 : -1;
+    o.trucks = [];
+    for (let i = 0; i < 3; i++) {
+      const T = UNIT.truck, u = { type: 'truck', T, hp: T.hp, cd: 99, pos: new V3(), vel: new V3(), alive: true, iFrame: 0, rocketCd: 99, axis: 'x', road: zr, dir, lane: 4 * dir, t: -dir * (HALF - 60 - i * 24) };
+      roadPos(u); u.mesh = buildUnitMesh('truck'); u.mesh.position.copy(u.pos); units.push(u); o.trucks.push(u);
+    }
+    o.minHeat = 1; o.mark = new V3(); popup('AMBUSH!', true);
+  } else if (type === 'hostage') {
+    const x = roadAt(5 + (Math.random() * 7 | 0)), z = roadAt(4 + (Math.random() * 6 | 0)), y = groundH(x, z);
+    o.pos = new V3(x, y, z); o.hold = 0; o.need = 40; o.t = 110;
+    zoneRing.position.set(x, y + .4, z); zoneRing.visible = true; setBeacon(x, y, z, 4, 220);
+    o.mark = new V3(x, y + 8, z); o.minHeat = 2; popup('HOSTAGE!', true);
+  }
+  RUN.hp0 = S.hp;
+  musPlay('fight');
+  requestAnimationFrame(() => document.body.style.setProperty('--bossH', $('bossbar').offsetHeight + 'px'));
+}
+function stopDone(win, msg, pay) {
+  const o = RUN.obj; if (!o || o.done) return;
+  o.done = true; S.over = true;
+  if (pay) H.loot += pay;
+  popup(win ? STOPS[o.type].name.toUpperCase() + ' DONE!' : 'BLOWN IT', true);
+  if (win) sfxUnlock();
+  later(1.8, () => {
+    state.playing = false; keys.clear(); if (document.pointerLockElement) document.exitPointerLock();
+    RUN.hp = S.hp; RUN.obj = null; clearObjective(); stopHeat(); $('obj').hidden = true; $('objMark').hidden = true;
+    $('bossbar').hidden = true;
+    musSting(win);
+    runAdvance(msg, 4600);
+  });
+}
+function updateStop(dt) {
+  const o = RUN.obj; if (!o || o.done) return;
+  // the response never drops below the stop's floor
+  const floor = o.type === 'hostage' && o.hold > 20 ? 3 : o.minHeat;
+  H.pts = Math.max(H.pts, HEAT_AT[floor - 1] * 1.05);
+  if (o.t != null) { o.t -= dt; }
+  let line = '', sub = '';
+  if (o.type === 'heist') {
+    if ((o.tick -= dt) <= 0) { o.tick = .25; o.left = chunksLeft(o.ent) / o.total; }
+    line = 'HEIST · Level the marked tower'; sub = Math.round(Math.max(0, o.left - .35) / .65 * 100) + '% to go';
+    if (o.left <= .35) { stopDone(true, 'Tower down. +' + fmtMoney(actPay(STOP_PAY.heist)) + ' from the vault.', actPay(STOP_PAY.heist)); return; }
+  } else if (o.type === 'ambush') {
+    const left = o.trucks.filter((u) => u.alive), down = o.trucks.filter((u) => !u.alive && !u.escaped).length, gone = o.trucks.filter((u) => u.escaped).length;
+    line = 'AMBUSH · Wreck the convoy'; sub = down + ' wrecked · ' + gone + ' escaped · ' + left.length + ' left';
+    let best = null, bd = 1e9; for (const u of left) { const d = u.pos.distanceTo(P.pos); if (d < bd) { bd = d; best = u; } }
+    if (best) o.mark.copy(best.pos).setY(best.pos.y + 5);
+    if (!left.length) { stopDone(down >= 2, down ? down + ' of 3 trucks wrecked. Cash grabbed.' : 'The whole convoy got away. Nothing.', 0); return; }
+  } else if (o.type === 'hostage') {
+    const inside = Math.hypot(P.pos.x - o.pos.x, P.pos.z - o.pos.z) < 30 && P.pos.y - o.pos.y < 50;
+    if (inside && !S.ko) o.hold += dt;
+    line = 'HOSTAGE · Hold the square'; sub = Math.floor(o.hold) + ' / ' + o.need + ' s' + (inside ? '' : ' · GET BACK IN THE ZONE');
+    zoneRing.material.opacity = inside ? .75 : .35 + .35 * Math.abs(Math.sin(performance.now() / 200));
+    if (o.hold >= o.need) { stopDone(true, 'They paid up. +' + fmtMoney(actPay(STOP_PAY.hostage)) + '.', actPay(STOP_PAY.hostage)); return; }
+  }
+  if (o.t != null && o.t <= 0) { stopDone(false, 'Out of time. No payout.', 0); return; }
+  const el = $('obj');
+  el.querySelector('b').textContent = line;
+  el.querySelector('span').textContent = sub + (o.t != null ? ' · ' + fmtTime(Math.max(0, o.t)) : '');
+  el.classList.toggle('hurry', o.t != null && o.t < 10);
+  // marker
+  const mk = $('objMark');
+  vTmp.copy(o.mark).project(camera);
+  const behind = vTmp.z > 1; let x = vTmp.x, y = vTmp.y; if (behind) { x = -x; y = -y; }
+  const off = behind || Math.abs(x) > .95 || Math.abs(y) > .9;
+  if (off) { const m = Math.max(Math.abs(x) / .92, Math.abs(y) / .86); x /= m; y /= m; }
+  mk.hidden = false; mk.classList.toggle('edge', off);
+  mk.style.transform = `translate(${(x * .5 + .5) * innerWidth - 14}px, ${(-y * .5 + .5) * innerHeight - 14}px)`;
+  mk.textContent = off ? '' : Math.round(P.pos.distanceTo(o.mark)) + 'm';
+}
+
+// ---- fights: sidekicks and bosses
+function runFight(kind, list) {
+  RUN.kind = kind; sfxTick();
+  startMode('showdown', RUN.diff, list);
+}
+function runFightEnd(win) {
+  S.over = true; state.playing = false; keys.clear();
+  if (document.pointerLockElement) document.exitPointerLock();
+  const names = S.foes.map((f) => f.vd.name);
+  endShowdownWorld();
+  if (!win) { musSting(false); runOver('Knocked out by ' + names.join(' + ') + '.'); return; }
+  musSting(true);
+  RUN.hp = S.hp;
+  if (RUN.kind === 'sidekick') { const pay = actPay(STOP_PAY.sidekick); H.loot += pay; runAdvance(names[0] + ' learned the hard way. +' + fmtMoney(pay) + '.', 4600); return; }
+  const vd = RUN.order[RUN.act - 1];
+  RUN.beaten.push(vd); RUN.bosses++;
+  const pay = actPay(BOSS_PAY); H.loot += pay;
+  RUN.hp = Math.min(PLAYER_HP, RUN.hp + PLAYER_HP * .25);
+  if (RUN.act === 5) { runWon(); return; }
+  RUN.act++; RUN.step = 0; RUN.opts = rollStops();
+  RUN.note = vd.name + ': “' + vd.down + '” +' + fmtMoney(pay) + ' and +25% health.';
+  showRoute(4600);
+}
+
+// ---- endings and the Hall of Infamy
+function runResults(won, reason) {
+  const haul = runHaul(), h = curHero(), key = 'runFast_' + h.id + '_' + RUN.diff;
+  RUN.kills = H.kills;
+  runCleanup(); state.mode = null; state.playing = false;
+  if (document.pointerLockElement) document.exitPointerLock();
+  const prevHaul = save.stats.bestRunLoot || 0;
+  if (haul > prevHaul) save.stats.bestRunLoot = haul;
+  let note = reason;
+  if (won) {
+    save.stats.runWins = (save.stats.runWins || 0) + 1;
+    const prev = save.stats[key];
+    if (!prev || RUN.time < prev) { save.stats[key] = RUN.time; note = 'New fastest takeover as ' + h.name + ' on ' + DIFFS[RUN.diff].name + '!'; }
+    else note = 'Fastest as ' + h.name + ' on ' + DIFFS[RUN.diff].name + ': ' + fmtTime(prev);
+  }
+  saveNow();
+  $('rTitle').textContent = won ? 'Skyline City is yours' : 'Run over';
+  $('rScore').textContent = fmtMoney(haul) + ' hauled';
+  $('rBest').textContent = haul > prevHaul && !won ? 'New best haul!' : note;
+  $('rBest').classList.toggle('newbest', won || haul > prevHaul);
+  $('rCut').textContent = won ? 'Five heroes down. Nobody left to stop you.' : '';
+  $('rNext').hidden = true;
+  const rows = [['Villain', h.name], ['Difficulty', DIFFS[RUN.diff].name], ['Acts cleared', (won ? 5 : RUN.act - 1) + ' / 5'], ['Heroes crushed', RUN.bosses + ' / 5'],
+    ['Stops pulled', RUN.stops], ['Henchmen down', RUN.kills], ['Run time', fmtTime(RUN.time)], ['Spent on the black market', fmtMoney(RUN.spent)]];
+  const st = $('rStats'); st.textContent = '';
+  for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
+  $('rUnlocks').textContent = '';
+  endShowdownWorld();
+  showScreen('results');
+}
+function runOver(reason) { runResults(false, reason); }
+function runWon() { runResults(true, ''); }
+function renderRunPanel() {
+  $('runVillain').textContent = curHero().name;
+  const s = save.stats;
+  $('runRec').textContent = s.runs ? 'Runs ' + s.runs + ' · Takeovers ' + (s.runWins || 0) + (s.bestRunLoot ? ' · Best haul ' + fmtMoney(s.bestRunLoot) : '') : 'No runs yet. About 20 minutes, five acts.';
+  for (const d of ['easy', 'normal', 'hard']) { const t = s['runFast_' + save.hero + '_' + d]; $('rnb-' + d).textContent = t ? 'best ' + fmtTime(t) : '—'; }
+}
+function updateRun(dt) {
+  if (!RUN.on) return;
+  if (!H.on) H.loot += Math.max(0, state.damage - RUN.lastDmg) * LOOT_RATE; // heat does this itself in stops
+  RUN.lastDmg = state.damage;
+  if (!state.playing) return;
+  RUN.time += dt;
+  if (state.mode === 'stop') updateStop(dt);
+}
+for (const d of ['easy', 'normal', 'hard']) $('run-' + d).addEventListener('click', () => startRun(d));
+$('routeQuit').addEventListener('click', () => runOver('You walked away.'));
+$('marketLeave').addEventListener('click', () => runAdvance(RUN.spent ? 'Fresh gear. Back to work.' : 'Window shopping. Back to work.'));
+
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
 function simulate(dt) {
   if (state.playing) updateFlight(dt);
   updateVillain(dt);
   updateHeat(dt);
+  updateRun(dt);
   if (state.cut) updateCutscene(dt);
   musUpdate(dt);
   updateMode(dt);
@@ -3947,6 +4315,6 @@ addEventListener('pointerdown', firstGesture, true); addEventListener('keydown',
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { RUN, startRun, runStop, runFight, pickStop, runFightEnd, showMarket, bossFor, H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
