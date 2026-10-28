@@ -11,7 +11,7 @@ Built in stages. **Stages 1 to 3 are done:** you play the villains, the heroes a
 | --- | --- | --- |
 | 1 | The flip: villains playable, heroes as bosses, Practice fights | Done |
 | 2 | Heat and henchmen: cops, SWAT, helicopters, tanks, drones; loot from destruction | Done |
-| 3 | The run: 25 rounds of waves and bosses, health carry-over, stacking heroes, tag-team | Done |
+| 3 | The run: 24 rounds of waves and bosses, health carry-over, stacking heroes, tag-team | Done |
 | 4 | Power-ups every 5 rounds (replaced the Black Market) | Done |
 | 5 | Polish: team-ups, Phase 2, mid-fight trash talk, Hall of Infamy, balance | Planned |
 
@@ -38,7 +38,7 @@ Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Att
 | Frostbite | "Chill out. Permanently." |
 
 ## The run
-Pick your villain and a difficulty on the main menu. A run is 25 rounds in five acts: four wave rounds, then a boss.
+Pick your villain and a difficulty on the main menu. A run is 24 rounds in five acts: three wave rounds before the first boss, then four wave rounds before each of the others.
 
 - **Wave rounds:** no wanted stars. Each round throws waves of henchmen at you (2 waves early, up to 4 late) and you clear every last one. The waves grow every round and new units join as you go: cops and cop cars from round 1, SWAT from 3, gunships from 4, drones from 7, tanks from 11. Every henchman has a red diamond over it that shows through buildings (orange for gunships and tanks), and a radar in the corner shows everything around you with your heading up. Stragglers that fall far behind get sent back in closer, and the last few get a distance marker.
 - **Bosses:** four random heroes, then your mirror in Act 5. Every hero you beat comes back for each later boss fight at 60% health with one power fewer. Only two attack at once; the rest circle and tag in when one drops.
@@ -91,7 +91,7 @@ Synthesized live: a menu theme, a tense intro under the cut scene, a 150 bpm bat
 | Click / F | Punch-dash |
 | X | Launch / meteor slam |
 | Mouse wheel / 1 2 3 | Pick a power |
-| Right-click / V | Use the power (hold for beams) |
+| Right-click / V | Use the power (hold for beams; 5 s of straight firing overheats a beam for 5 s, and it cools while you're not firing) |
 | R | Back to the sky |
 | P / Esc | Pause |
 | N | Music on/off |
