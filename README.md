@@ -5,13 +5,13 @@ You're a supervillain taking Skyline City by force. Five heroes stand in your wa
 Open `index.html` in a browser (needs internet for Three.js from the CDN).
 
 ## Status
-Built in stages. **Stage 1 (the flip) is done:** you play the villains, the heroes are the bosses, and the permanent power shop is gone.
+Built in stages. **Stages 1 and 2 are done:** you play the villains, the heroes are the bosses, and wrecking the city brings the law down on you.
 
 | Stage | What | Status |
 | --- | --- | --- |
 | 1 | The flip: villains playable, heroes as bosses, Practice fights | Done |
-| 2 | Heat and henchmen: cops, SWAT, helicopters, tanks, drones; loot from destruction | Next |
-| 3 | The run: 5 acts, route map, stops, health carry-over, stacking heroes, tag-team | Planned |
+| 2 | Heat and henchmen: cops, SWAT, helicopters, tanks, drones; loot from destruction | Done |
+| 3 | The run: 5 acts, route map, stops, health carry-over, stacking heroes, tag-team | Next |
 | 4 | Schemes: pick-1-of-3 upgrades, Black Market, in-run power boosts | Planned |
 | 5 | Polish: team-ups, Phase 2, mid-fight trash talk, Hall of Infamy, balance | Planned |
 
@@ -40,13 +40,24 @@ Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Att
 ## Modes
 - **Practice** (main menu): pick any heroes (tap to add or remove, up to 1v5) and a difficulty, and fight. Full runs arrive in Stage 3.
 - **Sandbox** (side game): every power at max, no clock, rebuild the city any time.
-- **Rampage** (side game): two-minute rounds scored on collateral damage.
+- **Rampage** (side game): two minutes to grab as much loot as you can while the city fights back. Get your health to zero and you're busted.
 
 | Difficulty | Hero health | Hero damage | Speed / aim | Hero power level |
 | --- | --- | --- | --- | --- |
 | Easy | 700 | 40% | slow, sloppy aim, long tells | 1 |
 | Normal | 1,300 | 70% | leads shots | 3 |
 | Hard | 2,200 | 120% | fast, tight aim, short tells | 5 |
+
+## Heat and henchmen
+Destruction pays **loot** (0.1% of the damage) and raises **Heat**. Lay low for 8 seconds and Heat starts to cool.
+
+| Heat | What comes for you | Loot per kill |
+| --- | --- | --- |
+| ★ | Cops on streets and rooftops, cop cars that drive the road grid to you | cop $500, car $2,500 |
+| ★★ | SWAT, plus a gunship with machine guns and rockets | SWAT $1,200, gunship $9,000 |
+| ★★★ | Army tanks firing shells, and drone swarms | tank $18,000, drone $1,500 |
+
+Fly through foot soldiers and cars to flatten them; every power, explosion and collapse hurts them too, and rooftop shooters fall with their building. Buildings block their shots. Gunships spin in and explode, tanks take a few hits. Heat is on in Rampage now, and in runs from Stage 3.
 
 ## The city
 Every building breaks into chunks: punch hero-sized holes, and floors that lose too much support collapse onto what's left. Diving into the street leaves cracked craters. Gas cans, oil drums, propane tanks and fuel tankers explode in chain reactions; trees snap and cars get crushed or thrown.

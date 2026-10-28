@@ -30,6 +30,11 @@ html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ink); 
 #speed small { font-family: var(--ui); font-size: 15px; font-weight: 700; -webkit-text-stroke: 0; margin-left: 4px; }
 #boostTag { display: inline-block; margin-top: 6px; padding: 2px 10px; background: var(--red); color: var(--paper); font-family: var(--display); font-size: 20px; letter-spacing: .06em; transform: skew(-10deg); opacity: 0; transition: opacity .15s; }
 #boostTag.on { opacity: 1; }
+#lootTags { display: grid; gap: 2px; margin-top: 4px; }
+.ltag { font-family: var(--display); font-size: 18px; letter-spacing: .05em; color: var(--yellow); animation: ltag 1.6s ease-out forwards; }
+@keyframes ltag { 0% { opacity: 0; transform: translateX(-12px); } 12%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.hud-heat { margin-top: 6px; font-family: var(--display); font-size: 24px; letter-spacing: .08em; color: rgba(247,243,232,.55); }
+.hud-heat.l1 { color: var(--yellow); } .hud-heat.l2 { color: #ff9a3c; } .hud-heat.l3 { color: var(--red); animation: hurry .5s ease-in-out infinite alternate; transform-origin: left; }
 #fps { font-size: 12px; font-weight: 600; letter-spacing: .06em; opacity: .6; margin-top: 4px; font-variant-numeric: tabular-nums; }
 
 #help { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--glass); padding: 8px 16px; border-radius: 6px;
@@ -222,6 +227,8 @@ body.cut #bossbar, body.cut #powers, body.cut #help, body.cut #hud-left, body.cu
   <div class="label" id="dmgLabel">Collateral damage</div>
   <div id="damage">$0</div>
   <div id="wrecked">0 buildings wrecked</div>
+  <div id="heat" class="hud-heat" hidden>HEAT ☆☆☆</div>
+  <div id="lootTags"></div>
 </div>
 <div class="hud" id="hud-right">
   <div id="speed">0<small>KM/H</small></div>
@@ -1090,7 +1097,7 @@ function updateCars(dt) {
 const hero = new THREE.Group(); scene.add(hero);
 const heroModel = new THREE.Group(); hero.add(heroModel);
 const heroMat = {}, heroMask = new THREE.Group();
-const capeGeo = new THREE.PlaneGeometry(.8, 1.5, 4, 10); capeGeo.translate(0, -.75, 0);
+const capeGeo = new THREE.PlaneGeometry(.62, 1.1, 4, 10); capeGeo.translate(0, -.55, 0); // short enough not to block the camera
 const capeBase = capeGeo.attributes.position.array.slice();
 const heroCape = new THREE.Mesh(capeGeo, new THREE.MeshStandardMaterial({ color: 0xb3121f, roughness: .75, side: THREE.DoubleSide, envMapIntensity: .4 }));
 {
@@ -1532,6 +1539,7 @@ function blast(p, r, vel) {
     const dx = c.p.x - p.x, dz = c.p.z - p.z, d = Math.hypot(dx, dz);
     if (d < r * 1.6) { const f = (1 - d / (r * 1.6)) * 30 + 8; flingCar(c, dx / (d || 1) * f, f * .8 + 6, dz / (d || 1) * f); }
   }
+  unitsInBlast(p, r, vel);
   return cash;
 }
 // spiderweb cracks: a ground-hugging decal that follows craters
@@ -1792,7 +1800,7 @@ function explode(x) {
   hitFeedback(cash, 100, true);
   if (T.r > 15 || Math.random() < .3) popup(['KABOOM!', 'BOOM!', 'FWOOSH!', 'KRAKOOM!'][Math.random() * 4 | 0], true);
   foesInRange(p, T.r * 1.3, () => hurtVillain(T.r * 3 * (1 - V.pos.distanceTo(p) / (T.r * 1.5)), tmpV2.subVectors(V.pos, p), T.r * 5, 'KABOOM!'));
-  if (state.mode === 'showdown' && d < T.r * 1.3) hurtPlayer(T.r * 3.5 * (1 - d / (T.r * 1.4)) / S.diff.dmg, null, 0);
+  if ((state.mode === 'showdown' || H.on) && d < T.r * 1.3) hurtPlayer(T.r * 3.5 * (1 - d / (T.r * 1.4)) / S.diff.dmg, null, 0);
   statAdd('explosions');
 }
 function touchExplosives() {
@@ -1869,8 +1877,10 @@ function aimInfo(range = 520) {
     const vt = tmpV.subVectors(f.V.pos, camera.position).dot(aimDir);
     if (vt > startT && vt < t && f.V.pos.distanceTo(tmpV2.copy(camera.position).addScaledVector(aimDir, vt)) < 2.8) { t = vt; onVillain = true; foe = f; }
   }
+  let unit = null;
+  if (H.on) { const uh = unitsOnRay(camera.position, aimDir, t); if (uh && uh.t > startT) { t = uh.t; unit = uh.u; onVillain = false; foe = null; } }
   aimPt.copy(camera.position).addScaledVector(aimDir, t);
-  return { hit, t, onVillain, foe, point: aimPt, dir: aimDir };
+  return { hit, t, onVillain, foe, unit, point: aimPt, dir: aimDir };
 }
 function handPos(out) { return heroModel.localToWorld(out.set(.4, .62, .75)); }
 
@@ -1925,7 +1935,7 @@ function updateProjs(dt) {
     for (let s = 0; s < steps && !hitAt; s++) {
       pr.pos.addScaledVector(pr.vel, dt / steps);
       if (pr.pos.y < groundH(pr.pos.x, pr.pos.z) + .5) hitAt = pr.pos;
-      else if (pr.owner === 'player' ? villainInRange(pr.pos, 2) : (state.mode === 'showdown' && P.pos.distanceTo(pr.pos) < 3)) hitAt = pr.pos;
+      else if (pr.owner === 'player' ? villainInRange(pr.pos, 2) || (H.on && units.some((u) => u.alive && u.pos.distanceTo(pr.pos) < 3)) : (state.mode === 'showdown' && P.pos.distanceTo(pr.pos) < 3)) hitAt = pr.pos;
       else { const arr = grid.get(cellKey(Math.floor(pr.pos.x / CELL), Math.floor(pr.pos.z / CELL))); if (arr) for (const e of arr) if (e.alive && pointInEntity(e, pr.pos)) { hitAt = pr.pos; break; } }
       if (!hitAt) for (const x of explosives) if (x.alive && !x.armed && Math.abs(x.x - pr.pos.x) < 2 && Math.abs(x.z - pr.pos.z) < 2 && pr.pos.y < groundH(x.x, x.z) + 3) { hitAt = pr.pos; break; }
     }
@@ -2133,6 +2143,8 @@ function updateBeam(dt) {
       beamCash += strike(p, 4.5 * m, m, 'storm');
       state.shake = Math.max(state.shake, .25);
     }
+  } else if (a.unit && beamTick <= 0) {
+    beamTick = .06; spawnFire(endV, .4, 2, 2, .3, 6); hitUnit(a.unit, false);
   } else if (!a.onVillain && a.hit && beamTick <= 0) {
     beamTick = id === 'flame' ? .08 : .05;
     const r = { laser: 1.6, icebeam: 2.2, flame: 3 }[id] * m;
@@ -2325,7 +2337,7 @@ const CEIL = 320, FENCE = 1000;
 const fwd = new V3(), right = new V3(), wish = new V3(), UP = new V3(0, 1, 0), steerDir = new V3(), steerTgt = new V3();
 let wasBoost = false;
 function updateFlight(dt) {
-  if (state.mode === 'showdown' && S.ko) {
+  if ((state.mode === 'showdown' || state.mode === 'rampage') && S.ko) {
     P.vel.y -= 30 * dt; P.vel.x *= Math.exp(-dt); P.vel.z *= Math.exp(-dt);
     P.pos.addScaledVector(P.vel, dt);
     const gk = groundH(P.pos.x, P.pos.z) + 1.2; if (P.pos.y < gk) { P.pos.y = gk; P.vel.set(0, 0, 0); }
@@ -2446,7 +2458,7 @@ function updateHero(dt) {
   if (heroCape.visible) {
     const pos = capeGeo.attributes.position, f01 = clamp(sp / 120, 0, 1);
     for (let i = 0; i < pos.count; i++) {
-      const x = capeBase[i * 3], y = capeBase[i * 3 + 1], f = -y / 1.5;
+      const x = capeBase[i * 3], y = capeBase[i * 3 + 1], f = -y / 1.1;
       const wave = Math.sin(animT * (5 + 12 * f01) + f * 5 + x * 2) * (.03 + .12 * f01) * f;
       pos.setXYZ(i, x * (1 + f * .3), y, -f * (.1 + .12 * f01) + wave);
     }
@@ -2505,8 +2517,8 @@ let hudT = 0, hudT2 = 3;
 function updateHud(dt) {
   state.comboT -= dt; if (state.comboT <= 0) { state.combo = 0; state.comboCash = 0; }
   hudT -= dt; if (hudT > 0) return; hudT = .1;
-  $('damage').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
-  $('wrecked').textContent = state.wrecked + (state.wrecked === 1 ? ' building wrecked' : ' buildings wrecked');
+  $('damage').textContent = '$' + Math.round(H.on ? H.loot : state.damage).toLocaleString('en-US');
+  $('wrecked').textContent = H.on ? H.kills + (H.kills === 1 ? ' henchman down' : ' henchmen down') + ' · ' + fmtMoney(state.damage) + ' damage' : state.wrecked + (state.wrecked === 1 ? ' building wrecked' : ' buildings wrecked');
   $('speed').innerHTML = Math.round(P.vel.length() * 3.6).toLocaleString('en-US') + '<small>KM/H</small>';
   $('alt').textContent = 'ALT ' + Math.round(P.pos.y) + ' m';
   $('boostTag').classList.toggle('on', P.boosting);
@@ -2656,7 +2668,7 @@ function showScreen(name) {
   $('pauseBtn').hidden = !!name || !state.mode;
   $('timer').hidden = !!name || state.mode !== 'rampage';
   $('help').hidden = !!name || isTouch; $('powers').hidden = !!name || isTouch;
-  if (name === 'main') { $('bestLine').textContent = stat('bestRampage') ? 'Best: ' + fmtMoney(stat('bestRampage')) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('heroMini').textContent = curHero().name;
+  if (name === 'main') { $('bestLine').textContent = save.stats.bestLoot ? 'Best haul: ' + fmtMoney(save.stats.bestLoot) : 'No score yet'; $('suitCount').textContent = save.unlocked.length + '/' + SUITS.length; $('heroMini').textContent = curHero().name;
     renderVillains(); }
   if (name === 'suits') renderSuits();
   if (name) saveNow();
@@ -2725,11 +2737,15 @@ function startMode(mode, diff) {
   state.mode = mode; state.timeLeft = RAMPAGE_TIME + 30 * powerLevel('overtime');
   buildPowerHud();
   state.run = { unlocks: [], maxCombo: 0, prevBest: stat('bestRampage') };
-  $('dmgLabel').textContent = mode === 'rampage' ? 'Rampage score' : 'Collateral damage';
+  $('dmgLabel').textContent = mode === 'rampage' ? 'Loot' : 'Collateral damage';
   if (mode === 'showdown') startShowdown(diff || 'normal'); else { endShowdownWorld(); musStop(); }
   if (mode === 'showdown') { showScreen(null); initAudio(); requestLock(); startCutscene(); }
   else enterPlay();
-  if (mode === 'rampage') popup('RAMPAGE!', true);
+  if (mode === 'rampage') {
+    popup('RAMPAGE!', true); startHeat();
+    Object.assign(S, { hp: PLAYER_HP, ko: false, over: false, taken: 0, lastHurt: 0, lastHurtReal: 0, stunT: 0, slowT: 0 }); S.foes = [];
+    $('bossbar').querySelectorAll('.vil').forEach((e) => e.remove()); $('bossbar').hidden = false; updateBars();
+  } else stopHeat();
 }
 function pauseGame() {
   if (!state.playing) return;
@@ -2741,18 +2757,21 @@ function pauseGame() {
   if (document.pointerLockElement) document.exitPointerLock();
   showScreen('pause');
 }
-function endRampage() {
-  state.playing = false; keys.clear();
+function endRampage(busted) {
+  if (S.over && busted) return;
+  S.over = true; state.playing = false; keys.clear();
   if (document.pointerLockElement) document.exitPointerLock();
   statMax('bestRampage', state.damage);
+  const r = state.run, prevLoot = save.stats.bestLoot || 0, loot = Math.round(H.loot);
+  statMax('bestLoot', loot);
   statAdd('rampages', 1);
-  $('rTitle').textContent = "Time's up"; $('rNext').hidden = true;
-  const r = state.run;
-  $('rScore').textContent = '$' + Math.round(state.damage).toLocaleString('en-US');
-  $('rBest').textContent = state.damage > r.prevBest ? 'New best!' : 'Best: $' + Math.round(stat('bestRampage')).toLocaleString('en-US');
-  $('rBest').classList.toggle('newbest', state.damage > r.prevBest);
+  $('rTitle').textContent = busted ? 'Busted!' : "Time's up"; $('rNext').hidden = true;
+  $('rScore').textContent = '$' + loot.toLocaleString('en-US') + ' loot';
+  $('rBest').textContent = loot > prevLoot ? 'New best haul!' : 'Best haul: $' + Math.round(stat('bestLoot')).toLocaleString('en-US');
+  $('rBest').classList.toggle('newbest', loot > prevLoot);
   $('rCut').textContent = '';
-  const rows = [['Buildings wrecked', state.wrecked], ['Buildings flattened', r.leveled || 0], ['Explosions', r.explosions || 0], ['Cars thrown', r.cars || 0], ['Trees down', r.trees || 0], ['Best combo', '×' + r.maxCombo]];
+  const rows = [['Collateral damage', fmtMoney(state.damage)], ['Henchmen down', H.kills], ['Top heat', '★'.repeat(H.maxLvl) || 'none'], ['Buildings wrecked', state.wrecked], ['Explosions', r.explosions || 0], ['Best combo', '×' + r.maxCombo]];
+  stopHeat(); $('bossbar').hidden = true;
   const st = $('rStats'); st.textContent = '';
   for (const [k, v] of rows) { const d = document.createElement('div'); const a = document.createElement('span'); a.textContent = k; const b = document.createElement('span'); b.textContent = v; d.append(a, b); st.append(d); }
   const un = $('rUnlocks'); un.textContent = '';
@@ -2948,15 +2967,15 @@ function hurtVillain(amount, dir, knock, label) {
   if (V.hp <= 0) villainDown();
 }
 function hurtPlayer(amount, dir, knock) {
-  if (state.mode !== 'showdown' || S.over || S.ko) return;
-  amount *= S.diff.dmg;
-  S.hp -= amount; S.taken += amount; S.lastHurt = S.time;
+  if (!(state.mode === 'showdown' || H.on) || S.over || S.ko || state.cut) return;
+  if (state.mode === 'showdown') amount *= S.diff.dmg;
+  S.hp -= amount; S.taken += amount; S.lastHurt = S.time; S.lastHurtReal = performance.now() / 1000;
   if (dir && knock) { P.vel.addScaledVector(tmpV.copy(dir).normalize(), knock); P.slamming = false; P.landT = 0; }
   const h = $('hurt'); h.style.transition = 'none'; h.style.opacity = String(clamp(amount / 120, .3, .85));
   requestAnimationFrame(() => { h.style.transition = 'opacity .6s'; h.style.opacity = '0'; });
   state.shake = Math.max(state.shake, clamp(amount / 150, .3, 1.2));
   updateBars();
-  if (S.hp <= 0) { S.hp = 0; S.ko = true; P.slamming = false; P.landT = 0; popup('K.O.', true); later(1.8, () => endShowdown(false)); }
+  if (S.hp <= 0) { S.hp = 0; S.ko = true; P.slamming = false; P.landT = 0; popup(state.mode === 'rampage' ? 'BUSTED!' : 'K.O.', true); later(1.8, () => state.mode === 'rampage' ? endRampage(true) : endShowdown(false)); }
 }
 function villainDown() {
   V.dead = true; V.act = null; vGlow.visible = false;
@@ -3348,6 +3367,290 @@ function updateFoe(dt) {
 // player attacks that reach the villain
 function villainInRange(p, r) { return state.mode === 'showdown' && S.foes.some((f) => f.group.visible && !f.V.dead && f.V.pos.distanceTo(p) < r + 1.8); }
 
+// ---------------------------------------------------------------- heat + henchmen
+// Destruction and kills raise Heat. Each level brings a nastier response: cops and cop cars,
+// then SWAT and a gunship, then tanks and drone swarms. Lay low and it cools off.
+const HEAT_AT = [10, 90, 400];            // heat points for levels 1, 2, 3 (a point is ~$1M of damage)
+const LOOT_RATE = .001;                  // loot per dollar of damage
+const H = { on: false, pts: 0, lvl: 0, calm: 0, loot: 0, kills: 0, maxLvl: 0, spawnT: 0, lastDmg: 0, lootPop: 0, siren: 0 };
+const UNIT = {
+  cop: { name: 'Cop', hp: 1, loot: 500, range: 130, rate: 1.5, dmg: 5, acc: .5, kind: 'foot', col: 0x1d3b7a },
+  swat: { name: 'SWAT', hp: 1, loot: 1200, range: 170, rate: .9, dmg: 7, acc: .55, kind: 'foot', col: 0x17191d },
+  car: { name: 'Cop car', hp: 1, loot: 2500, range: 120, rate: 1.1, dmg: 5, acc: .45, kind: 'road', speed: 26, stop: 55 },
+  heli: { name: 'Gunship', hp: 3, loot: 9000, range: 240, rate: .22, dmg: 3, acc: .35, kind: 'air', rocket: 4.5 },
+  drone: { name: 'Drone', hp: 1, loot: 1500, range: 150, rate: 1.2, dmg: 6, acc: .5, kind: 'air', fast: true },
+  tank: { name: 'Tank', hp: 4, loot: 18000, range: 280, rate: 3.6, dmg: 0, acc: 1, kind: 'road', speed: 11, stop: 110, shell: true },
+};
+const WANT = [ // how many of each are on the board at each heat level
+  {},
+  { cop: 6, car: 3 },
+  { cop: 4, swat: 6, car: 3, heli: 1 },
+  { swat: 7, car: 2, heli: 2, tank: 2, drone: 6 },
+];
+const units = [];
+const unitScale = QID === 'low' ? .65 : QID === 'medium' ? .85 : 1;
+const uMat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .6 }, o));
+const UM = {
+  cop: uMat(0x1d3b7a), swat: uMat(0x17191d), skin: uMat(0xc8936e), white: uMat(0xf1f1ee, { metalness: .3, roughness: .35 }), black: uMat(0x111216, { metalness: .3, roughness: .4 }),
+  red: new THREE.MeshBasicMaterial({ color: 0xff2020, toneMapped: false }), blue: new THREE.MeshBasicMaterial({ color: 0x2050ff, toneMapped: false }),
+  olive: uMat(0x4f5a3a, { roughness: .8 }), gun: uMat(0x2b2f35, { metalness: .6, roughness: .4 }), glass: uMat(0x1c2a36, { metalness: .8, roughness: .15 }),
+};
+const UG = {
+  body: new THREE.CapsuleGeometry(.32, .8, 4, 8), head: new THREE.SphereGeometry(.22, 10, 8), box: new THREE.BoxGeometry(1, 1, 1),
+  cyl: new THREE.CylinderGeometry(1, 1, 1, 10), rotor: new THREE.BoxGeometry(1, .05, .25),
+};
+function part(geo, mat, sx, sy, sz, x, y, z) { const m = new THREE.Mesh(geo, mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); m.castShadow = Q.shadows; return m; }
+function buildUnitMesh(type) {
+  const g = new THREE.Group();
+  if (type === 'cop' || type === 'swat') {
+    g.add(part(UG.body, UM[type], 1, 1, 1, 0, 1.05, 0), part(UG.head, type === 'swat' ? UM.black : UM.skin, 1, 1, 1, 0, 1.85, 0), part(UG.box, UM.gun, .1, .1, .7, .25, 1.2, .35));
+    g.scale.setScalar(1.35);
+  } else if (type === 'car') {
+    g.add(part(carGeo, UM.white, 1.05, 1.05, 1.05, 0, 0, 0), part(UG.box, UM.black, 1.9, .5, 2.2, 0, 1.15, -.3));
+    const r = part(UG.box, UM.red, .6, .18, .3, -.35, 1.5, -.3), b = part(UG.box, UM.blue, .6, .18, .3, .35, 1.5, -.3); g.add(r, b); g.userData.lights = [r, b];
+  } else if (type === 'heli') {
+    g.add(part(UG.body, UM.black, 3, 2.6, 4.2, 0, 0, 0), part(UG.box, UM.glass, 1.6, 1, 1.4, 0, .4, 2.6), part(UG.box, UM.black, .5, .5, 7, 0, .2, -5.5), part(UG.box, UM.black, .2, 1.6, 1, 0, 1, -8.8));
+    const rot = part(UG.rotor, UM.gun, 15, 1, 1, 0, 2.3, 0), rot2 = part(UG.rotor, UM.gun, 15, 1, 1, 0, 2.3, 0); rot2.rotation.y = Math.PI / 2;
+    const hub = new THREE.Group(); hub.add(rot, rot2); g.add(hub); g.userData.rotor = hub;
+  } else if (type === 'drone') {
+    g.add(part(UG.box, UM.black, 1.1, .3, 1.1, 0, 0, 0), part(UG.head, UM.red, 1, 1, 1, 0, -.15, .5));
+    for (const [x, z] of [[-.7, -.7], [.7, -.7], [-.7, .7], [.7, .7]]) g.add(part(UG.cyl, UM.gun, .32, .04, .32, x, .2, z));
+  } else if (type === 'tank') {
+    g.add(part(UG.box, UM.olive, 4, 1.4, 7, 0, .9, 0), part(UG.box, UM.gun, 4.4, .7, 7.2, 0, .35, 0));
+    const tur = new THREE.Group(); tur.position.y = 2;
+    tur.add(part(UG.box, UM.olive, 2.6, 1.1, 3, 0, 0, 0), part(UG.cyl, UM.gun, .18, 4.5, .18, 0, .1, 3.4));
+    tur.children[1].rotation.x = Math.PI / 2; g.add(tur); g.userData.turret = tur;
+  }
+  scene.add(g); return g;
+}
+// ---- spawning
+const roadAt = (i) => -HALF + i * PERIOD; // road centre lines are every 80 m
+function spawnUnit(type) {
+  const T = UNIT[type], u = { type, T, hp: T.hp, cd: rand(1, 2.5) * T.rate + .5, pos: new V3(), vel: new V3(), alive: true, iFrame: 0, rocketCd: rand(2, 4) };
+  const ang = rand(0, Math.PI * 2), d = rand(130, 210);
+  if (T.kind === 'foot') { // on a rooftop near you, or on the street
+    let best = null;
+    for (let k = 0; k < 12 && !best; k++) {
+      const a = ang + k * .5, x = clamp(P.pos.x + Math.cos(a) * d, -HALF + 20, HALF - 20), z = clamp(P.pos.z + Math.sin(a) * d, -HALF + 20, HALF - 20);
+      const arr = grid.get(cellKey(Math.floor(x / CELL), Math.floor(z / CELL)));
+      const e = arr && arr.find((q) => q.alive && !q.parent && q.kind === 'box' && q.style !== STONE_STYLE && (q.topK + 1) * q.ch + q.y0 < 160);
+      if (e && Math.random() < .7) { u.roof = e; best = new V3(e.cx + rand(-.3, .3) * e.w, e.y0 + (e.topK + 1) * e.ch, e.cz + rand(-.3, .3) * e.d); }
+      else if (k > 6) { const rx = roadAt(Math.round((x + HALF) / PERIOD)); best = new V3(rx + rand(-5, 5), 0, z); best.y = groundH(best.x, best.z); }
+    }
+    if (!best) return;
+    u.pos.copy(best);
+  } else if (T.kind === 'road') {
+    u.axis = Math.random() < .5 ? 'x' : 'z';
+    const across = u.axis === 'x' ? P.pos.z : P.pos.x, along = u.axis === 'x' ? P.pos.x : P.pos.z;
+    u.road = roadAt(clamp(Math.round((across + HALF) / PERIOD) + (Math.random() < .5 ? -1 : 1) * (1 + (Math.random() * 2 | 0)), 0, N));
+    u.t = clamp(along + (Math.random() < .5 ? -1 : 1) * rand(140, 220), -HALF, HALF); u.dir = Math.sign(along - u.t) || 1;
+    u.lane = 4 * u.dir;
+    roadPos(u);
+  } else {
+    u.pos.set(P.pos.x + Math.cos(ang) * d, clamp(P.pos.y + rand(20, 60), 70, CEIL - 20), P.pos.z + Math.sin(ang) * d);
+    u.orbit = ang; u.orbitR = T.fast ? rand(30, 55) : rand(80, 110);
+  }
+  u.mesh = buildUnitMesh(type); u.mesh.position.copy(u.pos);
+  units.push(u);
+}
+function roadPos(u) {
+  if (u.axis === 'x') u.pos.set(u.t, 0, u.road + u.lane); else u.pos.set(u.road - u.lane, 0, u.t);
+  u.pos.y = groundH(u.pos.x, u.pos.z);
+}
+function clearUnits() { for (const u of units) scene.remove(u.mesh); units.length = 0; for (const p of eproj) scene.remove(p.s); eproj.length = 0; }
+// ---- damage to henchmen
+function killUnit(u, push) {
+  if (!u.alive) return;
+  u.alive = false; H.kills++; H.loot += u.T.loot; H.pts += u.T.hp; lootTag('+$' + u.T.loot.toLocaleString('en-US') + ' · ' + u.T.name.toUpperCase());
+  const p = u.pos.clone(); p.y += 1;
+  if (u.type === 'cop' || u.type === 'swat') { spawnDust(p, 1.5, 1, CONCRETE_COL); scene.remove(u.mesh); return; }
+  if (u.type === 'heli') { u.falling = true; u.vel.set(rand(-8, 8), 0, rand(-8, 8)); spawnFire(p, 2, 4, 6, .8, 8); sfxBoom(); return; } // crashes, then explodes
+  unitBoom(u, p);
+}
+function unitBoom(u, p) {
+  const big = u.type === 'tank' || u.type === 'heli';
+  spawnFire(p, big ? 2.5 : 1.2, big ? 9 : 5, big ? 14 : 7, .9, big ? 18 : 10); spawnDust(p, big ? 6 : 3, 3, SMOKE_COL);
+  for (let q = 0; q < (big ? 22 : 10); q++) { tmpV3.set(rand(-1, 1), rand(.3, 1.3), rand(-1, 1)).normalize().multiplyScalar(rand(8, 22)); pools[0].spawn(p, tmpV3, rand(.3, .9), u.type === 'tank' ? new THREE.Color(0x4f5a3a) : new THREE.Color(0x222428)); }
+  boomLight.color.setHex(0xff9a40); boomLight.position.copy(p); boomLight.intensity = big ? 7 : 4;
+  if (big) { blast(p, 6, null); crater(p.x, p.z, 5, 1.2); }
+  sfxBoom(); sfxCrash(big ? 1 : .6);
+  scene.remove(u.mesh);
+}
+function hitUnit(u, strong, push) {
+  if (!u.alive || u.iFrame > 0) return;
+  u.hp -= strong ? 3 : 1; u.iFrame = .25;
+  spawnFire(u.pos, .5, 1.6, 2, .3, 6);
+  if (u.hp <= 0) killUnit(u, push);
+}
+// called from blast(): anything caught in a blast takes a hit, big blasts finish tough units
+function unitsInBlast(p, r, vel) { if (!H.on) return; for (const u of units) if (u.alive && u.pos.distanceTo(p) < r + 2.5) hitUnit(u, r > 10, vel); }
+function unitsOnRay(o, dir, maxT) { // nearest henchman on a ray, for beams
+  let best = null, bt = maxT;
+  for (const u of units) { if (!u.alive) continue; const c = tmpV.copy(u.pos); c.y += u.T.kind === 'foot' ? 1.4 : 1; const t = c.sub(o).dot(dir); if (t < 0 || t > bt) continue; if (tmpV2.copy(o).addScaledVector(dir, t).distanceTo(tmpV.copy(u.pos).setY(u.pos.y + 1)) < (u.type === 'heli' || u.type === 'tank' ? 4 : 2.2)) { best = u; bt = t; } }
+  return best ? { u: best, t: bt } : null;
+}
+// ---- enemy fire
+const TRACERS = 48, trPos = new Float32Array(TRACERS * 6), trLife = new Float32Array(TRACERS);
+const trGeo = new THREE.BufferGeometry(); trGeo.setAttribute('position', new THREE.BufferAttribute(trPos, 3));
+const tracerLines = new THREE.LineSegments(trGeo, new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: .9, toneMapped: false, fog: false }));
+tracerLines.frustumCulled = false; scene.add(tracerLines);
+let trIdx = 0;
+function tracer(a, b) { const i = trIdx = (trIdx + 1) % TRACERS; trPos.set([a.x, a.y, a.z, b.x, b.y, b.z], i * 6); trLife[i] = .07; }
+function updateTracers(dt) {
+  let ch = false;
+  for (let i = 0; i < TRACERS; i++) if (trLife[i] > 0) { trLife[i] -= dt; ch = true; if (trLife[i] <= 0) trPos.fill(0, i * 6, i * 6 + 6); }
+  if (ch) trGeo.attributes.position.needsUpdate = true;
+}
+const eproj = [];
+function fireShell(from, to, rocket) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, color: rocket ? 0xffd080 : 0xffa060, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  s.scale.setScalar(rocket ? 2 : 2.6); s.position.copy(from); scene.add(s);
+  const v = tmpV.subVectors(to, from).normalize().multiplyScalar(rocket ? 120 : 150).clone();
+  eproj.push({ s, pos: from.clone(), vel: v, life: 4, rocket });
+  sfxBoom();
+}
+function updateEproj(dt) {
+  for (let i = eproj.length - 1; i >= 0; i--) {
+    const e = eproj[i]; e.life -= dt;
+    if (!e.rocket) e.vel.y -= 6 * dt;
+    e.pos.addScaledVector(e.vel, dt); e.s.position.copy(e.pos);
+    if (Math.random() < .6) spawnDust(e.pos, .6, 1, SMOKE_COL);
+    let hit = e.pos.y < groundH(e.pos.x, e.pos.z) + .5 || P.pos.distanceTo(e.pos) < 3;
+    if (!hit) { const arr = grid.get(cellKey(Math.floor(e.pos.x / CELL), Math.floor(e.pos.z / CELL))); if (arr) for (const q of arr) if (q.alive && pointInEntity(q, e.pos)) { hit = true; break; } }
+    if (hit || e.life <= 0) {
+      scene.remove(e.s); e.s.material.dispose(); eproj.splice(i, 1);
+      if (!hit) continue;
+      const R = e.rocket ? 6 : 9;
+      spawnFire(e.pos, 1, R * .6, 8, .8, R); spawnDust(e.pos, R * .3, 2, SMOKE_COL);
+      boomLight.color.setHex(0xff9a40); boomLight.position.copy(e.pos); boomLight.intensity = 5;
+      blast(e.pos.clone(), R * .6, null);
+      if (e.pos.y - groundH(e.pos.x, e.pos.z) < 2) crater(e.pos.x, e.pos.z, R * .4, .8);
+      const d = P.pos.distanceTo(e.pos);
+      if (d < R + 1.5) hurtPlayer((e.rocket ? 45 : 70) * (1 - d / (R * 1.6)), tmpV2.subVectors(P.pos, e.pos), 60);
+      sfxCrash(.7); state.shake = Math.max(state.shake, clamp(.8 - d / 300, .1, .8));
+    }
+  }
+}
+let gunT = 0;
+function shoot(u, from) {
+  const T = u.T, dist = from.distanceTo(P.pos), dir = tmpV.subVectors(P.pos, from).normalize().clone();
+  const hit = raycastWorld(from, dir, 3, dist - 2);
+  if (hit) { tracer(from, tmpV2.copy(from).addScaledVector(dir, hit.t)); return; } // a building is in the way
+  const sp = P.vel.length(), chance = clamp(T.acc - sp / 500 - dist / 900, .08, .75);
+  if (Math.random() < chance) { tracer(from, P.pos); hurtPlayer(T.dmg, null, 0); }
+  else tracer(from, tmpV2.copy(P.pos).add(new V3(rand(-4, 4), rand(-3, 3), rand(-4, 4))));
+  gunT -= 1; if (gunT <= 0) { gunT = 3; sfxGun(); }
+}
+// ---- the response, every frame
+let heatLevelShown = -1;
+function updateHeat(dt) {
+  if (!H.on || !state.playing) { updateTracers(dt); return; }
+  // heat and loot from damage
+  const dd = Math.max(0, state.damage - H.lastDmg); H.lastDmg = state.damage;
+  H.loot += dd * LOOT_RATE;
+  if (dd > 0) { H.pts += dd / 1e6; H.calm = 0; } else H.calm += dt;
+  if (H.calm > 8) H.pts *= Math.exp(-dt * .12); // lay low and it cools off
+  const lvl = H.pts >= HEAT_AT[2] ? 3 : H.pts >= HEAT_AT[1] ? 2 : H.pts >= HEAT_AT[0] ? 1 : 0;
+  if (lvl > H.lvl) { popup(['', 'COPS INCOMING', 'SWAT + GUNSHIP', 'THE ARMY IS HERE'][lvl], true); sfxSiren(); }
+  H.lvl = lvl; H.maxLvl = Math.max(H.maxLvl, lvl);
+  // health comes back slowly when you're not being shot
+  if (state.mode === 'rampage' && !S.ko && performance.now() / 1000 - S.lastHurtReal > 4) { S.hp = Math.min(PLAYER_HP, S.hp + 14 * dt); updateBars(); }
+  // reinforcements
+  H.spawnT -= dt;
+  if (H.spawnT <= 0) {
+    H.spawnT = 1.1;
+    const want = WANT[lvl], have = {};
+    for (const u of units) if (u.alive) have[u.type] = (have[u.type] || 0) + 1;
+    const need = Object.keys(want).filter((t) => (have[t] || 0) < Math.round(want[t] * unitScale) || (want[t] && !have[t]));
+    if (need.length) spawnUnit(need[Math.random() * need.length | 0]);
+  }
+  // move, aim, shoot
+  const pt = new V3();
+  for (let i = units.length - 1; i >= 0; i--) {
+    const u = units[i], T = u.T;
+    if (!u.alive && !u.falling) { units.splice(i, 1); continue; }
+    u.iFrame -= dt;
+    const far = u.pos.distanceTo(P.pos);
+    if (u.falling) { // a downed gunship spins in
+      u.vel.y -= 30 * dt; u.pos.addScaledVector(u.vel, dt); u.mesh.rotation.y += dt * 6; u.mesh.position.copy(u.pos);
+      if (Math.random() < .5) spawnFire(u.pos, 1, 3, 1, .5, 4);
+      if (u.pos.y <= groundH(u.pos.x, u.pos.z) + 1) { u.falling = false; unitBoom(u, u.pos.clone()); }
+      continue;
+    }
+    if (far > 520 && lvl < 3) { scene.remove(u.mesh); units.splice(i, 1); continue; } // left behind
+    if (T.kind === 'foot') {
+      if (u.roof && (!u.roof.alive || u.roof.y0 + (u.roof.topK + 1) * u.roof.ch < u.pos.y - 2)) { killUnit(u); continue; } // the roof came down
+      u.mesh.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
+      // flatten them if you fly through
+      if (far < 3.5 && P.vel.length() > 10) { killUnit(u); continue; }
+    } else if (T.kind === 'road') {
+      const along = u.axis === 'x' ? P.pos.x : P.pos.z, across = u.axis === 'x' ? P.pos.z : P.pos.x;
+      const flat = Math.hypot(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
+      if (flat > T.stop) {
+        const step = T.speed * dt; u.t += u.dir * step;
+        // at an intersection, turn toward you if that's the shorter way
+        const near = roadAt(Math.round((u.t + HALF) / PERIOD));
+        if (Math.abs(u.t - near) < step && Math.abs(across - u.road) > 60 && Math.random() < .7) {
+          const newRoad = near, newT = u.road; u.axis = u.axis === 'x' ? 'z' : 'x'; u.road = newRoad; u.t = newT; u.dir = Math.sign(across - newT) || 1; u.lane = 4 * u.dir;
+        } else if (Math.sign(along - u.t) !== u.dir && Math.abs(along - u.t) > 30) { u.dir = -u.dir; u.lane = 4 * u.dir; }
+        u.t = clamp(u.t, -HALF, HALF);
+      }
+      roadPos(u);
+      u.mesh.rotation.y = u.axis === 'x' ? (u.dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (u.dir > 0 ? 0 : Math.PI);
+      if (u.type === 'car') { const l = u.mesh.userData.lights, on = (performance.now() / 180 | 0) % 2; l[0].visible = !!on; l[1].visible = !on; }
+      if (u.type === 'tank') { const tur = u.mesh.userData.turret; tur.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z) - u.mesh.rotation.y; }
+      if (far < 3.5 + (u.type === 'tank' ? 3 : 1) && P.vel.length() > 10) { hitUnit(u, P.vel.length() > 120); P.vel.multiplyScalar(.7); }
+    } else { // air: orbit you
+      u.orbit += dt * (T.fast ? 1.1 : .35);
+      pt.set(P.pos.x + Math.cos(u.orbit) * u.orbitR, clamp(P.pos.y + (T.fast ? 6 : 28), 40, CEIL - 10), P.pos.z + Math.sin(u.orbit) * u.orbitR);
+      u.vel.lerp(pt.sub(u.pos).multiplyScalar(T.fast ? 2 : .9).clampLength(0, T.fast ? 70 : 45), 1 - Math.exp(-dt * 2));
+      u.pos.addScaledVector(u.vel, dt);
+      u.mesh.rotation.y = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
+      if (u.type === 'heli') { u.mesh.userData.rotor.rotation.y += dt * 25; u.mesh.rotation.z = clamp(-u.vel.x * .01, -.3, .3); }
+      if (far < (u.type === 'heli' ? 7 : 3.5) && P.vel.length() > 10) hitUnit(u, P.vel.length() > 120);
+    }
+    u.mesh.position.copy(u.pos);
+    // fire
+    u.cd -= dt;
+    if (S.ko) continue;
+    if (u.cd <= 0 && far < T.range) {
+      u.cd = T.rate * rand(.8, 1.25);
+      const from = tmpV3.copy(u.pos); from.y += T.kind === 'foot' ? 1.7 : T.kind === 'air' ? -.5 : 1.6;
+      if (T.shell) fireShell(from.clone(), predicted(new V3(), far / 150).add(new V3(rand(-4, 4), 0, rand(-4, 4))), false);
+      else shoot(u, from.clone());
+    }
+    if (T.rocket && (u.rocketCd -= dt) <= 0 && far < T.range) { u.rocketCd = T.rocket * rand(.8, 1.3); fireShell(u.pos.clone().setY(u.pos.y - 1), predicted(new V3(), far / 120), true); }
+  }
+  updateTracers(dt); updateEproj(dt);
+  // HUD
+  const stars = '★'.repeat(lvl) + '☆'.repeat(3 - lvl);
+  if (lvl !== heatLevelShown) { heatLevelShown = lvl; $('heat').textContent = 'HEAT ' + stars; $('heat').className = 'hud-heat l' + lvl; }
+}
+function lootTag(text) {
+  const box = $('lootTags'); if (box.children.length > 4) box.firstChild.remove();
+  const el = document.createElement('div'); el.className = 'ltag'; el.textContent = text; box.append(el); setTimeout(() => el.remove(), 1600);
+}
+function startHeat() {
+  clearUnits();
+  Object.assign(H, { on: true, pts: 0, lvl: 0, calm: 0, loot: 0, kills: 0, maxLvl: 0, spawnT: 2, lastDmg: state.damage, lootAcc: 0, lootPop: 0 });
+  heatLevelShown = -1; $('heat').hidden = false;
+}
+function stopHeat() { H.on = false; clearUnits(); $('heat').hidden = true; trPos.fill(0); trGeo.attributes.position.needsUpdate = true; }
+// ---- sounds
+function sfxGun() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  for (let k = 0; k < 3; k++) { const s = AC.createBufferSource(); s.buffer = noiseBuf; const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 900; const g = AC.createGain(); g.gain.setValueAtTime(.18, t + k * .07); g.gain.exponentialRampToValueAtTime(.001, t + k * .07 + .06); s.connect(f); f.connect(g); g.connect(master); s.start(t + k * .07); s.stop(t + k * .07 + .08); }
+}
+function sfxSiren() {
+  if (!AC) return;
+  const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = 'sawtooth';
+  for (let k = 0; k < 4; k++) { o.frequency.setValueAtTime(700, t + k * .5); o.frequency.linearRampToValueAtTime(1100, t + k * .5 + .25); o.frequency.linearRampToValueAtTime(700, t + k * .5 + .5); }
+  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1800;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.06, t + .1); g.gain.setValueAtTime(.06, t + 1.8); g.gain.exponentialRampToValueAtTime(.0001, t + 2);
+  o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + 2.05);
+}
+
 // ---------------------------------------------------------------- villain intro cut scene
 // Each villain drops out of the sky and craters the street, the camera pushes in on him while
 // his title card plays, then a shot over the hero's shoulder before control starts.
@@ -3586,6 +3889,7 @@ const clock = new THREE.Clock();
 function simulate(dt) {
   if (state.playing) updateFlight(dt);
   updateVillain(dt);
+  updateHeat(dt);
   if (state.cut) updateCutscene(dt);
   musUpdate(dt);
   updateMode(dt);
@@ -3643,6 +3947,6 @@ addEventListener('pointerdown', firstGesture, true); addEventListener('keydown',
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
