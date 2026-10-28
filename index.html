@@ -3694,9 +3694,18 @@ function buildUnitMesh(type) {
 const roadAt = (i) => -HALF + i * PERIOD; // road centre lines are every 80 m
 // src: the spawner building it comes from in a run round; cars and tanks set off from its street,
 // aircraft lift off its roof, mechs walk out of it, and foot soldiers deploy closer to you
-function spawnUnit(type, src) {
+// is there building at p (or just above it)? spawns must stand in the open
+function insideBuilding(p) {
+  for (const [dx, dz] of [[0, 0], [1.6, 0], [-1.6, 0], [0, 1.6], [0, -1.6]]) { // the body, not just its centre
+    const q = tmpV2.set(p.x + dx, p.y + 1.5, p.z + dz), arr = grid.get(cellKey(Math.floor(q.x / CELL), Math.floor(q.z / CELL)));
+    if (arr && arr.some((e) => e.alive && pointInEntity(e, q))) return true;
+  }
+  return false;
+}
+// close: the last stand, which drops them in near you
+function spawnUnit(type, src, close) {
   const T = UNIT[type], u = { type, T, hp: T.hp, cd: rand(1, 2.5) * Math.min(T.rate, 3) + .5, pos: new V3(), vel: new V3(), alive: true, iFrame: 0, rocketCd: rand(2, 4), face: 0 };
-  const ang = rand(0, Math.PI * 2), d = T.roof ? rand(160, 280) : src ? rand(80, 150) : rand(130, 210);
+  const ang = rand(0, Math.PI * 2), d = T.roof ? rand(160, 280) : close ? rand(60, 120) : src ? rand(80, 150) : rand(130, 210);
   if (T.kind === 'foot') { // on a rooftop near you, or on the street
     let best = null;
     for (let k = 0; k < 12 && !best; k++) {
@@ -3705,12 +3714,14 @@ function spawnUnit(type, src) {
       const e = arr && arr.find((q) => q.alive && !q.parent && q.kind === 'box' && q.style !== STONE_STYLE && (q.topK + 1) * q.ch + q.y0 < 160);
       if (e && (Math.random() < .7 || T.roof)) { u.roof = e; best = new V3(e.cx + rand(-.3, .3) * e.w, e.y0 + (e.topK + 1) * e.ch, e.cz + rand(-.3, .3) * e.d); }
       else if (k > 6 && !T.roof) { const rx = roadAt(Math.round((x + HALF) / PERIOD)); best = new V3(rx + rand(-5, 5), 0, z); best.y = groundH(best.x, best.z); }
+      if (best && insideBuilding(best)) { best = null; u.roof = null; }
     }
     if (!best) return null;
     u.pos.copy(best); u.face = Math.atan2(P.pos.x - u.pos.x, P.pos.z - u.pos.z);
   } else if (T.kind === 'walker') {
     const sx = src || { x: P.pos.x + Math.cos(ang) * d, z: P.pos.z + Math.sin(ang) * d };
     u.pos.set(roadAt(clamp(Math.round((sx.x + HALF) / PERIOD), 0, N)), 0, clamp(sx.z, -HALF, HALF)); u.pos.y = groundH(u.pos.x, u.pos.z); u.cd = 2;
+    if (insideBuilding(u.pos)) return null;
   } else if (T.kind === 'road' && src) {
     u.axis = Math.random() < .5 ? 'x' : 'z';
     u.road = roadAt(clamp(Math.round(((u.axis === 'x' ? src.z : src.x) + HALF) / PERIOD), 0, N));
@@ -3720,8 +3731,8 @@ function spawnUnit(type, src) {
   } else if (T.kind === 'road') {
     u.axis = Math.random() < .5 ? 'x' : 'z';
     const across = u.axis === 'x' ? P.pos.z : P.pos.x, along = u.axis === 'x' ? P.pos.x : P.pos.z;
-    u.road = roadAt(clamp(Math.round((across + HALF) / PERIOD) + (Math.random() < .5 ? -1 : 1) * (1 + (Math.random() * 2 | 0)), 0, N));
-    u.t = clamp(along + (Math.random() < .5 ? -1 : 1) * rand(140, 220), -HALF, HALF); u.dir = Math.sign(along - u.t) || 1;
+    u.road = roadAt(clamp(Math.round((across + HALF) / PERIOD) + (Math.random() < .5 ? -1 : 1) * (close ? 1 : 1 + (Math.random() * 2 | 0)), 0, N));
+    u.t = clamp(along + (Math.random() < .5 ? -1 : 1) * (close ? rand(50, 100) : rand(140, 220)), -HALF, HALF); u.dir = Math.sign(along - u.t) || 1;
     u.lane = 4 * u.dir;
     roadPos(u);
   } else {
@@ -3730,6 +3741,7 @@ function spawnUnit(type, src) {
       u.vel.subVectors(P.pos, u.pos).normalize().multiplyScalar(T.speed); u.pass = 'in'; u.gunT = 0; u.rocketCd = rand(1, 3);
     } else if (src) u.pos.set(src.x + rand(-6, 6), src.top + 6, src.z + rand(-6, 6));
     else u.pos.set(P.pos.x + Math.cos(ang) * d, clamp(P.pos.y + rand(20, 60), 70, CEIL - 20), P.pos.z + Math.sin(ang) * d);
+    for (let k = 0; k < 6 && insideBuilding(u.pos); k++) u.pos.y += 30; // never start inside a tower
     u.orbit = ang; u.orbitR = T.jet ? rand(16, 28) : T.fast ? rand(30, 55) : rand(80, 110);
   }
   u.mesh = buildUnitMesh(type); u.mesh.position.copy(u.pos);
@@ -3881,7 +3893,7 @@ function updateHeat(dt) {
       continue;
     }
     if (far > 520 && lvl < 3) { scene.remove(u.mesh); units.splice(i, 1); continue; } // left behind
-    if (H.waves && far > 450 && T.kind !== 'air' && T.kind !== 'walker') { scene.remove(u.mesh); if (u.laser) scene.remove(u.laser); units.splice(i, 1); spawnUnit(u.type); continue; } // sent back in closer
+    if (H.waves && far > (RUN.w && RUN.w.last ? 260 : 450) && T.kind !== 'air' && T.kind !== 'walker') { scene.remove(u.mesh); if (u.laser) scene.remove(u.laser); units.splice(i, 1); spawnUnit(u.type, null, RUN.w && RUN.w.last); continue; } // sent back in closer
     if (T.kind === 'foot') {
       // standing on nothing now? the floor under them got knocked out, so they fall to their death
       if (u.roof && (u.supT = (u.supT || 0) - dt) <= 0) {
@@ -4668,7 +4680,7 @@ const roundTypes = (g, mod) => spawnersFor(g, mod).flatMap((k) => SPAWNERS[k].un
 function rollMod(g) { return g >= 2 && Math.random() < .75 ? Object.keys(MODS)[Math.random() * 5 | 0] : null; }
 function roundBlurb(g, mod) {
   const sp = spawnersFor(g, mod).map((k) => SPAWNERS[k].name.toLowerCase());
-  let t = 'Level the ' + (sp.length > 1 ? sp.slice(0, -1).join(', ') + ' and ' + sp[sp.length - 1] : sp[0]) + '. Until you do, they keep sending ' + roundTypes(g, mod).map((u) => PLURAL[u]).join(', ') + '. Level them all and the rest retreat.';
+  let t = 'Level the ' + (sp.length > 1 ? sp.slice(0, -1).join(', ') + ' and ' + sp[sp.length - 1] : sp[0]) + '. Until you do, they keep sending ' + roundTypes(g, mod).map((u) => PLURAL[u]).join(', ') + '. Level them all, then survive the last stand.';
   for (const [k, [at, how]] of Object.entries(ELITES)) if (at === g) t += ' NEW: ' + how;
   return t;
 }
@@ -4753,13 +4765,23 @@ function updateWaves(dt) {
   if (!w.cameo && w.t > w.cameoAt && !S.ko) { w.cameo = true; startCameo(); }
   updateCameo(dt);
   const standing = w.spawners.filter((s) => s.alive);
-  if (!standing.length && !cameo) { roundDone(true); return; } // every spawner down: whoever's left runs for it
+  if (!standing.length && !w.last) { // every spawner down: the last stand, a final surge dropped in around you
+    w.last = true; popup('LAST STAND!', true); sfxSiren();
+    const types = roundTypes(g, w.mod).filter((t) => t !== 'mech' && t !== 'fighter');
+    w.surge = Array.from({ length: Math.round((6 + g * .5) * (w.mod === 'double' ? 1.5 : 1)) }, () => types[Math.random() * types.length | 0]);
+    w.surgeT = 0;
+  }
+  if (w.last) {
+    if (w.surge.length && (w.surgeT -= dt) <= 0 && alive.length < WAVE_CAP) { w.surgeT = .3; const t = w.surge.shift(); const u = spawnUnit(t, null, true); if (u) alive.push(u); else w.surge.push(t); }
+    if (!w.surge.length && !alive.length && !cameo) { roundDone(); return; }
+  }
   const el = $('obj');
   el.querySelector('b').textContent = 'ROUND ' + g + (w.mod ? ' · ' + MODS[w.mod].name.toUpperCase() : '');
-  el.querySelector('span').textContent = w.spawners.map((s) => SPAWNERS[s.k].name + (s.alive ? '' : ' ✓')).join(' · ') + ' · ' + alive.length + ' hostiles on you';
+  el.querySelector('span').textContent = w.spawners.map((s) => SPAWNERS[s.k].name + (s.alive ? '' : ' ✓')).join(' · ') + ' · ' + (w.last ? 'LAST STAND · ' + (alive.length + w.surge.length) + ' left' : alive.length + ' hostiles on you');
   // point at the nearest spawner still standing, then at the stragglers
   let best = null, bd = 1e9;
   for (const s of standing) { const d = s.pos.distanceTo(P.pos); if (d < bd) { bd = d; best = s.pos; } }
+  if (w.last) for (const u of alive) { const d = u.pos.distanceTo(P.pos); if (d < bd) { bd = d; best = u.pos; } }
   const mk = $('objMark');
   if (!best) { mk.hidden = true; return; }
   vTmp.copy(best); vTmp.y += 4; vTmp.project(camera);
@@ -4777,10 +4799,9 @@ function spawnerDown(s) {
   popup(S0.name.toUpperCase() + ' DOWN!', true); lootTag('+$' + pay.toLocaleString('en-US') + ' · ' + S0.name.toUpperCase());
   sfxBoom(); sfxUnlock();
 }
-function roundDone(retreat) {
+function roundDone() {
   const w = RUN.w; w.done = true; S.over = true;
-  popup(retreat && units.some((u) => u.alive) ? 'ROUND CLEAR! THE REST RETREAT' : 'ROUND CLEAR!', true); sfxUnlock();
-  for (const u of units) if (u.alive) { u.alive = false; spawnDust(u.pos, 1.5, 1, SMOKE_COL); scene.remove(u.mesh); if (u.laser) scene.remove(u.laser); } // they scatter
+  popup('ROUND CLEAR!', true); sfxUnlock();
   later(1.8, () => {
     state.playing = false; keys.clear(); if (document.pointerLockElement) document.exitPointerLock();
     RUN.hp = Math.min(PLAYER_HP, S.hp + PLAYER_HP * .15); RUN.rounds++; RUN.w = null;
