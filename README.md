@@ -100,4 +100,6 @@ Synthesized live: a menu theme, a tense intro under the cut scene, a 150 bpm bat
 
 On phones: left stick flies, drag to look, buttons for boost, punch, slam and powers.
 
+A punch-dash that connects is a super punch: the hero goes flying about 150 m (500 ft), and a hero's ram does the same to you. Bursting into a building sets off one small explosion.
+
 Buildings are solid at cruising speed: you slide along walls and land on roofs. You only smash through while boosting (or still going boost speed), punch-dashing, launching, meteor-slamming or using a power.

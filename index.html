@@ -2256,7 +2256,7 @@ function updateBeam(dt) {
     beamTick = .06; spawnFire(endV, .4, 2, 2, .3, 6); hitUnit(a.unit, false);
   } else if (!a.onVillain && a.hit && beamTick <= 0) {
     beamTick = id === 'flame' ? .08 : .05;
-    const r = { laser: 1.6, icebeam: 2.2, flame: 3 }[id] * m;
+    const r = { laser: 2.3, icebeam: 2.2, flame: 3 }[id] * m;
     if (id === 'icebeam') { spawnDust(endV, 1.5, 1, ICE_COL); glassPool.spawn(endV, new V3(rand(-6, 6), rand(2, 9), rand(-6, 6)), rand(.4, 1), ICE_COL); }
     else spawnFire(endV, .4, id === 'flame' ? 3 : 1.6, id === 'flame' ? 2 : 1, .35, 6);
     if (a.hit.e) beamCash += smashEntity(a.hit.e, new V3(endV.x - a.hit.e.cx, endV.y, endV.z - a.hit.e.cz), r, aimDir.clone().multiplyScalar(-15));
@@ -2308,6 +2308,15 @@ function raycastWorld(o, dir, t0, maxT) {
 // ---------------------------------------------------------------- collisions
 const HERO_R = 1.5, SMASH_SPEED = 16;
 const lp = new V3();
+// one small fireball when you burst into a building, a handful of sprites so it stays cheap
+let lastBang = 0;
+function smashBang() {
+  const now = performance.now(); if (now - lastBang < 150) return; lastBang = now;
+  const p = tmpV2.copy(P.pos).addScaledVector(P.vel, .02);
+  spawnFire(p, 1.2, 4, 5, .45, 12); spawnDust(p, 2.5, 2, SMOKE_COL);
+  boomLight.color.setHex(0xff9a40); boomLight.position.copy(p); boomLight.intensity = Math.max(boomLight.intensity, 3);
+  sfxBoom(); state.shake = Math.max(state.shake, .35);
+}
 function collide() {
   const sp = P.vel.length(), rSmash = (sp > 150 ? 9 : sp > 70 ? 6 : 4.5) * (hasPower('fists') ? 1.15 + .15 * (powerLevel('fists') - 1) : 1);
   // you only smash through when boosting, punching, slamming, launching, using a power, or still carrying boost speed
@@ -2327,7 +2336,7 @@ function collide() {
       if (!t) continue;
       if (ram) {
         const c = smashEntity(e, lp, rSmash, P.vel);
-        if (c) { cash += c; P.vel.multiplyScalar(.95); }
+        if (c) { cash += c; P.vel.multiplyScalar(.95); if (!e.banged) { e.banged = true; smashBang(); } }
       } else {
         // gentle bump: stand on roofs and floors, slide along walls
         P.pos.x += t.nx * t.pen; P.pos.y += t.ny * t.pen; P.pos.z += t.nz * t.pen;
@@ -3368,7 +3377,7 @@ function runAct(dt, dist) {
     else {
       if (!V.ramDir) { V.ramDir = vTmp.subVectors(V.aim, V.pos).normalize().clone(); spawnRing(V.pos.clone(), V.ramDir, false); sfxBoom(); }
       V.vel.copy(V.ramDir).multiplyScalar(290 * S.diff.speed);
-      if (V.pos.distanceTo(P.pos) < 4.2) { hurtPlayer(150 * L, V.ramDir, 170); V.act = null; V.vel.multiplyScalar(.2); }
+      if (V.pos.distanceTo(P.pos) < 4.2) { hurtPlayer(150 * L, tmpV3.copy(V.ramDir).setY(.25), 175); S.stunT = Math.max(S.stunT, 1.1); popup('SUPER PUNCHED!', true); V.act = null; V.vel.multiplyScalar(.2); }
       else if (V.actT > V.wind + .7) V.act = null;
     }
   } else if (id === 'slam') {
@@ -3457,9 +3466,11 @@ function updateFoe(dt) {
       V.pos.x = clamp(V.pos.x, -FENCE, FENCE); V.pos.z = clamp(V.pos.z, -FENCE, FENCE); V.pos.y = Math.min(V.pos.y, CEIL);
       // player punches: fly into him fast
       const rel = vTmp.subVectors(P.vel, V.vel), relSp = rel.length();
-      if (S.hitCd <= 0 && P.pos.distanceTo(V.pos) < HERO_R + 2.2 && relSp > 30 && P.vel.length() > 25) {
+      if (S.hitCd <= 0 && S.stunT <= 0 && P.pos.distanceTo(V.pos) < HERO_R + 2.2 && relSp > 30 && P.vel.length() > 25 && rel.dot(vfH.subVectors(V.pos, P.pos)) > 0) { // moving into him, not knocked away
         const fm = hasPower('fists') ? 1.15 + .15 * (powerLevel('fists') - 1) : 1;
-        hurtVillain(clamp(relSp * .5, 15, 150) * fm * (P.dashT > 0 ? 1.3 : 1), P.vel, clamp(relSp * .9, 60, 260));
+        const sup = P.dashT > 0; // a punch-dash is a super punch: it sends them flying about 150 m (500 ft)
+        hurtVillain(clamp(relSp * .5, 15, 150) * fm * (sup ? 1.3 : 1), sup ? tmpV3.copy(P.vel).normalize().setY(.25) : P.vel, sup ? 270 : clamp(relSp * .9, 60, 260), sup ? 'SUPER PUNCH!' : undefined);
+        if (sup && !V.dead) V.stun = Math.max(V.stun, 1.3);
         P.vel.multiplyScalar(.35); S.hitCd = .7; // punches can't land faster than this
       }
     }
