@@ -4396,11 +4396,11 @@ const THEME = [
   [[0, 72, 6], [6, 74, 2], [8, 76, 4], [12, 79, 4]],
   [[0, 81, 8], [8, 79, 4], [12, 76, 4]],
 ];
-// recorded tracks published next to the page in audio/: the menu theme, and the boss theme from the
-// moment a hero shows up to the end of the fight. The artifact frame only allows fetch() for these, so
-// they're fetched and decoded (mono, to keep the memory down). Until a track is ready, or if it can't
+// recorded tracks published next to the page in audio/: the menu theme, the wave-round theme, and the
+// boss theme from the moment a hero shows up to the end of the fight. They're decoded up front (mono, to
+// keep the memory down). Until a track is ready, or if it can't
 // load, the synth version plays.
-const TRACKS = { menu: { url: 'audio/menu-theme.mp3', vol: .85 }, boss: { url: 'audio/boss-theme.mp3', vol: .7 } };
+const TRACKS = { menu: { url: 'audio/menu-theme.mp3', vol: .85 }, waves: { url: 'audio/waves-theme.mp3', vol: .7 }, boss: { url: 'audio/boss-theme.mp3', vol: .7 } };
 // older Safari only has the callback form of decodeAudioData, so use that everywhere
 const decode = (b) => new Promise((res, rej) => { const p = AC.decodeAudioData(b, res, (e) => rej(e || new Error('decode failed'))); if (p && p.catch) p.catch(() => {}); });
 function b64ToBuf(b64) { const bin = atob(b64.replace(/\s+/g, '')), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
@@ -4439,7 +4439,7 @@ function stopTrack(fade = .4) {
 function trackOff(fade = .4) { MUS.want = null; stopTrack(fade); }
 function musInit() {
   if (!AC || MUS.out) return;
-  loadTrack('menu'); loadTrack('boss');
+  loadTrack('menu'); loadTrack('waves'); loadTrack('boss');
   MUS.out = AC.createGain(); MUS.out.gain.value = 0;
   const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
   MUS.out.connect(comp); comp.connect(master);
@@ -4549,7 +4549,7 @@ function musVol(v, ramp = .4) {
 }
 function musPlay(mode) {
   if (!AC) return; musInit();
-  const want = mode === 'menu' ? 'menu' : state.mode === 'showdown' && (mode === 'intro' || mode === 'fight') ? 'boss' : null;
+  const want = mode === 'menu' ? 'menu' : state.mode === 'showdown' && (mode === 'intro' || mode === 'fight') ? 'boss' : state.mode === 'waves' && mode === 'fight' ? 'waves' : null;
   if (want) trackOn(want); else trackOff();
   if (MUS.mode === mode && mode === 'menu') return musVol(1.4, .6);
   if (MUS.mode === 'off' || MUS.mode !== mode || mode === 'fight') { MUS.step = 0; MUS.nextT = AC.currentTime + .08; }

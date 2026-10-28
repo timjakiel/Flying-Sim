@@ -9,7 +9,7 @@ import base64, datetime, pathlib
 root = pathlib.Path(__file__).resolve().parent.parent
 html = (root / 'index.html').read_text(encoding='utf-8')
 blocks = ''
-for name in ('menu', 'boss'):
+for name in ('menu', 'waves', 'boss'):
     data = base64.b64encode((root / 'audio' / f'{name}-theme.mp3').read_bytes()).decode()
     blocks += f'<script type="text/plain" id="aud-{name}">{data}</script>\n'
 marker = '<script src="https://cdn.jsdelivr.net/npm/three@'
