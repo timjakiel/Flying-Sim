@@ -40,7 +40,7 @@ Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Att
 ## The run
 Pick your villain and a difficulty on the main menu. A run is 25 rounds in five acts: four wave rounds, then a boss.
 
-- **Wave rounds:** no wanted stars. Each round throws waves of henchmen at you (2 waves early, up to 4 late) and you clear every last one. The waves grow every round and new units join as you go: cops and cop cars from round 1, SWAT from 3, gunships from 4, drones from 7, tanks from 11. Stragglers that fall far behind get sent back in closer, and the last few get a marker.
+- **Wave rounds:** no wanted stars. Each round throws waves of henchmen at you (2 waves early, up to 4 late) and you clear every last one. The waves grow every round and new units join as you go: cops and cop cars from round 1, SWAT from 3, gunships from 4, drones from 7, tanks from 11. Every henchman has a red diamond over it that shows through buildings (orange for gunships and tanks), and a radar in the corner shows everything around you with your heading up. Stragglers that fall far behind get sent back in closer, and the last few get a distance marker.
 - **Bosses:** four random heroes, then your mirror in Act 5. Every hero you beat comes back for each later boss fight at 60% health with one power fewer. Only two attack at once; the rest circle and tag in when one drops.
 - **Power Up, every 5 rounds:** after each boss you get 3 points to level Strength (punches), your three powers, or Meteor Slam. Each level is +25% damage and size, max 5.
 - Health and loot carry through the run. No health regen: +15% after each wave round, +35% after a boss. Get knocked out and the run's over.
@@ -98,3 +98,5 @@ Synthesized live: a menu theme, a tense intro under the cut scene, a 150 bpm bat
 | M | Mute |
 
 On phones: left stick flies, drag to look, buttons for boost, punch, slam and powers.
+
+Buildings are solid at cruising speed: you slide along walls and land on roofs. You only smash through while boosting (or still going boost speed), punch-dashing, launching, meteor-slamming or using a power.
