@@ -2845,8 +2845,17 @@ function resetHero() {
   P.pos.copy(START.pos); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.pitch = START.pitch;
   P.slamming = false; P.landT = 0; P.launchT = 0; P.dashT = 0; P.dashCd = 0; state.boostStreak = 0;
 }
+// in a run the city and your position carry over from round to round; only the first round starts fresh
+function softReset() {
+  pending.length = 0; for (const k in cds) cds[k] = 0; for (const k in beamHeat) beamHeat[k] = 0;
+  for (const pr of projs) scene.remove(pr.mesh); projs.length = 0;
+  $('popups').textContent = '';
+  P.vel.set(0, 0, 0); P.slamming = false; P.landT = 0; P.launchT = 0; P.dashT = 0; P.dashCd = 0;
+  Object.assign(state, { combo: 0, comboT: 0, shake: 0 });
+}
 function startMode(mode, diff, list) {
-  resetWorld();
+  if (RUN.on && RUN.started) softReset(); else resetWorld();
+  RUN.started = RUN.on;
   if (!RUN.on) { state.lastMode = mode; state.lastDiff = diff; }
   state.mode = mode; state.timeLeft = RAMPAGE_TIME + 30 * powerLevel('overtime');
   buildPowerHud();
@@ -3036,6 +3045,7 @@ function startShowdown(diffId, list) {
   S.diffId = diffId; S.diff = DIFFS[diffId];
   Object.assign(S, { hp: RUN.on ? RUN.hp : PLAYER_HP, lastHurt: 0, ko: false, time: 0, dealt: 0, hits: 0, taken: 0, over: false, hitCd: 0, stunT: 0, slowT: 0 });
   list = list || selectedVillains(); S.foes = foes.slice(0, list.length);
+  const keep = RUN.on && RUN.started && RUN.rounds > 0; // mid-run: fight where you stand
   for (const f of foes) { f.group.visible = false; f.glow.visible = false; f.mark.hidden = true; for (const b of f.beams) b.core.visible = b.glow.visible = false; }
   const bar = $('bossbar'); bar.querySelectorAll('.vil').forEach((e) => e.remove());
   list.forEach((vd, i) => {
@@ -3045,7 +3055,13 @@ function startShowdown(diffId, list) {
     applyVillainLook(vd); vBeamsOff(); vModel.rotation.set(0, 0, 0); vModel.scale.setScalar(vd.side ? .95 : 1.35);
     const a = -Math.PI / 2 + (i - (list.length - 1) / 2) * .7;
     const lx = [0, -80, 80, -160, 160][i];
-    f.land = new V3(lx, groundH(lx, 560) + 1.6, 560); f.from = new V3(lx + rand(-12, 12), 190, 525); f.landed = false;
+    if (keep) { // drop in on the streets ahead of wherever you are
+      const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+      let x = clamp(P.pos.x + fx * 130 + rx * lx, -FENCE + 40, FENCE - 40), z = clamp(P.pos.z + fz * 130 + rz * lx, -FENCE + 40, FENCE - 40);
+      if (Math.abs(x) < HALF) x = roadAt(Math.round((x + HALF) / PERIOD)); // on a north-south street
+      f.land = new V3(x, groundH(x, z) + 1.6, z); f.from = new V3(x + fx * 35 + rand(-12, 12), 190, z + fz * 35);
+    } else { f.land = new V3(lx, groundH(lx, 560) + 1.6, 560); f.from = new V3(lx + rand(-12, 12), 190, 525); }
+    f.landed = false;
     V.pos.copy(f.from); V.vel.set(0, 0, 0); V.orbit = i / list.length * Math.PI * 2;
     villain.visible = true; villain.position.copy(V.pos);
     f.mark.style.borderColor = hex(vd.look.accent); f.mark.style.background = hex(vd.look.cape ?? vd.look.limb);
@@ -3058,7 +3074,7 @@ function startShowdown(diffId, list) {
   bar.hidden = false;
   updateBars();
   requestAnimationFrame(() => document.body.style.setProperty('--bossH', bar.offsetHeight + 'px'));
-  P.pos.set(0, 30, 690); P.yaw = 0; P.pitch = -.05;
+  if (!keep) { P.pos.set(0, 30, 690); P.yaw = 0; P.pitch = -.05; }
 }
 function endShowdownWorld() {
   if (state.cut) { state.cut = null; document.body.classList.remove('cut'); $('intro').hidden = true; $('vs').hidden = true; }
@@ -4128,7 +4144,7 @@ const bossFor = (act) => [RUN.order[act - 1], ...RUN.beaten.map(returning)];
 
 function startRun(diff) {
   const mirror = VILLAINS.find((v) => v.mirror === save.hero);
-  Object.assign(RUN, { on: true, diff, act: 1, round: 1, beaten: [], hp: PLAYER_HP, time: 0, kind: null, w: null, note: '', rounds: 0, bosses: 0, kills: 0, lv: {}, pts: 0 });
+  Object.assign(RUN, { on: true, started: false, diff, act: 1, round: 1, beaten: [], hp: PLAYER_HP, time: 0, kind: null, w: null, note: '', rounds: 0, bosses: 0, kills: 0, lv: {}, pts: 0 });
   RUN.order = shuffle(VILLAINS.filter((v) => v !== mirror)).concat(mirror);
   state.lastMode = 'run'; state.lastDiff = diff;
   H.loot = 0; H.kills = 0;

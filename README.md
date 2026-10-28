@@ -43,6 +43,7 @@ Pick your villain and a difficulty on the main menu. A run is 24 rounds in five 
 - **Wave rounds:** no wanted stars. Each round throws waves of henchmen at you (2 waves early, up to 4 late) and you clear every last one. The waves grow every round and new units join as you go: cops and cop cars from round 1, SWAT from 3, gunships from 4, drones from 7, tanks from 11. Every henchman has a red diamond over it that shows through buildings (orange for gunships and tanks), and a radar in the corner shows everything around you with your heading up. Stragglers that fall far behind get sent back in closer, and the last few get a distance marker.
 - **Bosses:** four random heroes, then your mirror in Act 5. Every hero you beat comes back for each later boss fight at 60% health with one power fewer. Only two attack at once; the rest circle and tag in when one drops.
 - **Power Up, every 5 rounds:** after each boss you get 3 points to level Strength (punches), your three powers, or Meteor Slam. Each level is +25% damage and size, max 5.
+- The city and your position carry over the whole run: every round picks up where the last one ended, with all the damage still there, and bosses drop in on the streets ahead of you. Only a new run rebuilds the city.
 - Health and loot carry through the run. No health regen: +15% after each wave round, +35% after a boss. Get knocked out and the run's over.
 - Records: runs, takeovers (wins), best haul, fastest win per villain and difficulty.
 
