@@ -4024,7 +4024,7 @@ function endCutscene() {
 // and a riser; wins get a fanfare, losses a sting.
 const MUS = { on: save.music !== false, out: null, rev: null, white: null, timer: null, mode: 'off', step: 0, nextT: 0, bar: 0, introT: 0 };
 const BPM = 150, STEP = 60 / BPM / 4;
-function toggleMusic() { MUS.on = !MUS.on; save.music = MUS.on; saveDirty = true; if (MUS.trackSrc) MUS.trackOut.gain.setTargetAtTime(MUS.on ? MENU_TRACK_VOL : 0, AC.currentTime, .1); musVol(MUS.mode === 'menu' ? 1.4 : state.playing ? 1 : .3, .2); $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off'); popup(MUS.on ? 'MUSIC ON' : 'MUSIC OFF', false); }
+function toggleMusic() { MUS.on = !MUS.on; save.music = MUS.on; saveDirty = true; musVol(MUS.mode === 'menu' ? 1.4 : state.playing ? 1 : .3, .2); $('pMusic').textContent = 'Music: ' + (MUS.on ? 'on' : 'off'); popup(MUS.on ? 'MUSIC ON' : 'MUSIC OFF', false); }
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 const CHORDS = [[50, [0, 3, 7]], [46, [0, 4, 7]], [48, [0, 4, 7]], [45, [0, 4, 7]]]; // Dm, Bb, C, A
 const THEME = [
@@ -4033,28 +4033,35 @@ const THEME = [
   [[0, 72, 6], [6, 74, 2], [8, 76, 4], [12, 79, 4]],
   [[0, 81, 8], [8, 79, 4], [12, 76, 4]],
 ];
-// recorded menu theme (audio/menu-theme.mp3, published next to the page). It takes over from the
-// synth menu music once it has loaded; if it can't load, the synth version keeps playing.
-const MENU_TRACK = 'audio/menu-theme.mp3', MENU_TRACK_VOL = .85;
-function loadMenuTrack() {
-  if (MUS.trackLoading) return; MUS.trackLoading = true;
-  fetch(MENU_TRACK).then((r) => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then((b) => AC.decodeAudioData(b))
-    .then((buf) => { MUS.track = buf; if (MUS.mode === 'menu') menuTrackOn(); }).catch(() => { /* stay on the synth theme */ });
+// recorded tracks, streamed from audio/ next to the page: the menu theme, and the boss theme from the
+// moment a hero shows up to the end of the fight. If a file can't play, the synth version carries on.
+const TRACKS = { menu: { url: 'audio/menu-theme.mp3', vol: .85 }, boss: { url: 'audio/boss-theme.mp3', vol: .7 } };
+function trackNode(name) {
+  const T = TRACKS[name];
+  if (!T.el) {
+    T.el = new Audio(T.url); T.el.loop = true; T.el.preload = 'auto';
+    T.gain = AC.createGain(); T.gain.gain.value = 0;
+    try { AC.createMediaElementSource(T.el).connect(T.gain); T.gain.connect(master); } catch (e) { T.bad = true; }
+    T.el.addEventListener('error', () => trackFailed(name));
+  }
+  return T.bad ? null : T;
 }
-function menuTrackOn() {
-  if (!MUS.track) return false;
-  if (!MUS.trackOut) { MUS.trackOut = AC.createGain(); MUS.trackOut.gain.value = 0; MUS.trackOut.connect(master); }
-  if (!MUS.trackSrc) { const src = AC.createBufferSource(); src.buffer = MUS.track; src.loop = true; src.connect(MUS.trackOut); src.start(); MUS.trackSrc = src; }
-  MUS.file = true; MUS.trackOut.gain.setTargetAtTime(MUS.on ? MENU_TRACK_VOL : 0, AC.currentTime, .3);
+function trackFailed(name) { TRACKS[name].bad = true; if (MUS.cur === name) { MUS.cur = null; MUS.file = false; } }
+function trackOn(name) {
+  if (MUS.cur === name) return true;
+  trackOff(.3);
+  const T = trackNode(name); if (!T) return false;
+  T.el.currentTime = 0;
+  const p = T.el.play(); if (p && p.catch) p.catch(() => trackFailed(name));
+  MUS.cur = name; MUS.file = true;
   return true;
 }
-function menuTrackOff(fade = .4) {
-  MUS.file = false; if (!MUS.trackSrc) return;
-  const src = MUS.trackSrc; MUS.trackSrc = null;
-  MUS.trackOut.gain.setTargetAtTime(0, AC.currentTime, fade / 3); src.stop(AC.currentTime + fade + .1);
+function trackOff(fade = .4) {
+  const name = MUS.cur; MUS.cur = null; MUS.file = false; if (!name) return;
+  const T = TRACKS[name]; T.gain.gain.setTargetAtTime(0, AC.currentTime, fade / 3);
+  setTimeout(() => { if (MUS.cur !== name) T.el.pause(); }, fade * 1000 + 150);
 }
 function musInit() {
-  if (AC) loadMenuTrack();
   if (!AC || MUS.out) return;
   MUS.out = AC.createGain(); MUS.out.gain.value = 0;
   const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
@@ -4119,7 +4126,8 @@ function menuStep(t) {
   } else if (bar === 3 && s === 8) noiseHit(t, D * 8, .06, 'bandpass', 1800, .6); // swell into the big half
 }
 function musStep(t) {
-  if (MUS.mode === 'menu') return MUS.file ? undefined : menuStep(t);
+  if (MUS.file) return; // a recorded track is playing
+  if (MUS.mode === 'menu') return menuStep(t);
   const s = MUS.step % 16, bar = Math.floor(MUS.step / 16) % 8, [root, tri] = CHORDS[bar % 4];
   const hype = MUS.hype;
   if (MUS.mode === 'intro') {
@@ -4157,17 +4165,21 @@ function musTick() {
   const dur = MUS.mode === 'menu' ? MENU_STEP : STEP;
   while (MUS.nextT < AC.currentTime + .6) { musStep(MUS.nextT); MUS.nextT += dur; MUS.step++; }
 }
-function musVol(v, ramp = .4) { if (MUS.out) MUS.out.gain.setTargetAtTime(MUS.on ? v : 0, AC.currentTime, ramp); }
+function musVol(v, ramp = .4) {
+  if (MUS.out) MUS.out.gain.setTargetAtTime(MUS.on ? v : 0, AC.currentTime, ramp);
+  if (MUS.cur) { const T = TRACKS[MUS.cur]; T.gain.gain.setTargetAtTime(MUS.on ? T.vol * Math.min(1, v) : 0, AC.currentTime, ramp); }
+}
 function musPlay(mode) {
   if (!AC) return; musInit();
-  if (mode === 'menu') menuTrackOn(); else menuTrackOff();
+  const want = mode === 'menu' ? 'menu' : state.mode === 'showdown' && (mode === 'intro' || mode === 'fight') ? 'boss' : null;
+  if (want) trackOn(want); else trackOff();
   if (MUS.mode === mode && mode === 'menu') return musVol(1.4, .6);
   if (MUS.mode === 'off' || MUS.mode !== mode || mode === 'fight') { MUS.step = 0; MUS.nextT = AC.currentTime + .08; }
   MUS.mode = mode; MUS.introT = 0;
   if (!MUS.timer) MUS.timer = setInterval(musTick, 90);
   musVol(mode === 'menu' ? 1.4 : mode === 'intro' ? .8 : 1, mode === 'menu' ? 1.2 : mode === 'intro' ? .8 : .05);
 }
-function musStop(fade = .6) { if (!AC) return; menuTrackOff(fade); if (MUS.mode === 'off') return; MUS.mode = 'off'; musVol(0, fade / 3); clearInterval(MUS.timer); MUS.timer = null; }
+function musStop(fade = .6) { if (!AC) return; trackOff(fade); if (MUS.mode === 'off') return; MUS.mode = 'off'; musVol(0, fade / 3); clearInterval(MUS.timer); MUS.timer = null; }
 function musSting(win) {
   if (!AC) return; musInit(); musStop(.2);
   const t = AC.currentTime + .25;
@@ -4490,6 +4502,6 @@ addEventListener('pointerdown', firstGesture, true); addEventListener('keydown',
 const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start();
 addEventListener('pagehide', () => { if (saveDirty) saveNow(); });
-window.__game = { RUN, startRun, runWaves, runFight, runFightEnd, showUpgrade, bossFor, waveMix, powerLevel, H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
+window.__game = { TRACKS, RUN, startRun, runWaves, runFight, runFightEnd, showUpgrade, bossFor, waveMix, powerLevel, H, units, spawnUnit, hitUnit, regions, QID, perf, hurtPlayer, MUS, musPlay, skipCutscene, foes, VILLAINS, MOVES, V, S, hurtVillain, explosives, explode, useAbility, pickAbility, cycleAbility, HEROES, projs, POWERS, applySuit, toast, SUITS, startMode, pauseGame, endRampage, save, superMove, P, state, entities, simulate, keys, falling, trees, carList, groundH, groundGeo: () => groundGeo, crater };
 })();
 </script>
