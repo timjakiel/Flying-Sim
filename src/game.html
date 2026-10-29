@@ -1997,7 +1997,7 @@ const PW = Object.fromEntries(POWERS.map((p) => [p.id, p]));
 // every villain power starts at level 1 each run (in-run boosts come later); Sandbox gets everything maxed
 // run state lives up here because power levels read it
 const RUN = { on: false, diff: 'normal', act: 1, round: 1, order: [], beaten: [], hp: 1000, time: 0, kind: null, w: null, lastDmg: 0, note: '', rounds: 0, bosses: 0, kills: 0, lv: {}, pts: 0 };
-const baseLevel = (id) => id === 'overtime' || id === 'fists' ? 0 : 1;
+const baseLevel = (id) => id === 'overtime' || id === 'fists' || id === 'tough' ? 0 : 1;
 const powerLevel = (id) => state.mode === 'sandbox' ? PW[id].max : RUN.on ? RUN.lv[id] ?? baseLevel(id) : baseLevel(id);
 const hasPower = (id) => powerLevel(id) > 0;
 const pmul = (id) => 1 + .25 * (powerLevel(id) - 1); // damage/radius multiplier for the level
@@ -3065,6 +3065,7 @@ const DIFFS = {
   hard: { name: 'Hard', hp: 2200, dmg: 1.2, cd: .7, speed: 1.18, aim: 4.2, lead: .9, lvl: 5, think: .4, reward: 12e6 },
 };
 const PLAYER_HP = 1000;
+const maxHP = () => PLAYER_HP * (1 + .2 * (RUN.on ? RUN.lv.tough || 0 : 0)); // Toughness upgrade: +20% a level in a run
 // up to five villains at once; the villain code below works on whichever one is bound
 let villain, vModel, vMat, vBody, vGlow, vBeams, V, curFoe = null;
 const foes = [];
@@ -3170,7 +3171,7 @@ function endShowdownWorld() {
   $('bossbar').hidden = true;
 }
 function updateBars() {
-  $('pFill').style.transform = `scaleX(${clamp(S.hp / PLAYER_HP, 0, 1)})`;
+  $('pFill').style.transform = `scaleX(${clamp(S.hp / maxHP(), 0, 1)})`;
   for (const f of S.foes) if (f.fill) f.fill.style.transform = `scaleX(${clamp(f.V.hp / f.V.maxHp, 0, 1)})`;
 }
 
@@ -4134,22 +4135,22 @@ const orbs = [];
 for (let i = 0; i < 16; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: orbTex, transparent: true, depthWrite: false, toneMapped: false, fog: false })); s.visible = false; scene.add(s); orbs.push({ s, pos: new V3(), life: 0, heal: 0 }); }
 function dropOrb(p, big) {
   const o = orbs.find((q) => q.life <= 0); if (!o) return;
-  o.pos.copy(p); o.pos.y = Math.max(o.pos.y, groundH(p.x, p.z) + 2); o.life = 18; o.heal = big ? .12 : .06;
-  o.s.visible = true; o.s.scale.setScalar(big ? 3.4 : 2.6);
+  o.pos.copy(p); o.pos.y = Math.max(o.pos.y, groundH(p.x, p.z) + 2); o.life = 20; o.heal = big ? .15 : .08;
+  o.s.visible = true; o.s.scale.setScalar(big ? 4.5 : 3.5);
 }
 function updateOrbs(dt) {
   for (const o of orbs) {
     if (o.life <= 0) continue;
     o.life -= dt; if (o.life <= 0) { o.s.visible = false; continue; }
     const d = o.pos.distanceTo(P.pos);
-    if (d < 32) o.pos.addScaledVector(tmpV.subVectors(P.pos, o.pos).normalize(), Math.min(d, 70 * dt));
-    if (d < 4 && !S.ko) {
+    if (d < 70) o.pos.addScaledVector(tmpV.subVectors(P.pos, o.pos).normalize(), Math.min(d, (60 + (70 - d) * 3) * dt)); // pulled in, faster the closer it gets
+    if (d < 6 && !S.ko) {
       o.life = 0; o.s.visible = false;
-      S.hp = Math.min(PLAYER_HP, S.hp + o.heal * PLAYER_HP); updateBars();
+      S.hp = Math.min(maxHP(), S.hp + o.heal * maxHP()); updateBars();
       lootTag('+' + Math.round(o.heal * 100) + '% HEALTH'); sfxBeep(1180);
       continue;
     }
-    o.s.position.copy(o.pos); o.s.position.y += Math.sin(o.life * 4) * .4;
+    o.s.position.copy(o.pos); o.s.position.y += Math.sin(o.life * 4) * .4; o.s.material.rotation = o.life * 2;
     o.s.material.opacity = o.life < 3 ? (o.life * 4 | 0) % 2 ? .3 : 1 : 1;
   }
 }
@@ -4577,7 +4578,7 @@ function musSting(win) {
 }
 function musUpdate(dt) {
   if (MUS.mode === 'intro') MUS.introT += dt;
-  if (MUS.mode === 'fight') MUS.hype = S.hp < PLAYER_HP * .35 || S.foes.some((f) => !f.V.dead && f.V.hp < f.V.maxHp * .3);
+  if (MUS.mode === 'fight') MUS.hype = S.hp < maxHP() * .35 || S.foes.some((f) => !f.V.dead && f.V.hp < f.V.maxHp * .3);
 }
 
 // ---------------------------------------------------------------- the run
@@ -4585,7 +4586,7 @@ function musUpdate(dt) {
 // Bosses are four random heroes, then the hero who mirrors your powers. Beaten heroes come back
 // weaker for every later boss fight, two at a time. After every boss (every five rounds) you
 // upgrade your powers. Health and loot carry through; get knocked out and it's over.
-const RUN_HENCH = { easy: .7, normal: 1, hard: 1.35 };        // henchman damage by difficulty
+const RUN_HENCH = { easy: .5, normal: 1, hard: 1.35 };        // henchman damage by difficulty
 const henchScale = () => 2 + .03 * (gRound() - 1);           // and by round: x2 in round 1, about x2.7 by round 24
 const BOSS_PAY = 200000, UPGRADE_PTS = 3;
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -4622,8 +4623,8 @@ function showRoute(delay) {
   $('routeAct').textContent = 'Act ' + RUN.act + ' of 5';
   $('routeBoss').textContent = 'Round ' + g + ' of ' + TOTAL_ROUNDS + ' · Boss: ' + boss.map((v) => v.name).join(' + ');
   $('routeNote').textContent = RUN.note; $('routeNote').hidden = !RUN.note;
-  $('routeHp').style.transform = `scaleX(${RUN.hp / PLAYER_HP})`;
-  $('routeStat').textContent = 'Health ' + Math.round(RUN.hp) + ' / ' + PLAYER_HP + ' · Loot ' + fmtMoney(Math.round(H.loot)) + ' · ' + fmtTime(RUN.time);
+  $('routeHp').style.transform = `scaleX(${RUN.hp / maxHP()})`;
+  $('routeStat').textContent = 'Health ' + Math.round(RUN.hp) + ' / ' + Math.round(maxHP()) + ' · Loot ' + fmtMoney(Math.round(H.loot)) + ' · ' + fmtTime(RUN.time);
   const el = $('routeBody'); el.textContent = '';
   const b = document.createElement('button'); b.type = 'button'; b.className = 'mode stop' + (bossRound() ? ' boss' : '');
   const n = document.createElement('div'); n.className = 'mname';
@@ -4651,11 +4652,11 @@ function runAdvance(note, delay) {
 
 // ---- upgrades, every five rounds
 function upgradeList() {
-  return [{ id: 'fists', name: 'Strength', desc: 'Punches hit harder and tear wider holes.' }, ...curHero().abilities.map((id) => PW[id]), PW.slam];
+  return [{ id: 'tough', name: 'Toughness', desc: '+20% max health a level, and heals you by that much.' }, { id: 'fists', name: 'Strength', desc: 'Punches hit harder and tear wider holes.' }, ...curHero().abilities.map((id) => PW[id]), PW.slam];
 }
 function showUpgrade() {
   const el = $('upList'); el.textContent = '';
-  $('upStat').textContent = RUN.pts + (RUN.pts === 1 ? ' point' : ' points') + ' to spend · each level is +25% damage and size';
+  $('upStat').textContent = RUN.pts + (RUN.pts === 1 ? ' point' : ' points') + ' to spend · health ' + Math.round(RUN.hp) + ' / ' + Math.round(maxHP()) + ' · power levels are +25% damage and size';
   for (const u of upgradeList()) {
     const lv = powerLevel(u.id), max = 5;
     const card = document.createElement('div'); card.className = 'suit';
@@ -4668,7 +4669,7 @@ function showUpgrade() {
     body.append(nm, ds, pips);
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'equip';
     btn.textContent = lv >= max ? 'MAXED' : '+1'; btn.disabled = lv >= max || RUN.pts <= 0;
-    btn.addEventListener('click', () => { if (RUN.pts <= 0 || powerLevel(u.id) >= max) return; RUN.lv[u.id] = powerLevel(u.id) + 1; RUN.pts--; sfxUnlock(); showUpgrade(); });
+    btn.addEventListener('click', () => { if (RUN.pts <= 0 || powerLevel(u.id) >= max) return; RUN.lv[u.id] = powerLevel(u.id) + 1; RUN.pts--; if (u.id === 'tough') RUN.hp += PLAYER_HP * .2; sfxUnlock(); showUpgrade(); });
     card.append(k, body, btn); el.append(card);
   }
   const left = upgradeList().some((u) => powerLevel(u.id) < 5);
@@ -4839,7 +4840,7 @@ function roundDone() {
   popup('ROUND CLEAR!', true); sfxUnlock();
   later(1.8, () => {
     state.playing = false; keys.clear(); if (document.pointerLockElement) document.exitPointerLock();
-    RUN.hp = Math.min(PLAYER_HP, S.hp + PLAYER_HP * .15); RUN.rounds++; RUN.w = null;
+    RUN.hp = Math.min(maxHP(), S.hp + maxHP() * .15); RUN.rounds++; RUN.w = null;
     stopHeat(); $('obj').hidden = true; $('objMark').hidden = true; $('bossbar').hidden = true;
     musSting(true);
     runAdvance('Round ' + gRound() + ' cleared. +15% health.', 4600);
@@ -4917,7 +4918,7 @@ function runFightEnd(win) {
   const vd = RUN.order[RUN.act - 1];
   RUN.beaten.push(vd); RUN.bosses++; RUN.rounds++;
   H.loot += Math.round(BOSS_PAY * (1 + .25 * (RUN.act - 1)));
-  RUN.hp = Math.min(PLAYER_HP, S.hp + PLAYER_HP * .35);
+  RUN.hp = Math.min(maxHP(), S.hp + maxHP() * .35);
   if (RUN.act === 5) { runWon(); return; }
   RUN.act++; RUN.round = 1;
   RUN.note = vd.name + ': “' + vd.down + '” +35% health.';

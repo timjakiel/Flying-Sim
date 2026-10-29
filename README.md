@@ -46,10 +46,10 @@ Pick your villain and a difficulty on the main menu. A run is 24 rounds in five 
 - **Round modifiers** (most rounds from round 2, shown before you start): Gas Leak (every henchman explodes when they go down), Blackout (night), Tank Parade, Air Raid, Double or Nothing (twice the henchmen, twice the loot).
 - **Boss cameo:** in the last wave round before each boss, the act's hero shows up, hangs in the sky for a second ("INCOMING! KEEP MOVING"), then dives at you. Stopped or moving slowly, it locks on and lands a super punch that sends you tumbling through the buildings. Flying fast, you can outrun the turn and dodge it. Either way they talk trash and leave.
 - **Style meter:** chain kills within 3.5 s to climb D, C, B, A, S, SS, SSS. Each rank adds 25% to henchman loot.
-- **Health orbs:** gunships, tanks and mechs always drop one, elites often, regular henchmen sometimes. They drift to you when you're close.
+- **Health orbs:** big units (choppers, jets, tanks, mechs, artillery) always drop one, elites often, regular henchmen sometimes. They heal 8% (15% from big units) and get pulled in from about 70 m away, faster the closer you are.
 - **Rage:** fills from kills, leveled spawners and hits on heroes. When it's full, **G** unleashes your villain's ultimate: Sonic Boom, Meltdown, Mass Hurl, Skyfall or Absolute Zero. Rage carries over between rounds.
 - **Bosses:** four random heroes, then your mirror in Act 5. Every hero you beat comes back for each later boss fight at 60% health with one power fewer. Only two attack at once; the rest circle and tag in when one drops.
-- **Power Up, every 5 rounds:** after each boss you get 3 points to level Strength (punches), your three powers, or Meteor Slam. Each level is +25% damage and size, max 5.
+- **Power Up, every 5 rounds:** after each boss you get 3 points to level Toughness (+20% max health a level, and it heals you by that much), Strength (punches), your three powers, or Meteor Slam. Power levels are +25% damage and size. Max 5 each.
 - The city and your position carry over the whole run: every round picks up where the last one ended, with all the damage still there, and bosses drop in on the streets ahead of you. Only a new run rebuilds the city.
 - Health and loot carry through the run. No health regen: +15% after each wave round, +35% after a boss. Get knocked out and the run's over.
 - Records: runs, takeovers (wins), best haul, fastest win per villain and difficulty.
