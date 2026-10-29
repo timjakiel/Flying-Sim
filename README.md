@@ -27,7 +27,7 @@ Every villain flies, punch-dashes (left-click) and meteor-slams (X), plus three 
 | Permafrost | Ice Spikes | Blizzard | Ice Beam | Frostbite |
 
 ## Heroes (bosses)
-Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Attacks glow in the hero's color before they land. Every fight opens with a hero reveal: a hazard-stripe "WARNING · HERO APPROACHING" banner, then the hero's colors wipe across the screen with their name scrolling huge behind them, a studio-lit portrait rendered from the actual model rises in, and the name plate slams down. Then each hero drops in, gets a title card and talks trash.
+Each hero mirrors one villain's powers, plus a ramming dash and meteor slam. Heroes like it low: they weave between the buildings at rooftop height and shoot up at you, and only come up after you if you camp in the sky for more than about 6 seconds. Attacks glow in the hero's color before they land. Every fight opens with a hero reveal: a hazard-stripe "WARNING · HERO APPROACHING" banner, then the hero's colors wipe across the screen with their name scrolling huge behind them, a studio-lit portrait rendered from the actual model rises in, and the name plate slams down. Then each hero drops in, gets a title card and talks trash.
 
 | Hero | Says |
 | --- | --- |
