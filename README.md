@@ -110,4 +110,6 @@ On phones: left stick flies, drag to look, buttons for boost, punch, slam and po
 
 A punch-dash that connects is a super punch: the hero ragdolls about 150 m (500 ft), spinning with limbs flailing, and a hero's ram does the same to you. Bursting into a building sets off one small explosion.
 
+Every 3 seconds of unbroken full boost you break the sound barrier: a **sonic boom** that tears into the buildings right around you, flings cars, smashes henchmen within 30 m and knocks heroes back for a chunk of damage.
+
 Buildings are solid at cruising speed: you slide along walls and land on roofs. You only smash through while boosting (or still going boost speed), punch-dashing, launching, meteor-slamming or using a power.
